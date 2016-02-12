@@ -1,14 +1,14 @@
 Pojet option MSI P14 - février 2016
 
-Sauvegarde incrémentale sécurisée à distance
+Sauvegarde incrémentale sécurisée à distance : "sid"
 
 * use case
 
- sh> cmd create sav1 /un/répertoire url://destination
+ sh> cmd create/init sav1 /un/répertoire url://destination
   . entrer un mdp...
   . création sauvegarde initiale (0) d'une sauvegarde "sav1"
 
- sh> cmd update sav1
+ sh> cmd dump/update/... sav1
   . mdp...
   . sauvegarde suivante qui réutilise les donnée commune
 
