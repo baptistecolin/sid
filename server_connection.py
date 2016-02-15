@@ -2,8 +2,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-class server_connection(object):
-	__metaclass__=ABCMeta
+class server_connection(metaclass=ABCMeta):
 
 	@abstractmethod
 	def put(self,k, v) :
