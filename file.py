@@ -2,19 +2,19 @@
 
 class file(server_connection):
     
-    def put(k,v) :
+    def put(self,k,v) :
         content = open(k,'wb')
         content.write(v)
         content.close()
     
-    def get(k) :
+    def get(self,k) :
         content=open(k,'rb')
         if content : return content
         else :
             print("Pas de fichier de ce nom sur le serveur")
             return None
     
-    def delete(k) :
+    def delete(self,k) :
         import os
         if os.path.isfile(k) :
             os.remove(k)

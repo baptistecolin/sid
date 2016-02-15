@@ -22,12 +22,12 @@ class server_connection(object):
 
 	@abstractmethod
 	def  __contains__(self, key)  :
-		pass
+		if self.get(key) : return True
     		#histoire qu'on puisse utiliser "if key in list"
 	
 	@abstractmethod
 	def __delitem__(self, key) :
-		pass
+		self.delete(key)
     		#pour que delete self[key] ait un sens
 	
 	@abstractmethod
@@ -37,12 +37,12 @@ class server_connection(object):
 	
 	@abstractmethod
 	def __getitem__(self,x) :
-		pass
+		self.get(x)
     		#x.__getitem__(y)<=>x[y]
 	
 	@abstractmethod
 	def __setitem__(self, key, value) :
-		pass
+		self.put(key, value)
     		#set self[key] to value
 	
 	@abstractmethod
