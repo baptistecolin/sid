@@ -31,5 +31,3 @@ def __setitem__(self, key, value, /) :
 
 def __new__(*args, **kargs) :
     #pour utiliser la syntaxe connection = new connection()
-
-def 
