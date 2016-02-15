@@ -7,17 +7,17 @@ class server_connection(metaclass=ABCMeta):
 	@abstractmethod
 	def put(self,k, v) :
 		pass
-    		#créer sur le serveur le fichier envoyé, ou le modifier s'il existe déjà
+    		#cr√©er sur le serveur le fichier envoy√©, ou le modifier s'il existe d√©j√†
 	    
 	@abstractmethod
 	def get(self,k) :
 		pass
-    		#récupérer le fichier à partir de sa clé (hash du nom)
+    		#r√©cup√©rer le fichier √† partir de sa cl√© (hash du nom)
     	
 	@abstractmethod
 	def delete(self,k) :
 		pass
-    		#supprimer le fichier à partir de sa clé
+    		#supprimer le fichier √† partir de sa cl√©
 
 	def  __contains__(self, key)  :
 		if self.get(key) : return True

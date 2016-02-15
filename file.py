@@ -53,7 +53,7 @@ class file(server_connection):
         import os
         if os.path.isfile(k) :
             os.remove(k)
-            print ("le fichier {} a t supprim".format(k))
+            print ("le fichier {} a Ã©tÃ© supprimÃ©".format(k))
         else :
             print("Pas de fichier de ce nom sur le serveur")
 >>>>>>> master
