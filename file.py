@@ -1,6 +1,6 @@
-#coding=utf-8
+# -*- coding:utf-8 -*-
 
-<<<<<<< HEAD
+#<<<<<<< HEAD
 from server_connection import server_connection
 import os
 
@@ -34,7 +34,7 @@ def main():
 	fileSystem.delete('1234')
 	
 
-=======
+#=======
 class file(server_connection):
     
     def put(self,k,v) :
@@ -56,7 +56,7 @@ class file(server_connection):
             print ("le fichier {} a été supprimé".format(k))
         else :
             print("Pas de fichier de ce nom sur le serveur")
->>>>>>> master
+#>>>>>>> master
 
 if __name__=='__main__':
 	main()
