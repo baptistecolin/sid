@@ -5,6 +5,8 @@
 import sys
 import argparse as ap
 import re
+import server_connection.py
+import file.py
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
