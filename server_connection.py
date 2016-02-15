@@ -1,35 +1,51 @@
 #coding=utf-8
 
-class server_connection
+from abc import ABCMeta, abstractmethod
 
-def put(k, v) :
-    #créer sur le serveur le fichier envoyé, ou le modifier s'il existe déjà
-    
+class server_connection(object):
+	__metaclass__=ABCMeta
 
-def get(k) :
-    #récupérer le fichier à partir de sa clé (hash du nom)
-    
-def delete(k) :
-    #supprimer le fichier à partir de sa clé
+	@abstractmethod
+	def put(self,k, v) :
+		pass
+    		#créer sur le serveur le fichier envoyé, ou le modifier s'il existe déjà
+	    
+	@abstractmethod
+	def get(self,k) :
+		pass
+    		#récupérer le fichier à partir de sa clé (hash du nom)
+    	
+	@abstractmethod
+	def delete(self,k) :
+		pass
+    		#supprimer le fichier à partir de sa clé
 
 
+	@abstractmethod
+	def  __contains__(self, key, /) :
+		pass
+    		#histoire qu'on puisse utiliser "if key in list"
+	
+	@abstractmethod
+	def __delitem__(self, key, /) :
+		pass
+    		#pour que delete self[key] ait un sens
+	
+	@abstractmethod
+	def __eq__(self, value, /) :
+    		pass
+		#afin que self==value marche
+	
+	@abstractmethod
+	def __getitem__(self,x) :
+		pass
+    		#x.__getitem__(y)<=>x[y]
 
-def  __contains__(self, key, /) :
-    #histoire qu'on puisse utiliser "if key in list"
+	def __setitem__(self, key, value, /) :
+		pass
+    		#set self[key] to value
 
-def __delitem__(self, key, /) :
-    #pour que delete self[key] ait un sens
-
-def __eq__(self, value, /) :
-    #afin que self==value marche
-
-def __getitem__(x) :
-    #x.__getitem__(y)<=>x[y]
-
-def __setitem__(self, key, value, /) :
-    #set self[key] to value
-
-def __new__(*args, **kargs) :
-    #pour utiliser la syntaxe connection = new connection()
-
-def 
+	def __new__(self,*args, **kargs) :
+		pass
+    		#pour utiliser la syntaxe connection = new connection()
+ 
