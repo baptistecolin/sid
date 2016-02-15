@@ -1,9 +1,10 @@
-# /usr/bin/env python3
+#!/usr/bin/env python3
 
 ########################################################### OPTIONS & ARGUMENTS
 
 import sys
 import argparse as ap
+import re
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -22,8 +23,6 @@ slist = subs.add_parser('list', help='list all the saves')
 slist.set_defaults(op='list')
 
 slist.add_argument('--url', type=str, help='specify target url')
-
-slist.add_argument('files', nargs='*', help='process these files', type=ap.FileType('rb'), default=[sys.stdin.buffer])
 
 # options and arguments common to almost all: name and url 
 snameurl = ap.ArgumentParser(add_help=False)
@@ -45,6 +44,8 @@ sls.set_defaults(op='ls')
 supdate = subs.add_parser('update', help='update a save', parents=[snameurl])
 supdate.set_defaults(op='update')
 
+supdate.add_argument('files', nargs='*', help='process these files', type=ap.FileType('rb'), default=[sys.stdin.buffer])
+
 # dump sub-command
 sdump = subs.add_parser('dump', help='dump a save', parents=[snameurl])
 sdump.set_defaults(op='dump')
@@ -57,8 +58,12 @@ sstatus.set_defaults(op='status')
 srestore = subs.add_parser('restore', help='restore a save', parents=[snameurl])
 srestore.set_defaults(op='restore')
 
-
+# parse sub-command, options and arguments
 opts = parser.parse_args()
+
+def getProtocol(url):
+    reUrl = re.search(r'^(.*):',url)
+    return (reUrl.group(1))
 
 if opts.op == 'none':
 	opts = parser.parse_args(['help', '--help'])
@@ -73,7 +78,7 @@ elif opts.op == 'list':
 elif opts.op == 'ls':
     print('coucou')
 elif opts.op == 'update':
-    print('coucou')
+    protocol = getProtocol(opts.url) 
 elif opts.op == 'dump':
     print('coucou')
 elif opts.op == 'update':
