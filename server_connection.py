@@ -20,19 +20,18 @@ class server_connection(object):
 		pass
     		#supprimer le fichier à partir de sa clé
 
-
 	@abstractmethod
-	def  __contains__(self, key, /) :
+	def  __contains__(self, key)  :
 		pass
     		#histoire qu'on puisse utiliser "if key in list"
 	
 	@abstractmethod
-	def __delitem__(self, key, /) :
+	def __delitem__(self, key) :
 		pass
     		#pour que delete self[key] ait un sens
 	
 	@abstractmethod
-	def __eq__(self, value, /) :
+	def __eq__(self, value) :
     		pass
 		#afin que self==value marche
 	
@@ -42,7 +41,7 @@ class server_connection(object):
     		#x.__getitem__(y)<=>x[y]
 	
 	@abstractmethod
-	def __setitem__(self, key, value, /) :
+	def __setitem__(self, key, value) :
 		pass
     		#set self[key] to value
 	
