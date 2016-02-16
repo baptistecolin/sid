@@ -10,6 +10,7 @@ import json
 # /!\ Tested on Linux systems only (incompatible with Windows)
 # @path : str
 def listFiles(path):
+	if path == 0: path = "."
 	files = []
 	l = glob.glob(path + "/*")
 	for i in l:
@@ -24,16 +25,6 @@ def listFiles(path):
 # @path : str
 # @isNew : boolean
 """
-def buildSID(path, isNew = False):
-	to_upload = []
-	dic = {}
-	dic["files"] = {}
-	if not isNew:
-		last_info = json.load() #decrypt + download
-		ver = last_info["version"] + 1
-	else:
-		ver = 0
-	dic["version"] = ver
 	for f in listFiles(path):
 		name = f.rsplit("/", 1)[-1]
 		fcontent = open(f, "rb").read()
@@ -53,22 +44,17 @@ def buildSID(path, isNew = False):
 				to_upload.append(f)
 				dic["files"][f] = {"serverName" : crypto.hash(name, ver), 							"version" : ver,
 						"hash" : fhash}
-	if to_upload:
-		js = json.dumps(dic)
-		js = crypto.encrypt(js)
-		open("last.sid", "wb").write(js)
-	return to_upload
 """
 
-def buildSID(path = ".", isNew = False):
+def buildSID(path = "", isNew = False):
 	to_upload = []
 	dic = {}
 	dic["files"] = {}
 	if not isNew:
-		o = open("last.sid", "wb")		
+		o = open(path + "last.sid", "wb")		
 		o.write(sid.protocol.get("last.sid")) # !! nom
 		o.close()
-		last_info = json.loads(crypto.decrypt("last.sid"))
+		last_info = json.loads(crypto.decrypt(path + "last.sid"))
 		ver = last_info["version"] + 1
 		id_max = last_info["id_max"]
 	else:
@@ -86,51 +72,56 @@ def buildSID(path = ".", isNew = False):
 					"version" : 0,
 					"hash" : fhash}
 			id_max += 1
+			to_upload.append(f)
 		else:
 			try:
 				if last_info["files"][f]["hash"] == fhash:
 					dic["files"][f] = last_info["files"][f]
 				else:
-					to_upload.append(f)
 					dic["files"][f] = {"serverName" : id_max, 								"version" : ver,
 							"hash" : fhash}
 					id_max += 1
+					to_upload.append(f)
 			except KeyError:
-				to_upload.append(f)
 				dic["files"][f] = {"serverName" : id_max, 							"version" : ver,
 						"hash" : fhash}
 				id_max += 1
+				to_upload.append(f)
 	if to_upload:
 		if not isNew:
 			# rename previous
-			o = open("last.sid", "rb")
-			prevSid = "v" + last_info["version"] + ".sid"
-			prev = open(prevSid, "wb")
+			o = open(path + "last.sid", "rb")
+			prevSid = "v" + str(last_info["version"]) + ".sid"
+			prev = open(path + prevSid, "wb")
 			prev.write(o.read())
 			o.close()
 			prev.close()
+			to_upload.append(path + prevSid)
 		# create new
 		dic["id_max"] = id_max
-		o = open("last.sid", "wb")
+		o = open(path + "last.sid", "wb")
 		json.dump(dic, o)
 		o.close()
 		js = crypto.encrypt("last.sid")
-		o = open("last.sid", "wb")
+		o = open(path + "last.sid", "wb")
 		o.write(js)
 		o.close()
-		to_upload.append("last.sid")
-		to_upload.append(prevSid)
+		to_upload.append(path + "last.sid")
 	return to_upload, dic["files"]
 
 
-def SIDSave(path = "."):
+## Upload directory "path" to update backup
+# @path : str
+def SIDSave(path = ""):
 	to_upload, dic = buildSID(path)
 	for f in to_upload:
 		o = open(f, "rb")
 		sid.protocole.put(dic[f]["serverName"], crypto.encrypt(o.read())) # !! nom
 		o.close()
 
-def SIDCreate(path = "."):
+## Upload directory "path" to create new backup
+# @path : str
+def SIDCreate(path = ""):
 	to_upload, dic = buildSID(path, True)
 	for f in to_upload:
 		o = open(f, "rb")
@@ -138,28 +129,34 @@ def SIDCreate(path = "."):
 		o.close()
 		
 
-def SIDRestore(ver = -1, path = "."):
+## Restore directory in "path" from backup (latest version or previous)
+# @ver : int
+# @path : str
+def SIDRestore(ver = -1, path = ""):
 	downloaded = []
 
 	if ver < 0:
 		lastSID = json.loads(crypto.decryptString(sid.protocol.get("last.sid")))
-		o = open("last.sid", "wb")
+		o = open(path + "last.sid", "wb")
 		o.write(lastSID) # keep track on local machine
 		o.close()
 	else:
-		lastSID = json.loads(crypto.decryptString(sid.protocol.get("v" + ver + ".sid")))
-		o = open("last.sid", "wb")
+		lastSID = json.loads(crypto.decryptString(sid.protocol.get("v" + str(ver) + ".sid")))
+		o = open(path + "last.sid", "wb")
 		o.write(lastSID) # keep track on local machine
 		o.close()
 
 	for f, v in lastSID["files"].items():
-		o = open(f, "rb")
-		fcontent = o.read()
-		o.close()
-		fhash = crypto.hash(fcontent)
+		try:
+			o = open(path + f, "rb")
+			fcontent = o.read()
+			o.close()
+			fhash = crypto.hash(fcontent)
+		except IOError:
+			fhash = ""
 		if fhash != v["hash"]:
 			flux = sid.protocol.get(v["serverName"])
-			o = open(f, "wb")
+			o = open(path + f, "wb")
 			o.write(crypto.decryptString(flux))
 			o.close()
 			downloaded.append(f)
