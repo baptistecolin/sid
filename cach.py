@@ -17,7 +17,7 @@ def save(name,url='',directory_path='',version=0):
     dic = {'version' : version,
         'url' : url,
         'directory_path' : directory_path}
-    t = cach_dir + '/' + name
+    t = os.path.join(cach_dir, name)
     o = open(t,"w")
     json.dump(dic,o,sort_keys = True,indent=2)
     o.close()
