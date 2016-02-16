@@ -93,9 +93,6 @@ class SIDCrypto:
             cipher = AES.new(key, self.cipher_mode, iv)
             m = cipher.decrypt(c)
 
-           # m=m.decode('utf-8')
-           # unicodedata.normalize('NFKD',m).encode('ascii','ignore')
-
             return m #the output is a string containing the message.
 
 ###HASH FUNCTION
@@ -127,9 +124,9 @@ rand=Random.new()
 keylen = 16
 
 password = "msi2014"
-sid = SIDCrypto(password, algo_cipher=None)
+sid = SIDCrypto(password)
                 
-message_clair =b"abcdefghijklmnopqrstuvwxyzabcdef\n"
+message_clair =b"abcdefghijklmnop"
 clear = open("/home/baptiste/msi-p14/clear.txt", 'bw')
 clear.write(message_clair)
 clear.close()
