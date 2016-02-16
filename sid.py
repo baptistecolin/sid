@@ -80,13 +80,14 @@ elif opts.op == 'create':
     pwd = getPwd()
     protocol = getProtocol()
     protocol,adress = getProtocol()
+    chemin = '/'+adress
     print(pwd)
     print(protocol)
     for file in opts.files:
         aEcrire = file.read()
-        if not os.path.isdir(opts.url):
-            os.mkdir(opts.url)
-        File.put(File, '/'+adress+file.name, aEcrire)
+        if not os.path.isdir(chemin):
+            os.mkdir(chemin)
+        File.put(File, chemin+file.name, aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
     protocol,address = getProtocol()
