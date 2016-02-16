@@ -2,7 +2,7 @@ import glob
 import os.path
 import json
 #import SIDCrypto
-#import sid
+import sid
 
 #crypto = SIDCrypto("", "orage", "") # define ??
 
@@ -21,31 +21,30 @@ def listFiles(path):
 			files.append(i)
 	return files
 
+## Pour les tests
+# @path : str
+def identity(path):
+	o = open(path, 'rb')
+	res = o.read()
+	o.close()
+	return res
+	
+# @x : str
+def identityString(x):
+	return x
+	
+class cryptoTest():
+	def __init__(self):
+		self.encrypt = identity
+		self.decrypt = identity
+		self.decryptString = identityString
+		self.hash = identityString
+		
+crypto = cryptoTest()
+	
 ## Generate "last.sid" file from version "ver" in directory "path"
 # @path : str
 # @isNew : boolean
-"""
-	for f in listFiles(path):
-		name = f.rsplit("/", 1)[-1]
-		fcontent = open(f, "rb").read()
-		fhash = crypto.hash(fcontent)
-		if isNew:
-			dic["files"][f] = {"serverName" : crypto.hash(name, 0), 					"version" : 0,
-					"hash" : fhash}
-		else:
-			try:
-				if last_info["files"][f]["hash"] == fhash:
-					dic["files"][f] = last_info["files"][f]
-				else:
-					to_upload.append(f)
-					dic["files"][f] = {"serverName" : crypto.hash(name, ver), 								"version" : ver,
-							"hash" : fhash}
-			except KeyError:
-				to_upload.append(f)
-				dic["files"][f] = {"serverName" : crypto.hash(name, ver), 							"version" : ver,
-						"hash" : fhash}
-"""
-
 def buildSID(path = "", isNew = False):
 	to_upload = []
 	dic = {}
@@ -166,6 +165,9 @@ def SIDRestore(ver = -1, path = ""):
 
 	
 
+
+# status : derniere ver en ligne
+# ls pour une ver
 
 
 

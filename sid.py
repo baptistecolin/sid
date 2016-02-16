@@ -25,13 +25,13 @@ help.add_argument('about', nargs='?', choices=['help','create','list','ls','upda
 slist = subs.add_parser('list', help='list all the saves')
 slist.set_defaults(op='list')
 
-slist.add_argument('--url', type=str, help='specify target url')
+slist.add_argument('-u','--url', type=str, help='specify target url')
 
 # options and arguments common to almost all: name and url 
 snameurl = ap.ArgumentParser(add_help=False)
 
-snameurl.add_argument('--name', type=str, help='Give a save name')
-snameurl.add_argument('--url', type=str, help='specify target url')
+snameurl.add_argument('-n','--name', type=str, help='Give a save name')
+snameurl.add_argument('-u','--url', type=str, help='specify target url')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -49,9 +49,9 @@ supdate.set_defaults(op='update')
 
 supdate.add_argument('files', nargs='*', help='process these files', type=ap.FileType('rb'), default=[sys.stdin.buffer])
 
-# dump sub-command
-sdump = subs.add_parser('dump', help='dump a save', parents=[snameurl])
-sdump.set_defaults(op='dump')
+# remove sub-command
+sremove = subs.add_parser('remove', help='remove a save', parents=[snameurl])
+sremove.set_defaults(op='remove')
 
 # status sub-command
 sstatus = subs.add_parser('status', help='status of a save', parents=[snameurl])
@@ -64,12 +64,16 @@ srestore.set_defaults(op='restore')
 # parse sub-command, options and arguments
 opts = parser.parse_args()
 
-def getProtocol():
-    reUrl = re.search(r'^(.*)://(.*)',opts.url)
+########################################################### FUNCTIONS 
+
+def getProtocol(): 
+    reUrl = re.search(r'^(.*)://(.*)',opts.url) 
     return reUrl.group(1),reUrl.group(2)
 
 def getPwd():
     return input('Password?')
+
+########################################################### PROGRAM 
 
 if opts.op == 'none':
 	opts = parser.parse_args(['help', '--help'])
@@ -80,14 +84,14 @@ elif opts.op == 'create':
     pwd = getPwd()
     protocol = getProtocol()
     protocol,adress = getProtocol()
-    chemin = '/'+adress
+    adress
     print(pwd)
     print(protocol)
     for file in opts.files:
         aEcrire = file.read()
-        if not os.path.isdir(chemin):
-            os.mkdir(chemin)
-        File.put(File, chemin+file.name, aEcrire)
+        if not os.path.isdir(adress):
+            os.mkdir(adress)
+        File.put(File, os.path.join(chemin,file.name), aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
     protocol,address = getProtocol()
