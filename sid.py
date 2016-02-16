@@ -87,7 +87,7 @@ elif opts.op == 'create':
         aEcrire = file.read()
         if not os.path.isdir(adress):
             os.mkdir(adress)
-        File.put(File, chemin+file.name, aEcrire)
+        File.put(File, os.path.join(chemin,file.name), aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
     protocol,address = getProtocol()
