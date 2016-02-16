@@ -2,7 +2,7 @@ sid create name url folder
 #create a save "name" from "local_file/folder" to "url" 
 sid list 
 #list all the saves cashed on the computer 
-sid getName url
+sid setName name url
 #get name of the save at url
 sid update name 
 #update the save 
