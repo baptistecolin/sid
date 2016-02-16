@@ -68,10 +68,7 @@ def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
 	dic = {"files" : {}}
 	if not isNew:
-		o = open(os.path.join(path, "last.sid"), "w") ##
-		o.write(protocol.get("last.sid").read().decode("ascii")) ##
-		o.close()
-		last_info = json.loads(crypto.decrypt(os.path.join(path, "last.sid"))) ##
+		last_info = json.loads(crypto.decryptString(protocol.get("last.sid").read())) ##
 		ver = last_info["version"] + 1
 		id_max = last_info["id_max"]
 	else:
@@ -79,7 +76,7 @@ def buildSID(protocol, path = "", isNew = False):
 		id_max = 0
 	dic["version"] = ver
 	for f in listFiles(path):
-		fhash = crypto.hash(f)
+		fhash = crypto.hash(f, h_file=True)
 		prop = os.lstat(f)
 		isLink = stat.S_ISLNK(prop.st_mode)
 		if isLink != 0:
@@ -176,29 +173,28 @@ def SIDCreate(protocol, path = ""):
 # @path : str
 def SIDRestore(protocol, path = "", ver = -1):
 	downloaded = []
-
 	if ver < 0:
 		lastSID = json.loads(crypto.decryptString(protocol.get("last.sid").read()))
-		o = open(os.path.join(path, "last.sid"), "wb")
-		o.write(lastSID) # keep track on local machine
-		o.close()
+#		o = open(os.path.join(path, "last.sid"), "wb")
+#		o.write(lastSID) # keep track on local machine
+#		o.close()
 	else:
 		lastSID = json.loads(crypto.decryptString(protocol.get("v" + str(ver) + ".sid").read()))
-		o = open(os.path.join(path, "last.sid"), "wb")
-		o.write(lastSID) # keep track on local machine
-		o.close()
+#		o = open(os.path.join(path, "last.sid"), "wb")
+#		o.write(lastSID) # keep track on local machine
+#		o.close()
 	
 	for f, v in lastSID["files"].items():
 		fstat = os.lstat(f)
 		if fstat.st_size != v["size"] or fstat.st_mtime != v["modTime"]: 
 			try:
-				fhash = crypto.hash(os.path.join(path, f))
+				fhash = crypto.hash(os.path.join(path, f), h_file=True)
 			except IOError:
 				fhash = ""
 			if fhash != v["hash"]:
 				flux = protocol.get(v["serverName"])
 				if ftype == 0:
-					o = open(os.path.join(path, f), "wb")
+					o = open(os.path.join(path, f), "w")
 					o.write(crypto.decryptString(flux))
 					o.close()
 					try:
@@ -207,6 +203,7 @@ def SIDRestore(protocol, path = "", ver = -1):
 				elif ftype == 1:
 					os.symlink(v["linkURL"], os.path.join(path, f))
 				elif ftype == 2: #TODO
+					os.makedirs(os.path.join(path, f), 0o777, True)
 					try:
 						os.chmod(os.path.join(path, f), v["mode"])
 					except: ""

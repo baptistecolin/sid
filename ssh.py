@@ -41,10 +41,11 @@ def main():
     server=input('Serveur :')
     login=input('Login :')
     password=getpass.getpass('Password :')
-    fileSystem = Ssh('/Haroun/msi-p14', login, password, server)
+    fileSystem = Ssh("/Haroun/msi-p14",login,password,server)
     test = open('test.txt','rb')
     fileSystem.put('test.txt',test.read())
-    fileSystem.get('test.txt')
+    content=fileSystem.get('test.txt')
+    print(content)
 
 if __name__=='__main__':
     main()
