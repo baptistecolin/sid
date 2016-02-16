@@ -2,15 +2,12 @@
 
 ########################################################### OPTIONS & ARGUMENTS
 
+import os
 import sys
 import argparse as ap
 import re
 import server_connection
-<<<<<<< HEAD
 from file import File
-=======
-import file
->>>>>>> 64b33b577717734fa1010c0e42965cfcba7c963b
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -81,12 +78,14 @@ elif opts.op == 'help':
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
     pwd = getPwd()
-    protocol = getProtocol()
+#    protocol = getProtocol()
     print(pwd)
-    print(protocol)
+#    print(protocol)
     for file in opts.files:
         aEcrire = file.read()
-        File.put(File, k=opts.url, v=aEcrire)
+        if not os.path.isdir(opts.url):
+            os.mkdir(opts.url)
+        File.put(File, opts.url+file.name, aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
     protocol = getProtocol()
