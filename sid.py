@@ -99,14 +99,14 @@ elif opts.op == 'help':
 elif opts.op == 'create':
     print('Création du dépôt ' + opts.name + ' dans : ' + opts.url)
     protocolName,adress = getProtocol()
-    if protocolName == 'file':
-        protocol = File(adress)
-        SIDCreate(protocol, opts.directory)
-        for file in opts.files:
-            aEcrire = file.read()
-            if not os.path.isdir(adress):
-                os.mkdir(adress)
-            protocol.put(file.name, aEcrire)
+#    if protocolName == 'file':
+#        protocol = File(adress)
+#        SIDCreate(protocol, opts.directory)
+#        for file in opts.files:
+#            aEcrire = file.read()
+#            if not os.path.isdir(adress):
+#                os.mkdir(adress)
+#            protocol.put(file.name, aEcrire)
 #    elif protocol == 'http' or protocol == 'https':
 #    elif protocol == 'imap' or protocol == 'imaps':
 #    print('Dépot créé')

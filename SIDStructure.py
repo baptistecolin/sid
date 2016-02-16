@@ -151,7 +151,10 @@ def SIDSave(protocol, path = ""):
 def SIDCreate(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path, True)
 	for f in to_upload:
-		protocol.put(dic[f]["serverName"], crypto.encrypt(f))
+		if f.endswith('.sid'):
+			protocol.put('last.sid', crypto.encrypt(f))
+		else:
+			protocol.put(dic[f]["serverName"], crypto.encrypt(f))
 		
 
 ## Restore directory in "path" from backup (latest version or previous)
