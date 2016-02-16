@@ -42,11 +42,14 @@ class SIDCrypto:
             o = open(path, 'rb')
             c = o.read() #the file is ciphered
             o.close()
+<<<<<<< HEAD
 
+>>>>>>> e485a3538062b766611a1d364ed3fe1a57e34f9f
             return b'encrypt: ' + c #the output is the clear message
 
         else:
             (key,iv,salt) = self.key_iv_salt_generator(password)
+<<<<<<< HEAD
 
             #generating a cipher
             if self.algo_cipher == "AES":
@@ -64,18 +67,26 @@ class SIDCrypto:
             elif self.algo_cipher == "DES3":
                 cipher = DES.new(key, DES.MODE_CBC, iv)
             #print(cipher.block_size)
+
+>>>>>>> e485a3538062b766611a1d364ed3fe1a57e34f9f
             
             o = open(path, 'rb')
-            c = cipher.encrypt(o.read()) #the file is ciphered
+            clear = o.read()
+
+            #begin padding
+            if padlen != len(clear)%padlen:
+                padlen = padlen - (len(clear)%padlen)
+            clear += bytearray((chr(padlen)*padlen).encode("ASCII"))
+            
+            c = cipher.encrypt(clear) #the file is ciphered
             o.close()
+            
             
             c += iv #the iv is appended to the ciphered message
             c += salt #the salt is appended to the ciphered message after the iv
             
-            #print(c)
-            #print(iv)
-            #print(salt)
-
+<<<<<<< HEAD
+>>>>>>> e485a3538062b766611a1d364ed3fe1a57e34f9f
             return c #the output is a string containing the ciphered message + the encrypted iv
 
 
@@ -124,6 +135,12 @@ class SIDCrypto:
 
             m = cipher.decrypt(c)
 
+            #begin unpadding
+            padlen = m[-1]
+            print(padlen)
+            m = m[:-padlen]
+            print(len(m))
+
             return m #the output is a string containing the message.
 
 ###HASH FUNCTION
@@ -158,17 +175,17 @@ password = "msi2014"
 sid = SIDCrypto(password)
                 
 message_clair =b"abcdefghijklmnop"
-clear = open("/home/baptiste/msi-p14/clear.txt", 'bw')
+clear = open("clear.txt", 'bw')
 clear.write(message_clair)
 clear.close()
 
-message_chiffre = sid.encrypt("/home/baptiste/msi-p14/clear.txt")
+message_chiffre = sid.encrypt("clear.txt")
 
-encrypted = open("/home/baptiste/msi-p14/encrypted.txt", 'bw')
+encrypted = open("encrypted.txt", 'bw')
 encrypted.write(message_chiffre)
 encrypted.close()
 #encrypted = open("/home/baptiste/msi-p14/encrypted.txt", 'br')
 
-decrypted = open("/home/baptiste/msi-p14/decrypted.txt", 'bw')
-decrypted.write(sid.decrypt("/home/baptiste/msi-p14/encrypted.txt", 'msi2014'))
+decrypted = open("decrypted.txt", 'bw')
+decrypted.write(sid.decrypt("encrypted.txt", 'msi2014'))
 decrypted.close()

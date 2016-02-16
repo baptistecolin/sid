@@ -10,8 +10,10 @@ import sys
 import argparse as ap
 import re
 import server_connection
+import getpass
 from file import File
 from SIDStructure import SIDCreate
+from cach import save
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -84,56 +86,46 @@ opts = parser.parse_args()
 ########################################################### FUNCTIONS 
 
 def getProtocol(): 
-    reUrl = re.search(r'^(.*)://(.*)',opts.url) 
-    return reUrl.group(1),reUrl.group(2)
+	reUrl = re.search(r'^(.*)://(.*)',opts.url) 
+	return reUrl.group(1),reUrl.group(2)
 
 def getPwd():
-    return input('Password?')
+	return input('Password?')
+
+def absPath(path):
+	if path[0] == '/':
+		return path
+	else:
+		return os.path.join(os.getcwd(), path)
 
 ########################################################### PROGRAM 
 
 if opts.op == 'none':
-    opts = parser.parse_args(['help', '--help'])
+	opts = parser.parse_args(['help', '--help'])
 elif opts.op == 'help':
-    parser.parse_args([opts.about, '--help'])
+	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-    print('Création du dépôt ' + opts.name + ' dans : ' + opts.url)
-    protocolName,adress = getProtocol()
-#    if protocolName == 'file':
-#        protocol = File(adress)
-#        SIDCreate(protocol, opts.directory)
-#        for file in opts.files:
-#            aEcrire = file.read()
-#            if not os.path.isdir(adress):
-#                os.mkdir(adress)
-#            protocol.put(file.name, aEcrire)
-#    elif protocol == 'http' or protocol == 'https':
-#    elif protocol == 'imap' or protocol == 'imaps':
-#    print('Dépot créé')
+	pw = getpass.getpass()
+	protocolName,adress = getProtocol()
+	if protocolName == 'file':
+		protocol = File(adress)
+	SIDCreate(protocol, opts.directory)
+	save(opts.name, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
-    pwd = getPwd()
-    protocol,address = getProtocol()
-    print(address)
-    print(protocol)
-    print(pwd)	
+	pwd = getPwd()
+	protocol,address = getProtocol()
+	print(address)
+	print(protocol)
+	print(pwd)	
 elif opts.op == 'ls':
-    pwd = getPwd()
-    protocol,address = getProtocol()
-    print(pwd)	
+	pwd = getPwd()
+	protocol,address = getProtocol()
+	print(pwd)	
 elif opts.op == 'update':
-    pwd = getPwd()
-    protocol,address = getProtocol()
-    print(pwd)	
+	pwd = getPwd()
 elif opts.op == 'dump':
-    pwd = getPwd()
-    protocol,address = getProtocol()
-    print(pwd)	
+	pwd = getPwd()
 elif opts.op == 'update':
-    pwd = getPwd()
-    protocol,address = getProtocol()
-    print(pwd)	
+	pwd = getPwd()
 elif opts.op == 'restore':
-    pwd = getPwd()
-    protocol,address = getProtocol()
-    print(pwd)	
-
+	pwd = getPwd()
