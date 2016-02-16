@@ -41,7 +41,7 @@ class SIDCrypto:
 
     def decryptString(self,s):
         
-        if (self.algo_cipher=None):
+        if (self.algo_cipher==None):
             return s           #it is possible not to encrypt anything by assigning "None" to "algo_cipher". Useful for debugging.
 
         else:
