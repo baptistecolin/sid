@@ -98,24 +98,21 @@ elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
-#    pwd = getPwd()
-#    protocol = getProtocol()
     protocol,adress = getProtocol()
-#    adress
-#    print(pwd)
-#    print(protocol)
-    SIDCreate('aCopier/')
+    if protocol == 'file':
+       # SIDCreate('aCopier/')
 #    for file in opts.files:
 #        aEcrire = file.read()
 #        File.put(File, os.path.join(chemin,file.name), aEcrire)
-    adress
-    print(pwd)
-    print(protocol)
-    for file in opts.files:
-        aEcrire = file.read()
-        if not os.path.isdir(adress):
-            os.mkdir(adress)
-        File.put(File, chemin+file.name, aEcrire)
+        for file in opts.files:
+            aEcrire = file.read()
+            if not os.path.isdir(adress):
+                os.mkdir(adress)
+            transfert = File(adress)
+            transfert.put(file.name, aEcrire)
+#    elif protocol == 'http' or protocol == 'https':
+#    elif protocol == 'imap' or protocol == 'imaps':
+    print('Dépot créé')
 elif opts.op == 'list':
     pwd = getPwd()
     protocol,address = getProtocol()
