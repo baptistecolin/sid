@@ -2,6 +2,7 @@
 
 ########################################################### OPTIONS & ARGUMENTS
 
+import os
 import sys
 import argparse as ap
 import re
@@ -48,9 +49,9 @@ supdate.set_defaults(op='update')
 
 supdate.add_argument('files', nargs='*', help='process these files', type=ap.FileType('rb'), default=[sys.stdin.buffer])
 
-# dump sub-command
-sdump = subs.add_parser('dump', help='dump a save', parents=[snameurl])
-sdump.set_defaults(op='dump')
+# remove sub-command
+sremove = subs.add_parser('remove', help='remove a save', parents=[snameurl])
+sremove.set_defaults(op='remove')
 
 # status sub-command
 sstatus = subs.add_parser('status', help='status of a save', parents=[snameurl])
@@ -77,12 +78,16 @@ elif opts.op == 'help':
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
     pwd = getPwd()
-    protocol,address = getProtocol()
+    protocol = getProtocol()
+    protocol,adress = getProtocol()
+    adress
     print(pwd)
     print(protocol)
     for file in opts.files:
         aEcrire = file.read()
-        File.put(File, k=opts.url, v=aEcrire)
+        if not os.path.isdir(adress):
+            os.mkdir(adress)
+        File.put(File, chemin+file.name, aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
     protocol,address = getProtocol()
