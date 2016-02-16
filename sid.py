@@ -12,8 +12,8 @@ import re
 import server_connection
 import getpass
 from file import File
-from SIDStructure import SIDCreate
-from cach import save
+from SIDStructure import SIDCreate, SIDSave
+from cach import save, read_save
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -85,8 +85,8 @@ opts = parser.parse_args()
 
 ########################################################### FUNCTIONS 
 
-def getProtocol(): 
-	reUrl = re.search(r'^(.*)://(.*)',opts.url) 
+def getProtocol(url): 
+	reUrl = re.search(r'^(.*)://(.*)',url) 
 	return reUrl.group(1),reUrl.group(2)
 
 def getPwd():
@@ -106,23 +106,27 @@ elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
 	pw = getpass.getpass()
-	protocolName,adress = getProtocol()
+	protocolName,adress = getProtocol(url)
 	if protocolName == 'file':
 		protocol = File(adress)
 	SIDCreate(protocol, opts.directory)
 	save(opts.name, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
-	protocol,address = getProtocol()
 	print(address)
 	print(protocol)
 	print(pwd)	
 elif opts.op == 'ls':
 	pwd = getPwd()
-	protocol,address = getProtocol()
 	print(pwd)	
 elif opts.op == 'update':
-	pwd = getPwd()
+	pw = getpass.getpass()
+	(version, url, directory_path) = read_save(opts.name)
+	protocolName, adress = getProtocol(url)
+	if protocolName == 'file':
+		protocol = File(adress)
+	SIDSave(protocol, directory_path)
+	save(opts.name, url, absPath(directory_path), version+1)
 elif opts.op == 'dump':
 	pwd = getPwd()
 elif opts.op == 'update':

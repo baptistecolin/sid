@@ -210,12 +210,12 @@ def SIDRestore(protocol, path = "", ver = -1):
 				downloaded.append(f)
 	return downloaded
 
-test_destination_path = 'test_dir2/'	
-protocol_test = File(test_destination_path)
+#test_destination_path = 'test_dir2/'	
+#protocol_test = File(test_destination_path)
 
 #SIDCreate(protocol_test, "test_dir1/")
 
-SIDRestore(protocol_test, "dir3/")
+#SIDRestore(protocol_test, "dir3/")
 #SIDRestore(None, "test_dir")
 
 
