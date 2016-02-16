@@ -2,7 +2,8 @@ import glob
 import os.path
 import json
 #import SIDCrypto
-import sid
+#from sid import protocol
+from file import File
 
 #crypto = SIDCrypto("", "orage", "") # define ??
 
@@ -10,11 +11,11 @@ import sid
 # /!\ Tested on Linux systems only (incompatible with Windows)
 # @path : str
 def listFiles(path):
-	if path == 0: path = "."
+	if len(path) == 0: path = "."
 	files = []
 	l = glob.glob(path + "/*")
 	for i in l:
-		print(i)
+		#print(i)
 		if os.path.isdir(i):
 			files.extend(listFiles(i))
 		elif not i.endswith(".sid"):
@@ -62,6 +63,7 @@ def buildSID(path = "", isNew = False):
 	dic["version"] = ver
 	for f in listFiles(path):
 #		name = f.rsplit("/", 1)[-1]
+		print('dans la boucle : ' + f)
 		o = open(f, "rb")
 		fcontent = o.read()
 		o.close()
@@ -98,7 +100,14 @@ def buildSID(path = "", isNew = False):
 			to_upload.append(path + prevSid)
 		# create new
 		dic["id_max"] = id_max
-		o = open(path + "last.sid", "wb")
+		o = open(os.path.join(path,"last.sid"), "w")
+		#print('dic :', end=' ')
+		#print(dic)
+		print('to_upload :', end=' ')
+		print(to_upload)
+		print(type(to_upload[0]))
+		print('o :', end=' ')
+		print(o)
 		json.dump(dic, o)
 		o.close()
 		js = crypto.encrypt("last.sid")
@@ -115,16 +124,17 @@ def SIDSave(path = ""):
 	to_upload, dic = buildSID(path)
 	for f in to_upload:
 		o = open(f, "rb")
-		sid.protocole.put(dic[f]["serverName"], crypto.encrypt(o.read())) # !! nom
+		protocol.put(dic[f]["serverName"], crypto.encrypt(o.read())) # !! nom
 		o.close()
 
 ## Upload directory "path" to create new backup
 # @path : str
 def SIDCreate(path = ""):
 	to_upload, dic = buildSID(path, True)
+	print(to_upload)
 	for f in to_upload:
 		o = open(f, "rb")
-		sid.protocole.put(dic[f]["serverName"], crypto.encrypt(o.read())) # !! nom
+		File.put(dic[f]["serverName"], crypto.encrypt(o.read())) # !! nom
 		o.close()
 		
 

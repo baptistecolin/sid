@@ -8,6 +8,7 @@ import argparse as ap
 import re
 import server_connection
 from file import File
+from SIDStructure import SIDCreate
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -37,6 +38,7 @@ snameurl.add_argument('-u','--url', type=str, help='specify target url')
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
 scr.set_defaults(op='create')
 
+scr.add_argument('-d', type=str, help='specify a directory')
 scr.add_argument('files', nargs='*', help='process these files', type=ap.FileType('rb'), default=[sys.stdin.buffer])
 
 # ls sub-command
@@ -81,17 +83,16 @@ elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
-    pwd = getPwd()
-    protocol = getProtocol()
+#    pwd = getPwd()
+#    protocol = getProtocol()
     protocol,adress = getProtocol()
-    adress
-    print(pwd)
-    print(protocol)
-    for file in opts.files:
-        aEcrire = file.read()
-        if not os.path.isdir(adress):
-            os.mkdir(adress)
-        File.put(File, os.path.join(chemin,file.name), aEcrire)
+#    adress
+#    print(pwd)
+#    print(protocol)
+    SIDCreate('aCopier/')
+#    for file in opts.files:
+#        aEcrire = file.read()
+#        File.put(File, os.path.join(chemin,file.name), aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
     protocol,address = getProtocol()
