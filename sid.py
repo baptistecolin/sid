@@ -65,8 +65,8 @@ srestore.set_defaults(op='restore')
 opts = parser.parse_args()
 
 def getProtocol():
-    reUrl = re.search(r'^(.*):',opts.url)
-    return reUrl.group(1)
+    reUrl = re.search(r'^(.*)://(.*)',opts.url)
+    return reUrl.group(1),reUrl.group(2)
 
 def getPwd():
     return input('Password?')
@@ -78,36 +78,39 @@ elif opts.op == 'help':
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
     pwd = getPwd()
-#    protocol = getProtocol()
+    protocol = getProtocol()
+    protocol,adress = getProtocol()
     print(pwd)
-#    print(protocol)
+    print(protocol)
     for file in opts.files:
         aEcrire = file.read()
         if not os.path.isdir(opts.url):
             os.mkdir(opts.url)
-        File.put(File, opts.url+file.name, aEcrire)
+        File.put(File, '/'+adress+file.name, aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
+    print(address)
+    print(protocol)
     print(pwd)	
 elif opts.op == 'ls':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'update':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'dump':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'update':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'restore':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 
