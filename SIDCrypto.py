@@ -42,14 +42,11 @@ class SIDCrypto:
             o = open(path, 'rb')
             c = o.read() #the file is ciphered
             o.close()
-<<<<<<< HEAD
 
->>>>>>> e485a3538062b766611a1d364ed3fe1a57e34f9f
             return b'encrypt: ' + c #the output is the clear message
 
         else:
             (key,iv,salt) = self.key_iv_salt_generator(password)
-<<<<<<< HEAD
 
             #generating a cipher
             if self.algo_cipher == "AES":
@@ -68,12 +65,12 @@ class SIDCrypto:
                 cipher = DES.new(key, DES.MODE_CBC, iv)
             #print(cipher.block_size)
 
->>>>>>> e485a3538062b766611a1d364ed3fe1a57e34f9f
             
             o = open(path, 'rb')
             clear = o.read()
 
             #begin padding
+            padlen = cipher.block_size
             if padlen != len(clear)%padlen:
                 padlen = padlen - (len(clear)%padlen)
             clear += bytearray((chr(padlen)*padlen).encode("ASCII"))
@@ -84,9 +81,7 @@ class SIDCrypto:
             
             c += iv #the iv is appended to the ciphered message
             c += salt #the salt is appended to the ciphered message after the iv
-            
-<<<<<<< HEAD
->>>>>>> e485a3538062b766611a1d364ed3fe1a57e34f9f
+        
             return c #the output is a string containing the ciphered message + the encrypted iv
 
 
