@@ -152,7 +152,7 @@ def SIDCreate(protocol, path = ""):
 ## Restore directory in "path" from backup (latest version or previous)
 # @ver : int
 # @path : str
-def SIDRestore(ver = -1, path = ""):
+def SIDRestore(protocol, path = "", ver = -1):
 	downloaded = []
 
 	if ver < 0:
@@ -175,7 +175,7 @@ def SIDRestore(ver = -1, path = ""):
 		except IOError:
 			fhash = ""
 		if fhash != v["hash"]:
-			flux = sid.protocol.get(v["serverName"])
+			flux = protocol.get(v["serverName"])
 			o = open(path + f, "wb")
 			o.write(crypto.decryptString(flux))
 			o.close()
