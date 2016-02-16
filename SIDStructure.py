@@ -39,7 +39,7 @@ def identity(path):
 	
 # @x : str
 def identityString(path):
-	o = open(path, "rb")
+	o = open(path, "r")
 	res = o.read()
 	o.close()
 	return res
@@ -213,7 +213,9 @@ def SIDRestore(protocol, path = "", ver = -1):
 test_destination_path = 'test_dir2/'	
 protocol_test = File(test_destination_path)
 
-SIDCreate(protocol_test, test_destination_path)
+#SIDCreate(protocol_test, "test_dir1/")
+
+SIDRestore(protocol_test, "dir3/")
 #SIDRestore(None, "test_dir")
 
 
