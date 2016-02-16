@@ -24,13 +24,13 @@ help.add_argument('about', nargs='?', choices=['help','create','list','ls','upda
 slist = subs.add_parser('list', help='list all the saves')
 slist.set_defaults(op='list')
 
-slist.add_argument('--url', type=str, help='specify target url')
+slist.add_argument('-u','--url', type=str, help='specify target url')
 
 # options and arguments common to almost all: name and url 
 snameurl = ap.ArgumentParser(add_help=False)
 
-snameurl.add_argument('--name', type=str, help='Give a save name')
-snameurl.add_argument('--url', type=str, help='specify target url')
+snameurl.add_argument('-n','--name', type=str, help='Give a save name')
+snameurl.add_argument('-u','--url', type=str, help='specify target url')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
