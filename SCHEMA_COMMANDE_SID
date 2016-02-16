@@ -4,12 +4,14 @@ sid list
 #list all the saves cashed on the computer 
 sid getName url
 #get name of the save at url
-sid update name/url folder 
+sid update name 
 #update the save 
+sid ls name/url (version)
+#list save content + version
 sid delete name/url
 #delete save
 sid status name/url
-#give the status of a save (version, url, files)
+#give the status of a save (last online version, url)
 sid restore name/url (version) 
 #download the save "name" in "version" (last version by default)
 sid help
