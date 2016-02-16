@@ -40,17 +40,22 @@ class SIDCrypto:
         return m #the output is a string containing the message.
 
     def decryptString(self,s):
+        
+        if (self.algo_cipher=None):
+            return s           #it is possible not to encrypt anything by assigning "None" to "algo_cipher". Useful for debugging.
 
-        c , iv = s[:len(s)-16] , s[len(s)-16:len(s)] #the string is splitted into the actual ciphered message and the crypted iv
+        else:
+            c , iv = s[:len(s)-16] , s[len(s)-16:len(s)] #the string is splitted into the actual ciphered message and the crypted iv
+            
+            ivCipher = ARC4.new(self.key)
+            iv = ivCipher.decrypt(iv) #the crypted iv is decrypted using the key
+            
+            cipher = (self.algo_cipher).new(self.key, self.cipher_mode, iv)
+            m = cipher.decrypt(c)
+            
+            return m #the output is a string containing the message.
 
-        ivCipher = ARC4.new(self.key)
-        iv = ivCipher.decrypt(iv) #the crypted iv is decrypted using the key
-
-        cipher = (self.algo_cipher).new(self.key, self.cipher_mode, iv)
-        m = cipher.decrypt(c)
-
-        return m #the output is a string containing the message.
-
+###HASH FUNCTION
     def hash(self, name, version = -1):
         if version == -1:
             s = name
