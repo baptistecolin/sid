@@ -51,6 +51,25 @@ class SIDCrypto:
 
         return m #the output is a string containing the message.
 
+    def hash(self, name, version = -1):
+        if version == -1:
+            s = name
+        else:
+            s = name + str(version)
+        s = s.encode("utf-8")
+        
+        if self.algo_hash == "MD5":
+            h = MD5.new()
+        
+        elif self.algo_hash == "SHA256":
+            h = SHA256.new()
+        
+        elif self.algo_hash == "SHA512":
+            h = SHA512.new()
+
+        h.update(s)
+        return h.digest()
+
 k = (12345689).to_bytes(9,byteorder =  "big")
 sid = SIDCrypto(k, "AES","AES.MODE_CBC","SHA256")
 
