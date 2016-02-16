@@ -1,5 +1,7 @@
 # -*- coding:utf-8 -*-
 
+# FC: directory path? error handling?
+
 from server_connection import server_connection
 import os
 

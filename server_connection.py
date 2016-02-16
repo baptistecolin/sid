@@ -1,5 +1,7 @@
 #coding=utf-8
 
+# FC: contains un peu violent; à quoi sert new()?
+
 from abc import ABCMeta, abstractmethod
 
 class server_connection(metaclass=ABCMeta):
