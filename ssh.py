@@ -1,10 +1,12 @@
 from server_connection import server_connection
 import paramiko
 import os
+import getpass
 
 
 class Ssh(server_connection):
-    def __init__(self, login, password, server):
+    def __init__(self, path, login, password, server):
+        self.savePath=path
         self.pkey = paramiko.RSAKey.from_private_key_file('rsa.key')
         self.transport=paramiko.Transport((server,22))
         self.transport.connect(username=login, password=password,pkey=self.pkey)
@@ -33,3 +35,17 @@ class Ssh(server_connection):
         else :
             print("Pas de fichier de ce nom sur le serveur")
 
+
+def main():
+    server_connection.register(Ssh)
+    server=input('Serveur :')
+    login=input('Login :')
+    password=getpass.getpass('Password :')
+    fileSystem = Ssh("/Haroun/msi-p14",login,password,server)
+    test = open('test.txt','rb')
+    fileSystem.put('test.txt',test.read())
+    content=fileSystem.get('test.txt')
+    print(content)
+
+if __name__=='__main__':
+    main()

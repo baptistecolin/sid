@@ -14,9 +14,7 @@ class SIDCrypto:
     def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", keylen=16, ivlen=16, saltlen=8):
         self.algo_cipher = algo_cipher
         
-        b = bytearray()
-        b.extend(map(ord, password))
-        self.password = b
+        self.password = password # password.encode('UTF-8')
 
         self.algo_hash = algo_hash
         self.keylen = keylen
@@ -85,13 +83,18 @@ class SIDCrypto:
             return c #the output is a string containing the ciphered message + the encrypted iv
 
 
+
+
+
+
+
 ###DECRYPTION FUNCTION
-    def decrypt(self,path,password):
+    def decrypt(self,path):
         
         o = open(path, 'rb')
         c = o.read()
 
-        m = self.decryptString(c,password)
+        m = self.decryptString(c,self.password)
 
         return m #the output is a string containing the message.
 
@@ -132,9 +135,9 @@ class SIDCrypto:
 
             #begin unpadding
             padlen = m[-1]
-            print(padlen)
+            #print(padlen)
             m = m[:-padlen]
-            print(len(m))
+            #print(len(m))
 
             return m #the output is a string containing the message.
 
@@ -166,24 +169,26 @@ class SIDCrypto:
         h.update(s)
         return h.digest()
 
-rand=Random.new()
-keylen = 16
+if False:
+    rand=Random.new()
+    keylen = 16
 
-password = "msi2014"
-sid = SIDCrypto(password)
+    import getpass
+    password = getpass.getpass('password: ')
+    sid = SIDCrypto(password)
                 
-message_clair =b"abcdefghijklmnop"
-clear = open("clear.txt", 'bw')
-clear.write(message_clair)
-clear.close()
+    message_clair = input().encode('utf-8')
+    clear = open("clear.txt", 'bw')
+    clear.write(message_clair)
+    clear.close()
 
-message_chiffre = sid.encrypt("clear.txt")
+    message_chiffre = sid.encrypt("clear.txt")
 
-encrypted = open("encrypted.txt", 'bw')
-encrypted.write(message_chiffre)
-encrypted.close()
-#encrypted = open("/home/baptiste/msi-p14/encrypted.txt", 'br')
+    encrypted = open("encrypted.txt", 'bw')
+    encrypted.write(message_chiffre)
+    encrypted.close()
+    #encrypted = open("/home/baptiste/msi-p14/encrypted.txt", 'br')
 
-decrypted = open("decrypted.txt", 'bw')
-decrypted.write(sid.decrypt("encrypted.txt", 'msi2014'))
-decrypted.close()
+    decrypted = open("decrypted.txt", 'bw')
+    decrypted.write(sid.decrypt("encrypted.txt"))
+    decrypted.close()
