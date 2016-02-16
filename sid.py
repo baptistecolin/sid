@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# FC: certaines options pas utiles si arguments obligatoires?
+# password caché, sans affichage?
+
 ########################################################### OPTIONS & ARGUMENTS
 
 import os

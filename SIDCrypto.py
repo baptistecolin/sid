@@ -1,3 +1,8 @@
+
+# FC: ne pas recréer un Random à chaque fois ? padding ?
+#     version dans hash maintenant inutile ?
+#     tests : éviter les chemins en durs ?!
+
 from Crypto.Cipher import AES,ARC4
 from Crypto.Hash import MD5,SHA256,SHA512
 from os import urandom

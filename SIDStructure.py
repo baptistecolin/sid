@@ -1,3 +1,7 @@
+
+# FC: pas très OO pour l'instant !
+#     fichiers temporaires ?
+
 import glob
 import os.path
 import json
