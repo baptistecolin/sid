@@ -75,6 +75,10 @@ def buildSID(protocol, path = "", isNew = False):
 		o.close()
 		fhash = crypto.hash(f)
 		prop = os.lstat(f)
+		print('Dans la boucle, f : ', end='')
+		print(f)
+		print('Et prop : ', end='')
+		print(prop)
 #		isLink = prop.S_ISLINK != 0
 		if isNew:
 			dic["files"][f] = {"serverName" : str(id_max),
@@ -147,7 +151,10 @@ def SIDSave(protocol, path = ""):
 def SIDCreate(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path, True)
 	for f in to_upload:
-		protocol.put(dic[f]["serverName"], crypto.encrypt(f))
+		if f.endswith('.sid'):
+			protocol.put('last.sid', crypto.encrypt(f))
+		else:
+			protocol.put(dic[f]["serverName"], crypto.encrypt(f))
 		
 
 ## Restore directory in "path" from backup (latest version or previous)
