@@ -93,26 +93,23 @@ def getPwd():
 ########################################################### PROGRAM 
 
 if opts.op == 'none':
-	opts = parser.parse_args(['help', '--help'])
+    opts = parser.parse_args(['help', '--help'])
 elif opts.op == 'help':
-	parser.parse_args([opts.about, '--help'])
+    parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
-    protocol,adress = getProtocol()
-    if protocol == 'file':
-       # SIDCreate('aCopier/')
-#    for file in opts.files:
-#        aEcrire = file.read()
-#        File.put(File, os.path.join(chemin,file.name), aEcrire)
+    protocolName,adress = getProtocol()
+    if protocolName == 'file':
+        SIDCreate(opts.directory)
         for file in opts.files:
             aEcrire = file.read()
             if not os.path.isdir(adress):
                 os.mkdir(adress)
-            transfert = File(adress)
-            transfert.put(file.name, aEcrire)
+            protocol = File(adress)
+            protocol.put(file.name, aEcrire)
 #    elif protocol == 'http' or protocol == 'https':
 #    elif protocol == 'imap' or protocol == 'imaps':
-    print('Dépot créé')
+#    print('Dépot créé')
 elif opts.op == 'list':
     pwd = getPwd()
     protocol,address = getProtocol()
