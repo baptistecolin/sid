@@ -37,25 +37,33 @@ class SIDCrypto:
 
 ###ENCRYPTION FUNCTION
     def encrypt(self, path, keylen=16, ivlen=16, saltlen=8): #the path is the one of the file that will be ciphered
-        
-        (key,iv,salt) = self.key_iv_salt_generator(password)
        
-        cipher = AES.new(key, self.cipher_mode, iv) #a cipher is generated
-        
-        #print(AES.block_size)
-
         o = open(path, 'rb')
         c = cipher.encrypt(o.read()) #the file is ciphered
-        o.close()
-        
-        c += iv #the iv is appended to the ciphered message
-        c += salt #the salt is appended to the ciphered message after the iv
-        
-        #print(c)
-        #print(iv)
-        #print(salt)
+        o.close() 
 
-        return c #the output is a string containing the ciphered message + the encrypted iv
+        if (cipher_algo == None):
+            return c #the output is the clear message
+
+        else:
+            (key,iv,salt) = self.key_iv_salt_generator(password)
+            
+            cipher = AES.new(key, self.cipher_mode, iv) #a cipher is generated
+            
+            #print(AES.block_size)
+            
+            o = open(path, 'rb')
+            c = cipher.encrypt(o.read()) #the file is ciphered
+            o.close()
+            
+            c += iv #the iv is appended to the ciphered message
+            c += salt #the salt is appended to the ciphered message after the iv
+            
+            #print(c)
+            #print(iv)
+            #print(salt)
+            
+            return c #the output is a string containing the ciphered message + the encrypted iv
 
 
 ###DECRYPTION FUNCTION
@@ -113,7 +121,7 @@ rand=Random.new()
 keylen = 16
 
 password = "msi2014"
-sid = SIDCrypto(password)
+sid = SIDCrypto(password, algo_cipher=None)
                 
 message_clair ="abcdefghijklmnopqrstuvwxyzabcdef"
 clear = open("/home/baptiste/msi-p14/clear.txt", 'w')
