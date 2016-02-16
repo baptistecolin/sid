@@ -5,8 +5,8 @@
 import sys
 import argparse as ap
 import re
-import server_connection.py
-import file.py
+import server_connection
+from file import File
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -72,9 +72,10 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-    print('bonjour')	
+    print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
     for file in opts.files:
-        print('coucou')
+        aEcrire = file.read()
+        File.put(File, k=opts.url, v=aEcrire)
 elif opts.op == 'list':
     print('coucou')
 elif opts.op == 'ls':
