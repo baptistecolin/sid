@@ -68,10 +68,10 @@ def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
 	dic = {"files" : {}}
 	if not isNew:
-		o = open(os.path.join(path, "last.sid"), "wb")		
-		o.write(protocol.get("last.sid"))
+		o = open(os.path.join(path, "last.sid"), "w") ##
+		o.write(protocol.get("last.sid").read().decode("ascii")) ##
 		o.close()
-		last_info = json.loads(crypto.decrypt(os.path.join(path, "last.sid")))
+		last_info = json.loads(crypto.decrypt(os.path.join(path, "last.sid"))) ##
 		ver = last_info["version"] + 1
 		id_max = last_info["id_max"]
 	else:
@@ -81,14 +81,14 @@ def buildSID(protocol, path = "", isNew = False):
 	for f in listFiles(path):
 		fhash = crypto.hash(f)
 		prop = os.lstat(f)
-		if stat.S_ISLNK(prop.st_mode) != 0:
-			linkURL = os.readlink(f)
+		isLink = stat.S_ISLNK(prop.st_mode)
+		if isLink != 0:
 			ftype = 1
-		elif False: # TODO isDirectory (type 2
+		elif False: # TODO isDirectory (type 2)
 			ftype = 2
 		else:
 			ftype = 0
-			linkURL = ""
+		linkURL = os.readlink(f) if isLink else None
 		if isNew:
 			dic["files"][f] = {"serverName" : str(id_max),
 					"version" : 0,
@@ -96,7 +96,8 @@ def buildSID(protocol, path = "", isNew = False):
 					"size" : prop.st_size,
 					"modTime" : prop.st_mtime,
 					"mode" : prop.st_mode,
-					"type" : ftype
+					"type" : ftype,
+					"linkURL" : linkURL
 					}
 			id_max += 1
 			to_upload.append(f)
@@ -177,12 +178,12 @@ def SIDRestore(protocol, path = "", ver = -1):
 	downloaded = []
 
 	if ver < 0:
-		lastSID = json.loads(crypto.decryptString(protocol.get("last.sid")))
+		lastSID = json.loads(crypto.decryptString(protocol.get("last.sid").read()))
 		o = open(os.path.join(path, "last.sid"), "wb")
 		o.write(lastSID) # keep track on local machine
 		o.close()
 	else:
-		lastSID = json.loads(crypto.decryptString(protocol.get("v" + str(ver) + ".sid")))
+		lastSID = json.loads(crypto.decryptString(protocol.get("v" + str(ver) + ".sid").read()))
 		o = open(os.path.join(path, "last.sid"), "wb")
 		o.write(lastSID) # keep track on local machine
 		o.close()
@@ -200,10 +201,18 @@ def SIDRestore(protocol, path = "", ver = -1):
 					o = open(os.path.join(path, f), "wb")
 					o.write(crypto.decryptString(flux))
 					o.close()
-				#elif ... ? TODO
-				try:
-					os.chmod(os.path.join(path, f), v["mode"])
-				except: ""
+					try:
+						os.chmod(os.path.join(path, f), v["mode"])
+					except: ""
+				elif ftype == 1:
+					os.symlink(v["linkURL"], os.path.join(path, f))
+				elif ftype == 2: #TODO
+					try:
+						os.chmod(os.path.join(path, f), v["mode"])
+					except: ""
+				else:
+					print("ERROR: unsupported file type - this should not happen.") 
+
 				try:
 					os.utime(os.path.join(path, f), v["modTime"])
 				except: ""
@@ -214,9 +223,8 @@ test_destination_path = 'test_dir2/'
 protocol_test = File(test_destination_path)
 
 #SIDCreate(protocol_test, "test_dir1/")
-
-SIDRestore(protocol_test, "dir3/")
-#SIDRestore(None, "test_dir")
+SIDSave(protocol_test, "test_dir1/")
+#SIDRestore(protocol_test, "dir3/")
 
 
 # status : derniere ver en ligne
