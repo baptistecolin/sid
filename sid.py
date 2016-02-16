@@ -6,11 +6,7 @@ import sys
 import argparse as ap
 import re
 import server_connection
-<<<<<<< HEAD
 from file import File
-=======
-import file
->>>>>>> 64b33b577717734fa1010c0e42965cfcba7c963b
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -68,8 +64,8 @@ srestore.set_defaults(op='restore')
 opts = parser.parse_args()
 
 def getProtocol():
-    reUrl = re.search(r'^(.*):',opts.url)
-    return reUrl.group(1)
+    reUrl = re.search(r'^(.*)://(.*)',opts.url)
+    return reUrl.group(1),reUrl.group(2)
 
 def getPwd():
     return input('Password?')
@@ -81,7 +77,7 @@ elif opts.op == 'help':
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)
     print(protocol)
     for file in opts.files:
@@ -89,26 +85,28 @@ elif opts.op == 'create':
         File.put(File, k=opts.url, v=aEcrire)
 elif opts.op == 'list':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
+    print(address)
+    print(protocol)
     print(pwd)	
 elif opts.op == 'ls':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'update':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'dump':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'update':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 elif opts.op == 'restore':
     pwd = getPwd()
-    protocol = getProtocol()
+    protocol,address = getProtocol()
     print(pwd)	
 
