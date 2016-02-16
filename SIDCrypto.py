@@ -83,6 +83,11 @@ class SIDCrypto:
             return c #the output is a string containing the ciphered message + the encrypted iv
 
 
+
+
+
+
+
 ###DECRYPTION FUNCTION
     def decrypt(self,path):
         
