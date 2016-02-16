@@ -1,4 +1,5 @@
 from Crypto.Cipher import AES,ARC4
+from Crypto.Hash import MD5, SHA256, SHA512
 from os import urandom
 import sys
 
@@ -50,6 +51,8 @@ class SIDCrypto:
         m = cipher.decrypt(c)
 
         return m #the output is a string containing the message.
+
+###HASH FUNCTION
 
     def hash(self, name, version = -1):
         if version == -1:

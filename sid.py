@@ -2,11 +2,12 @@
 
 ########################################################### OPTIONS & ARGUMENTS
 
+import os
 import sys
 import argparse as ap
 import re
-import server_connection.py
-import file.py
+import server_connection
+from file import File
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -63,28 +64,54 @@ srestore.set_defaults(op='restore')
 # parse sub-command, options and arguments
 opts = parser.parse_args()
 
-def getProtocol(url):
-    reUrl = re.search(r'^(.*):',url)
-    return (reUrl.group(1))
+def getProtocol():
+    reUrl = re.search(r'^(.*)://(.*)',opts.url)
+    return reUrl.group(1),reUrl.group(2)
+
+def getPwd():
+    return input('Password?')
 
 if opts.op == 'none':
 	opts = parser.parse_args(['help', '--help'])
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-    print('bonjour')	
+    print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
+    pwd = getPwd()
+    protocol = getProtocol()
+    protocol,adress = getProtocol()
+    chemin = '/'+adress
+    print(pwd)
+    print(protocol)
     for file in opts.files:
-        print('coucou')
+        aEcrire = file.read()
+        if not os.path.isdir(chemin):
+            os.mkdir(chemin)
+        File.put(File, chemin+file.name, aEcrire)
 elif opts.op == 'list':
-    print('coucou')
+    pwd = getPwd()
+    protocol,address = getProtocol()
+    print(address)
+    print(protocol)
+    print(pwd)	
 elif opts.op == 'ls':
-    print('coucou')
+    pwd = getPwd()
+    protocol,address = getProtocol()
+    print(pwd)	
 elif opts.op == 'update':
-    protocol = getProtocol(opts.url) 
+    pwd = getPwd()
+    protocol,address = getProtocol()
+    print(pwd)	
 elif opts.op == 'dump':
-    print('coucou')
+    pwd = getPwd()
+    protocol,address = getProtocol()
+    print(pwd)	
 elif opts.op == 'update':
-    print('coucou')
+    pwd = getPwd()
+    protocol,address = getProtocol()
+    print(pwd)	
 elif opts.op == 'restore':
-    print('coucou')
+    pwd = getPwd()
+    protocol,address = getProtocol()
+    print(pwd)	
 
