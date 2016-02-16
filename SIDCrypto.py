@@ -22,11 +22,11 @@ class SIDCrypto:
         self.keylen = keylen
         self.ivlen = ivlen
         self.saltlen = saltlen
+        self rand = Random.new()
 
     def key_iv_salt_generator(self,password):
-        rand = Random.new()
-        iv = rand.read(self.ivlen) #random generation of the iv
-        salt = rand.read(self.saltlen) #random generation of the salt
+        iv = (self.rand).read(self.ivlen) #random generation of the iv
+        salt = (self.rand).read(self.saltlen) #random generation of the salt
         password_bytes = password.encode('utf-8')
 
         key = self.hash(password_bytes+salt , converting_bytes = True) #the key is the hash of the password+the salt
@@ -49,11 +49,11 @@ class SIDCrypto:
         o.close()
         
         c += iv #the iv is appended to the ciphered message
-        c += salt #the salt is appended tot he ciphered message after the iv
+        c += salt #the salt is appended to the ciphered message after the iv
         
-        print(c)
-        print(iv)
-        print(salt)
+        #print(c)
+        #print(iv)
+        #print(salt)
 
         return c #the output is a string containing the ciphered message + the encrypted iv
 
@@ -114,8 +114,8 @@ keylen = 16
 
 password = "msi2014"
 sid = SIDCrypto(password)
-
-message_clair ="c9ae3045f221dbfc6b051ed05d64ef4b"
+                
+message_clair ="abcdefghijklmnopqrstuvwxyzabcdef"
 clear = open("/home/baptiste/msi-p14/clear.txt", 'w')
 clear.write(message_clair)
 
