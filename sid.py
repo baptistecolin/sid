@@ -64,12 +64,16 @@ srestore.set_defaults(op='restore')
 # parse sub-command, options and arguments
 opts = parser.parse_args()
 
-def getProtocol():
-    reUrl = re.search(r'^(.*)://(.*)',opts.url)
+########################################################### FUNCTIONS 
+
+def getProtocol(): 
+    reUrl = re.search(r'^(.*)://(.*)',opts.url) 
     return reUrl.group(1),reUrl.group(2)
 
 def getPwd():
     return input('Password?')
+
+########################################################### PROGRAM 
 
 if opts.op == 'none':
 	opts = parser.parse_args(['help', '--help'])
