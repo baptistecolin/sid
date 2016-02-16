@@ -3,7 +3,7 @@
 #     version dans hash maintenant inutile ?
 #     tests : éviter les chemins en durs ?!
 
-from Crypto.Cipher import AES,ARC4
+from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from os import urandom
 import sys
@@ -11,9 +11,8 @@ from Crypto import Random
 import unicodedata
 
 class SIDCrypto:
-    def __init__(self, password, algo_cipher=AES, cipher_mode=AES.MODE_CBC, algo_hash = "SHA256", keylen=16, ivlen=16, saltlen=8):
+    def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", keylen=16, ivlen=16, saltlen=8):
         self.algo_cipher = algo_cipher
-        self.cipher_mode = cipher_mode
         
         b = bytearray()
         b.extend(map(ord, password))
@@ -43,16 +42,28 @@ class SIDCrypto:
             o = open(path, 'rb')
             c = o.read() #the file is ciphered
             o.close()
-            #c=c.decode('utf-8')
-            #unicodedata.normalize('NFKD',c).encode('ascii','ignore')
+
             return b'encrypt: ' + c #the output is the clear message
 
         else:
             (key,iv,salt) = self.key_iv_salt_generator(password)
-            
-            cipher = AES.new(key, self.cipher_mode, iv) #a cipher is generated
-            
-            #print(AES.block_size)
+
+            #generating a cipher
+            if self.algo_cipher == "AES":
+                cipher = AES.new(key, AES.MODE_CBC, iv)
+            elif self.algo_cipher == "ARC2":
+                cipher = ARC2.new(key)
+            elif self.algo_cipher == "ARC4":
+                cipher = ARC4.new(key, ARC4.MODE_CBC, iv)
+            elif self.algo_cipher == "Blowfish":
+                cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
+            elif self.algo_cipher == "DES":
+                cipher = DES3.new(key, DES3.MODE_CBC, iv)
+            elif self.algo_cipher == "CAST":
+                cipher = CAST.new(key, CAST.MODE_CBC, iv)
+            elif self.algo_cipher == "DES3":
+                cipher = DES.new(key, DES.MODE_CBC, iv)
+            #print(cipher.block_size)
             
             o = open(path, 'rb')
             c = cipher.encrypt(o.read()) #the file is ciphered
@@ -64,8 +75,7 @@ class SIDCrypto:
             #print(c)
             #print(iv)
             #print(salt)
-            #c=c.decode('utf-8')
-            #unicodedata.normalize('NFKD',c).encode('ascii','ignore')
+
             return c #the output is a string containing the ciphered message + the encrypted iv
 
 
@@ -86,11 +96,32 @@ class SIDCrypto:
             return s[9:]           #it is possible not to encrypt anything by assigning "None" to "algo_cipher". Useful for debugging.
 
         else:
-            c , iv, salt = s[:len(s)-(self.saltlen + self.ivlen)] , s[len(s)-(self.ivlen+self.saltlen):len(s)-self.saltlen] , s[len(s)-self.saltlen:] #the string is splitted into the actual ciphered message, the iv, and the salt
-            password_bytes = password.encode('utf-8')
-            key = self.hash(password_bytes+salt , converting_bytes = True) #the key is the hash of the password+the salt
 
-            cipher = AES.new(key, self.cipher_mode, iv)
+            #the string is splitted into the actual ciphered message, the iv, and the salt
+            c = s[:len(s)-(self.saltlen + self.ivlen)]
+            iv = s[len(s)-(self.ivlen+self.saltlen):len(s)-self.saltlen]
+            salt = s[len(s)-self.saltlen:]
+
+            password_bytes = password.encode('utf-8')
+
+            #the key is the hash of the password+the salt
+            key = self.hash(password_bytes+salt , converting_bytes = True)
+
+            if self.algo_cipher == "AES":
+                cipher = AES.new(key, AES.MODE_CBC, iv)
+            elif self.algo_cipher == "ARC2":
+                cipher = ARC2.new(key)
+            elif self.algo_cipher == "ARC4":
+                cipher = ARC4.new(key, ARC4.MODE_CBC, iv)
+            elif self.algo_cipher == "Blowfish":
+                cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
+            elif self.algo_cipher == "DES":
+                cipher = DES3.new(key, DES3.MODE_CBC, iv)
+            elif self.algo_cipher == "CAST":
+                cipher = CAST.new(key, CAST.MODE_CBC, iv)
+            elif self.algo_cipher == "DES3":
+                cipher = DES.new(key, DES.MODE_CBC, iv)
+
             m = cipher.decrypt(c)
 
             return m #the output is a string containing the message.
