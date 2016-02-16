@@ -6,7 +6,11 @@ import sys
 import argparse as ap
 import re
 import server_connection
+<<<<<<< HEAD
 from file import File
+=======
+import file
+>>>>>>> 64b33b577717734fa1010c0e42965cfcba7c963b
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -63,9 +67,12 @@ srestore.set_defaults(op='restore')
 # parse sub-command, options and arguments
 opts = parser.parse_args()
 
-def getProtocol(url):
-    reUrl = re.search(r'^(.*):',url)
-    return (reUrl.group(1))
+def getProtocol():
+    reUrl = re.search(r'^(.*):',opts.url)
+    return reUrl.group(1)
+
+def getPwd():
+    return input('Password?')
 
 if opts.op == 'none':
 	opts = parser.parse_args(['help', '--help'])
@@ -73,19 +80,35 @@ elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
     print('Création du dépôt + ' + opts.name + ' dans : ' + opts.url)
+    pwd = getPwd()
+    protocol = getProtocol()
+    print(pwd)
+    print(protocol)
     for file in opts.files:
         aEcrire = file.read()
         File.put(File, k=opts.url, v=aEcrire)
 elif opts.op == 'list':
-    print('coucou')
+    pwd = getPwd()
+    protocol = getProtocol()
+    print(pwd)	
 elif opts.op == 'ls':
-    print('coucou')
+    pwd = getPwd()
+    protocol = getProtocol()
+    print(pwd)	
 elif opts.op == 'update':
-    protocol = getProtocol(opts.url) 
+    pwd = getPwd()
+    protocol = getProtocol()
+    print(pwd)	
 elif opts.op == 'dump':
-    print('coucou')
+    pwd = getPwd()
+    protocol = getProtocol()
+    print(pwd)	
 elif opts.op == 'update':
-    print('coucou')
+    pwd = getPwd()
+    protocol = getProtocol()
+    print(pwd)	
 elif opts.op == 'restore':
-    print('coucou')
+    pwd = getPwd()
+    protocol = getProtocol()
+    print(pwd)	
 

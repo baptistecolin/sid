@@ -20,8 +20,6 @@ def listFiles(path):
 			files.append(i)
 	return files
 
-print(listFiles(""))
-
 ## Generate "last.sid" file from version "ver" in directory "path"
 # @path : str
 # @isNew : boolean
@@ -113,7 +111,9 @@ def buildSID(path = ".", isNew = False):
 			prev.close()
 		# create new
 		dic["id_max"] = id_max
-		json.dump(dic, "last.sid")
+		o = open("last.sid", "wb")
+		json.dump(dic, o)
+		o.close()
 		js = crypto.encrypt("last.sid")
 		o = open("last.sid", "wb")
 		o.write(js)
