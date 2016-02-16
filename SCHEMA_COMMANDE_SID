@@ -3,11 +3,11 @@ sid create name url folder
 sid list 
 #list all the saves cashed on the computer 
 sid setName name url
-#get name of the save at url
+#set a name for a save at url
 sid update name 
 #update the save 
 sid ls name/url (version)
-#list save content + version
+#list saved content + version
 sid delete name/url
 #delete save
 sid status name/url
