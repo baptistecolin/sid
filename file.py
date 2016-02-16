@@ -5,32 +5,36 @@
 from server_connection import server_connection
 import os
 
-class File(server_connection):
+class File():
 	
+	def __init__(self,path):
+		self.savePath=path
+
 	def put(self,k,v):
-		fileServer=open(k,'wb')
+		fileServer=open(os.path.join(self.savePath,k),'wb')
 		fileServer.write(v)
 		fileServer.close()
     
 	def get(self,k):
-		content=open(k,'rb')
-		if content:
-			return content
+		fileContent=open(os.path.join(self.savePath,k),'rb')
+		if fileContent:
+			return fileContent
 		else:
 			print("Pas de fichier de ce nom sur le serveur")
 			return None
     
 	def delete(self,k):
-		if os.path.isfile(k):
-			os.remove(k)
-			print ("le fichier %s  a ete supprime"%k)
-		else :
-			print("Pas de fichier de ce nom sur le serveur")
+		for root, dirs, files in os.walk(self.savePath):
+			if k in files:
+				os.remove(os.path.join(root,k))
+				print ("le fichier %s  a ete supprime"%k)
 #Testing the above functions
 def main():
-	#server_connection.register(File)
-	fileSystem=File()
+	server_connection.register(File)
+	fileSystem=File('/home/alban/Documents')
 	test=open("test.txt", 'rb')
 	fileSystem.put('1234',test.read())
 	print(fileSystem.get('1234').read())
 	fileSystem.delete('1234')
+if __name__=='__main__':
+	main()
