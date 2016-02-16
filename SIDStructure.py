@@ -8,7 +8,7 @@ import json
 #import SIDCrypto
 #import sid
 
-#crypto = SIDCrypto("", "orage", "") # define ??
+#crypto = SIDCrypto("orage", None) # define ??
 
 ## Recursively lists all files in directory "path" (with included path)
 # /!\ Tested on Linux systems only (incompatible with Windows)
@@ -18,7 +18,6 @@ def listFiles(path):
 	files = []
 	l = glob.glob(path + "/*")
 	for i in l:
-		print(i)
 		if os.path.isdir(i):
 			files.extend(listFiles(i))
 		elif not i.endswith(".sid"):
@@ -67,9 +66,9 @@ def buildSID(path = "", isNew = False):
 	for f in listFiles(path):
 #		name = f.rsplit("/", 1)[-1]
 		o = open(f, "rb")
-		fcontent = o.read()
+#		fcontent = o.read()
 		o.close()
-		fhash = crypto.hash(fcontent)
+		fhash = crypto.hash(f)
 		prop = os.lstat(f)
 		if isNew:
 			dic["files"][f] = {"serverName" : id_max,
@@ -77,6 +76,7 @@ def buildSID(path = "", isNew = False):
 					"hash" : fhash,
 					"size" : prop.st_size,
 					"modTime" : prop.st_mtime,
+					"mode" : prop.st_mode,
 					"isLink" : False} ##### !
 			id_max += 1
 			to_upload.append(f)
@@ -106,8 +106,8 @@ def buildSID(path = "", isNew = False):
 			to_upload.append(path + prevSid)
 		# create new
 		dic["id_max"] = id_max
-		o = open(path + "last.sid", "wb")
-		json.dump(dic, o)
+		o = open(path + "last.sid", "w")
+		json.dump(dic, o, sort_keys=True, indent=2)
 		o.close()
 		js = crypto.encrypt("last.sid")
 		o = open(path + "last.sid", "wb")
@@ -115,7 +115,6 @@ def buildSID(path = "", isNew = False):
 		o.close()
 		to_upload.append(path + "last.sid")
 	return to_upload, dic["files"]
-
 
 ## Upload directory "path" to update backup
 # @path : str
