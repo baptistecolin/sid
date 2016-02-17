@@ -26,11 +26,11 @@ class server_connection():
 	def __delitem__(self, key) :
 		self.delete(key)
     		#pour que delete self[key] ait un sens
-	
+'''
 	def __eq__(self, value) :
     		pass
 		#afin que self==value marche
-	
+
 	def __getitem__(self,x) :
 		self.get(x)
     		#x.__getitem__(y)<=>x[y]
@@ -38,6 +38,7 @@ class server_connection():
 	def __setitem__(self, key, value) :
 		self.put(key, value)
     		#set self[key] to value
+'''
 #Testing abstract type
 def main():
 	s=server_connection()

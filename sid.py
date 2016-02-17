@@ -14,7 +14,7 @@ import getpass
 from file import File
 from ssh import Ssh
 from SIDStructure import SIDCreate, SIDSave
-from SIDCrypto import SIDCrypto
+from SIDCrypto import * 
 from cach import save, read_save
 
 parser = ap.ArgumentParser(description="sid command")
@@ -37,6 +37,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('-n','--name', type=str, help='Give a save name')
+snameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -91,14 +92,18 @@ def splitUrl(url):
 	reUrl = re.search(r'^(.*)://(.*)',url) 
 	return reUrl.group(1),reUrl.group(2)
 
-def getPwd():
-	return input('Password?')
-
 def absPath(path):
 	if path[0] == '/':
 		return path
 	else:
 		return os.path.join(os.getcwd(), path)
+
+def getPw():
+    if not opts.password == None:
+        return opts.password
+    else: 
+        password = getpass.getpass('sid\'s password : ')
+        return password
 
 class Protocol():
 	def __init__(self, storage, crypto):
@@ -141,7 +146,7 @@ elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
 	#crypto
-	password = getpass.getpass('sid\'s password : ')
+	password = getPw()
 	crypto = SIDCrypto(password)
 	#protocol
 	storage = getStorage(opts.url)
@@ -161,8 +166,8 @@ elif opts.op == 'update':
 	SIDSave(protocol, directory_path)
 	save(opts.name, url, absPath(directory_path), version+1)
 elif opts.op == 'dump':
-	pwd = getPwd()
+	pw = getpass.getpass()
 elif opts.op == 'update':
-	pwd = getPwd()
+	pw = getpass.getpass()
 elif opts.op == 'restore':
-	pwd = getPwd()
+	pw = getpass.getpass()
