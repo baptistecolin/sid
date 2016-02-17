@@ -173,8 +173,12 @@ elif opts.op == 'delete':
 elif opts.op == 'status':
     password = getPw()
     crypto = SIDCrypto(password)
-    (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
-    print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s')
+    try:
+        (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
+    except ValueError:
+        print('Wrong password')
+    else:
+        print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s\n Version: %s' % (opts.name,url,directory_path,last_update,version))
 elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
