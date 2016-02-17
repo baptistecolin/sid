@@ -152,7 +152,7 @@ elif opts.op == 'create':
 	storage = getStorage(opts.url)
 	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
-	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
@@ -164,7 +164,7 @@ elif opts.op == 'update':
 	if protocolName == 'file':
 		protocol = File(adress)
 	SIDSave(protocol, directory_path)
-	save(opts.name, url, absPath(directory_path), version+1)
+	update_cach(opts.name, version+1)
 elif opts.op == 'dump':
 	pw = getpass.getpass()
 elif opts.op == 'restore':
