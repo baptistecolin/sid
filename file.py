@@ -5,7 +5,7 @@
 from server_connection import server_connection
 import os
 
-class File():
+class File(server_connection):
 	
 	def __init__(self,path):
 		self.savePath=path
@@ -30,7 +30,6 @@ class File():
 				print ("le fichier %s  a ete supprime"%k)
 #Testing the above functions
 def main():
-	server_connection.register(File)
 	fileSystem=File('/home/alban/Documents')
 	test=open("test.txt", 'rb')
 	fileSystem.put('1234',test.read())

@@ -7,7 +7,8 @@ import os.path
 import json
 import stat
 from file import File
-#import SIDCrypto
+import SIDCrypto
+#import sid
 
 
 
@@ -79,7 +80,7 @@ def buildSID(protocol, path = "", isNew = False):
 		id_max = 0
 	dic["version"] = ver
 	for f in listFiles(path):
-		fhash = crypto.hash(f, h_file=True)
+		fhash = crypto.hash(f)#, hash_file=True)
 		prop = os.lstat(f)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
@@ -239,7 +240,6 @@ def SIDRestore(protocol, path = "", ver = -1):
 			except: ""
 
 	return downloaded
-
 
 ## Get latest version number (from backend last.sid)
 # @protocol : server_connection
