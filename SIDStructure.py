@@ -10,6 +10,11 @@ from file import File
 #import SIDCrypto
 #import sid
 
+
+
+
+
+
 #crypto = SIDCrypto("orage", None) # define ??
 
 ## Recursively lists all files in directory "path" (with included path)
@@ -59,14 +64,13 @@ crypto = cryptoTest()
 # 0 : basic
 # 1 : symbolic link
 # 2 : directory
-#
 ## Generate "last.sid" file from version "ver" in directory "path"
 # @protocol : server_connection
 # @path : str
 # @isNew : boolean
 def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
-	dic = {"files" : {}}
+	dic = {"files" : {}, "symlinks" : {}, "dirs" : {}}
 	if not isNew:
 		last_info = json.loads(crypto.decryptString(protocol.get("last.sid").read())) ##
 		ver = last_info["version"] + 1
@@ -78,50 +82,53 @@ def buildSID(protocol, path = "", isNew = False):
 	for f in listFiles(path):
 		fhash = crypto.hash(f, h_file=True)
 		prop = os.lstat(f)
-		isLink = stat.S_ISLNK(prop.st_mode)
-		if isLink != 0:
-			ftype = 1
-		elif False: # TODO isDirectory (type 2)
-			ftype = 2
+		if stat.S_ISLNK(prop.st_mode) != 0:
+			ftype = "symlinks"
+			linkURL = os.readlink(f)
+		elif os.path.isdir(os.path.join(path, f)):
+			ftype = "dirs"
 		else:
-			ftype = 0
-		linkURL = os.readlink(f) if isLink else None
+			ftype = "files"
 		if isNew:
-			dic["files"][f] = {"serverName" : str(id_max),
-					"version" : 0,
-					"hash" : fhash,
+			dic[ftype][f] = {"hash" : fhash,
 					"size" : prop.st_size,
 					"modTime" : prop.st_mtime,
-					"mode" : prop.st_mode,
-					"type" : ftype,
-					"linkURL" : linkURL
+					"mode" : prop.st_mode
 					}
-			id_max += 1
-			to_upload.append(f)
-		else:
-			try:
-				if last_info["files"][f]["hash"] == fhash:
-					dic["files"][f] = last_info["files"][f]
-				else:
-					dic["files"][f] = {"serverName" : str(id_max), 								"version" : ver,
-							"hash" : fhash,
-							"size" : prop.st_size,
-							"modTime" : prop.st_mtime,
-							"mode" : prop.st_mode,
-							"type" : ftype
-							}
-					id_max += 1
-					to_upload.append(f)
-			except KeyError:
-				dic["files"][f] = {"serverName" : str(id_max), 							"version" : ver,
-						"hash" : fhash,
-						"size" : prop.st_size,
-						"modTime" : prop.st_mtime,
-						"mode" : prop.st_mode,
-						"type" : ftype
-						}
+			if ftype == "symlinks":
+				dic[ftype][f]["linkURL"] = linkURL
+			elif ftype == "files":
+				dic[ftype][f]["serverName"] : str(id_max)
 				id_max += 1
 				to_upload.append(f)
+		else:
+			try:
+				if last_info[ftype][f]["hash"] == fhash:
+					dic[ftype][f] = last_info[ftype][f]
+				else:
+					dic[ftype][f] = {"hash" : fhash,
+							"size" : prop.st_size,
+							"modTime" : prop.st_mtime,
+							"mode" : prop.st_mode
+							}
+					if ftype == "symlinks":
+						dic[ftype][f]["linkURL"] = linkURL
+					elif ftype == "files":
+						dic[ftype][f]["serverName"] : str(id_max)
+						id_max += 1
+						to_upload.append(f)
+			except KeyError:
+				dic[ftype][f] = {"hash" : fhash,
+						"size" : prop.st_size,
+						"modTime" : prop.st_mtime,
+						"mode" : prop.st_mode
+						}
+				if ftype == "symlinks":
+					dic[ftype][f]["linkURL"] = linkURL
+				elif ftype == "files":
+					dic[ftype][f]["serverName"] : str(id_max)
+					id_max += 1
+					to_upload.append(f)
 	if to_upload:
 		if not isNew:
 			# rename previous
@@ -216,11 +223,13 @@ def SIDRestore(protocol, path = "", ver = -1):
 				downloaded.append(f)
 	return downloaded
 
-test_destination_path = 'test_dir2/'	
-protocol_test = File(test_destination_path)
+#test_destination_path = 'test_dir2/'	
+#protocol_test = File(test_destination_path)
 
 #SIDCreate(protocol_test, "test_dir1/")
-SIDSave(protocol_test, "test_dir1/")
+
+#SIDRestore(protocol_test, "dir3/")
+#SIDRestore(None, "test_dir")
 #SIDRestore(protocol_test, "dir3/")
 
 
