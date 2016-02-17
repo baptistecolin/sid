@@ -19,7 +19,7 @@ class server_connection():
     		#supprimer le fichier à partir de sa clé
 
 	def  __contains__(self, key)  :
-		if self.get(key) : return True
+		if self.get(key)!=None : return True
 		else : return False
     		#histoire qu'on puisse utiliser "if key in list"
 	

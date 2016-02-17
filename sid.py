@@ -86,7 +86,7 @@ opts = parser.parse_args()
 
 ########################################################### FUNCTIONS 
 
-def getProtocol(url): 
+def splitUrl(url): 
 	reUrl = re.search(r'^(.*)://(.*)',url) 
 	return reUrl.group(1),reUrl.group(2)
 
@@ -100,17 +100,25 @@ def absPath(path):
 		return os.path.join(os.getcwd(), path)
 
 class Protocol():
-	def __init__(self, protocolName, backupPath, crypto):
-		self.protocolName = protocolName
-		self.backupPath = backupPath
+	def __init__(self, storage, crypto):
 		self.crypto = crypto
-		if self.protocolName == 'file':
-			self.protocol = File(backupPath)
+		self.storage = storage
 	# backupFile : file's name
 	# toBackup : file's name
-	def put(self, backupFile, toBackup):
-		toWrite = self.crypto.encrypt(toBackup)
-		self.protocol.put(backupFile, toWrite)
+	def put(self, k, v):
+		toWrite = self.crypto.encryptBytes(v)
+		self.storage.put(k, toWrite)
+
+	def get(self, k):
+		toDecrypt = self.storage.get(k)
+		return self.crypto.decryptBytes(toDecrypt)
+
+def getStorage(url):
+	protocolName, backupPath = splitUrl(url)
+	if protocolName == 'file':
+		storage = File(backupPath)
+	return storage
+
 
 ########################################################### PROGRAM 
 
@@ -139,22 +147,17 @@ elif opts.op == 'update':
 	password = getpass.getpass()
 	crypto = SIDCrypto(password)
 	#protocol
-	protocolName, backupPath = getProtocol(opts.url)
-	protocol = Protocol(protocolName, backupPath, crypto)
+	protocol = Protocol(getStorage(opts.url), crypto)
 	SIDCreate(protocol, opts.directory)
 	save(opts.name, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
-	print(address)
-	print(protocol)
-	print(pwd)	
 elif opts.op == 'ls':
 	pwd = getPwd()
-	print(pwd)	
 elif opts.op == 'update':
 	pw = getpass.getpass()
 	(version, url, directory_path) = read_save(opts.name)
-	protocolName, adress = getProtocol(url)
+	protocolName, adress = splitUrl(url)
 	if protocolName == 'file':
 		protocol = File(adress)
 	SIDSave(protocol, directory_path)
