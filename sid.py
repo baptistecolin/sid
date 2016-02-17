@@ -36,7 +36,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('-n','--name', type=str, help='Give a save name')
-snameurl.add_argument('-p','--pass', type=str, help='Give a password')
+snameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -98,8 +98,8 @@ def absPath(path):
 		return os.path.join(os.getcwd(), path)
 
 def getPw():
-    if not opts.p == None:
-        return opts.p
+    if not opts.password == None:
+        return opts.password
     else: 
         password = getpass.getpass()
         return password
@@ -134,11 +134,12 @@ elif opts.op == 'help':
 elif opts.op == 'create':
     #crypto
     password = getPw()
+    print(password)
     crypto = SIDCrypto(password)
     #protocol
     protocol = Protocol(getStorage(opts.url), crypto)
-    SIDCreate(protocol, opts.directory)
-    save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+    #SIDCreate(protocol, opts.directory)
+    #save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
 elif opts.op == 'ls':

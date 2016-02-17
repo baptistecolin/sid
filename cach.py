@@ -19,7 +19,7 @@ def save(name,crypto,url='',directory_path='',version=0):
         'url' : url,
         'directory_path' : directory_path}
     t = os.path.join(cach_dir, name)
-    crypted_json = crypto.encryptBytes(bytes(json.dumps(dic).encode('ASCII')))
+    crypted_json = crypto.encryptBytes(bytes(json.dumps(dic).encode('utf-8')))
     o = open(t,"wb")
     o.write(crypted_json)
     o.close()
@@ -46,7 +46,7 @@ def read_save(name,crypto):
             o = open(t,"rb")
             found = o.read() 
             o.close()
-            j_dic = json.loads(crypto.decryptBytes(found).decode('ASCII'))
+            j_dic = json.loads(crypto.decryptBytes(found).decode('utf-8'))
             print(j_dic)
             return (j_dic['version'],j_dic['url'],j_dic['directory_path']) #return (version,url,directory_address) 
 
