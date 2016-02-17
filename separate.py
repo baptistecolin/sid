@@ -6,9 +6,9 @@ import io
 class Separate():
 
     def __init__(self, store):
-    	self.MAX = 10
-    	self.store = store
-    	print('MAX bytes per block: ', self.MAX)
+        self.MAX = 10
+        self.store = store
+        print('MAX bytes per block: ', self.MAX)
     
     def get(self, k):
         if k in self.store:
@@ -22,7 +22,7 @@ class Separate():
             content.append(self.store.get(key))   # get result sont bytes
             i = i + 1
         if len(content) == 0:
-            print("Failed to find the clé ", key)
+            print("Failed to find the key ", key)
             return None    
         return b''.join(content)
         
