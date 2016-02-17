@@ -10,7 +10,7 @@ import stat
 #from file import File ##
 from SIDCrypto import *
 import base64
-import StructureFile
+
 
 crypto = SIDCrypto("orage")
 """
