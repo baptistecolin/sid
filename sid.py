@@ -12,9 +12,9 @@ import re
 import server_connection
 import getpass
 from file import File
-#from SIDStructure import SIDCreate
-from cach import save
-from SIDCrypto import *
+from SIDStructure import SIDCreate, SIDSave
+from SIDCrypto import * 
+from cach import save, read_save
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -86,8 +86,8 @@ opts = parser.parse_args()
 
 ########################################################### FUNCTIONS 
 
-def getProtocol(): 
-	reUrl = re.search(r'^(.*)://(.*)',opts.url) 
+def getProtocol(url): 
+	reUrl = re.search(r'^(.*)://(.*)',url) 
 	return reUrl.group(1),reUrl.group(2)
 
 def getPwd():
@@ -99,6 +99,19 @@ def absPath(path):
 	else:
 		return os.path.join(os.getcwd(), path)
 
+class Protocol():
+	def __init__(self, protocolName, backupPath, crypto):
+		self.protocolName = protocolName
+		self.backupPath = backupPath
+		self.crypto = crypto
+		if self.protocolName == 'file':
+			self.protocol = File(backupPath)
+	# backupFile : file's name
+	# toBackup : file's name
+	def put(self, backupFile, toBackup):
+		toWrite = self.crypto.encrypt(toBackup)
+		self.protocol.put(backupFile, toWrite)
+
 ########################################################### PROGRAM 
 
 if opts.op == 'none':
@@ -106,6 +119,7 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
+<<<<<<< HEAD
     pw = getpass.getpass()
     crypto = SIDCrypto(password=pw)
     protocolName,adress = getProtocol()
@@ -120,6 +134,32 @@ elif opts.op == 'ls':
 	protocol,address = getProtocol()
 elif opts.op == 'update':
 	pw = getpass.getpass()
+=======
+	#crypto
+	password = getpass.getpass()
+	crypto = SIDCrypto(password)
+	#protocol
+	protocolName, backupPath = getProtocol(opts.url)
+	protocol = Protocol(protocolName, backupPath, crypto)
+	SIDCreate(protocol, opts.directory)
+	save(opts.name, opts.url, absPath(opts.directory)) 
+elif opts.op == 'list':
+	pwd = getPwd()
+	print(address)
+	print(protocol)
+	print(pwd)	
+elif opts.op == 'ls':
+	pwd = getPwd()
+	print(pwd)	
+elif opts.op == 'update':
+	pw = getpass.getpass()
+	(version, url, directory_path) = read_save(opts.name)
+	protocolName, adress = getProtocol(url)
+	if protocolName == 'file':
+		protocol = File(adress)
+	SIDSave(protocol, directory_path)
+	save(opts.name, url, absPath(directory_path), version+1)
+>>>>>>> af47fc6f371cad26457bbf43438a5b8be19c715f
 elif opts.op == 'dump':
 	pw = getpass.getpass()
 elif opts.op == 'update':

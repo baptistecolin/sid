@@ -13,9 +13,7 @@ import unicodedata
 class SIDCrypto:
     def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", keylen=16, ivlen=16, saltlen=8):
         self.algo_cipher = algo_cipher
-        
-        self.password = password # password.encode('UTF-8')
-
+        self.password = password
         self.algo_hash = algo_hash
         self.keylen = keylen
         self.ivlen = ivlen
@@ -33,15 +31,23 @@ class SIDCrypto:
 
 
 
+
 ###ENCRYPTION FUNCTION
-    def encrypt(self, path, keylen=16, ivlen=16, saltlen=8): #the path is the one of the file that will be ciphered
+    def encrypt(self, path):
+        #the path is the one of the file that will be ciphered
 
+        o = open(path, 'rb')
+        clear = o.read() #message contained in the file
+        o.close()
+
+        m = self.encryptBytes(clear)
+
+        return m
+
+    def encryptBytes(self, clear):
+    
         if (self.algo_cipher == None):
-            o = open(path, 'rb')
-            c = o.read() #the file is ciphered
-            o.close()
-
-            return b'encrypt: ' + c #the output is the clear message
+            return b'encrypt: ' + clear #the output is the clear message
 
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.password)
@@ -55,35 +61,25 @@ class SIDCrypto:
                 cipher = ARC4.new(key, ARC4.MODE_CBC, iv)
             elif self.algo_cipher == "Blowfish":
                 cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
-            elif self.algo_cipher == "DES":
+            elif self.algo_cipher == "DES3":
                 cipher = DES3.new(key, DES3.MODE_CBC, iv)
             elif self.algo_cipher == "CAST":
                 cipher = CAST.new(key, CAST.MODE_CBC, iv)
-            elif self.algo_cipher == "DES3":
+            elif self.algo_cipher == "DES":
                 cipher = DES.new(key, DES.MODE_CBC, iv)
-            #print(cipher.block_size)
-
-            
-            o = open(path, 'rb')
-            clear = o.read()
-
+        
             #begin padding
             padlen = cipher.block_size
             if padlen != len(clear)%padlen:
                 padlen = padlen - (len(clear)%padlen)
             clear += bytearray((chr(padlen)*padlen).encode("ASCII"))
             
-            c = cipher.encrypt(clear) #the file is ciphered
-            o.close()
-            
+            c = cipher.encrypt(clear) #the message is ciphered           
             
             c += iv #the iv is appended to the ciphered message
             c += salt #the salt is appended to the ciphered message after the iv
         
             return c #the output is a string containing the ciphered message + the encrypted iv
-
-
-
 
 
 
@@ -94,11 +90,11 @@ class SIDCrypto:
         o = open(path, 'rb')
         c = o.read()
 
-        m = self.decryptString(c,self.password)
+        m = self.decryptBytes(c)
 
         return m #the output is a string containing the message.
 
-    def decryptString(self,s,password):
+    def decryptBytes(self,s):
         
         if self.algo_cipher is None:
             assert s[:9] == b'encrypt: '
@@ -111,7 +107,7 @@ class SIDCrypto:
             iv = s[len(s)-(self.ivlen+self.saltlen):len(s)-self.saltlen]
             salt = s[len(s)-self.saltlen:]
 
-            password_bytes = password.encode('utf-8')
+            password_bytes = self.password.encode('utf-8')
 
             #the key is the hash of the password+the salt
             key = self.hash(password_bytes+salt , converting_bytes = True)
@@ -135,9 +131,7 @@ class SIDCrypto:
 
             #begin unpadding
             padlen = m[-1]
-            #print(padlen)
             m = m[:-padlen]
-            #print(len(m))
 
             return m #the output is a string containing the message.
 
@@ -169,15 +163,13 @@ class SIDCrypto:
         h.update(s)
         return h.digest()
 
-if False:
-    rand=Random.new()
-    keylen = 16
-
+if __name__ == "__main__":
     import getpass
     password = getpass.getpass('password: ')
-    sid = SIDCrypto(password)
+    algo = input("algorithme a utiliser : ")
+    sid = SIDCrypto(password, algo_cipher=algo)
                 
-    message_clair = input().encode('utf-8')
+    message_clair = input("message a chiffrer : ").encode('utf-8')
     clear = open("clear.txt", 'bw')
     clear.write(message_clair)
     clear.close()
@@ -187,7 +179,6 @@ if False:
     encrypted = open("encrypted.txt", 'bw')
     encrypted.write(message_chiffre)
     encrypted.close()
-    #encrypted = open("/home/baptiste/msi-p14/encrypted.txt", 'br')
 
     decrypted = open("decrypted.txt", 'bw')
     decrypted.write(sid.decrypt("encrypted.txt"))
