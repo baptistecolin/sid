@@ -7,56 +7,51 @@ import os.path #utile ?
 import os
 import json
 import stat
-from file import File
-import SIDCrypto
-#import sid
-
-crypto = SIDCrypto("orage", None) # define ??
+#from file import File ##
+from SIDCrypto import *
+import base64
 
 
+crypto = SIDCrypto("orage")
+"""
+## TEMP TODO remove
+class Protocol():
+	def __init__(self, storage, crypto):
+		self.crypto = crypto
+		self.storage = storage
+	# backupFile : file's name
+	# toBackup : file's name
+	def put(self, k, v):
+		toWrite = self.crypto.encryptBytes(v)
+		self.storage.put(k, toWrite)
+
+	def get(self, k):
+		toDecrypt = self.storage.get(k)
+		print("type(toDecrypt): %s" % type(toDecrypt))
+		m = self.crypto.decryptBytes(toDecrypt)
+		print("type(m): %s" % type(m))
+		return m
+"""
 
 ## Recursively lists all files in directory "path" (with included path)
 # /!\ Tested on Linux systems only (incompatible with Windows)
 # @path : str
-def listFiles(path):
+def listFiles(path, addEntryPath = True, entryPath = ""):
 	if path == "": path = "."
 	files = []
-	l = os.listdir(path + "/")
+	l = os.listdir(os.path.join(entryPath, path))
+	if not addEntryPath:
+		entryPath = path
 	for i in l:
-		if os.path.isdir(i):
-			files.extend(listFiles(i))
-		if not i.endswith(".sid"):
-			if path != ".":
-				files.append(os.path.join(path, i))
-			else:
-				files.append(i)
+		print(i)
+		totalPath = os.path.join(path, i) if addEntryPath else i
+		if os.path.isdir(os.path.join(entryPath, i)):
+			print("DIRECTORY = " + i)
+			files.append(totalPath)
+			files.extend(listFiles(totalPath, True, entryPath))
+		if not i.endswith(".sid"): # REMOVE IN LATER VERSIONS (TODO)
+			files.append(totalPath)
 	return files
-
-"""
-## Pour les tests
-# @path : str
-def identity(path):
-	o = open(path, 'rb')
-	res = o.read()
-	o.close()
-	return res
-	
-# @x : str
-def identityString(path):
-	o = open(path, "r")
-	res = o.read()
-	o.close()
-	return res
-	
-class cryptoTest():
-	def __init__(self):
-		self.encrypt = identity
-		self.decrypt = identity
-		self.decryptString = identityString
-		self.hash = identityString
-		
-crypto = cryptoTest()
-"""
 
 ## Generate "last.sid" file from version "ver" in directory "path"
 # @protocol : server_connection (?)
@@ -66,76 +61,78 @@ def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
 	dic = {"basics" : {}, "symlinks" : {}, "dirs" : {}}
 	if not isNew:
-		last_info = json.loads(protocol.get("last.sid")) ##
+		last_info = json.loads(protocol.get("last.sid").decode("ASCII")) ##
 		ver = last_info["version"] + 1
 		id_max = last_info["id_max"]
 	else:
 		ver = 0
 		id_max = 0
 	dic["version"] = ver
-	for f in listFiles(path):
-		fhash = crypto.hash(f, hash_file=True)
-#		prop = os.lstat(f)
+	for f in listFiles(path, False):
+		prop = os.lstat(os.path.join(path, f))
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
-#			dic["symlinks"] = symbolic_link(os.join(path, f), str(id_max)) #### ??
-#			linkURL = os.readlink(f)
+			linkURL = os.readlink(os.path.join(path, f))
+			fhash = None
 		elif os.path.isdir(os.path.join(path, f)):
 			ftype = "dirs"
+			fhash = None
 		else:
 			ftype = "basics"
+			fhash = base64.b64encode(crypto.hash(os.path.join(path, f), hash_file=True)).decode("ASCII")  ## HASH_PROBLEMS
 		if isNew:
-#			dic[ftype][f] = {"hash" : fhash,
-#					"size" : prop.st_size,
-#					"modTime" : prop.st_mtime,
-#					"mode" : prop.st_mode
-#					}
+			dic[ftype][f] = {"hash" : fhash,
+					"size" : prop.st_size,
+					"modTime" : prop.st_mtime,
+					"mode" : prop.st_mode
+					}
 			if ftype == "symlinks":
-				dic[ftype][f] = symbolic_link(f, fhash) #
-#				dic[ftype][f]["linkURL"] = linkURL
+#				dic[ftype][f] = symbolic_link(f, fhash) 
+				dic[ftype][f]["linkURL"] = linkURL
 			elif ftype == "basics":
-#				dic[ftype][f]["serverName"] : str(id_max)
-				dic[ftype][f] = basic_file(f, fhash, str(id_max))
+				dic[ftype][f]["serverName"] = str(id_max)
+#				dic[ftype][f] = basic_file(f, fhash, str(id_max))
 				id_max += 1
 				to_upload.append(f)
-			elif ftype == "dirs":
-				dic[ftype][f] = directory(f,  fhash)
+#			elif ftype == "dirs":
+#				dic[ftype][f] = directory(f,  fhash)
 		else:
 			try:
-				if last_info[ftype][f].getHash() == fhash:
+#				if last_info[ftype][f].getHash() == fhash:
+				if last_info[ftype][f]["hash"] == fhash:
 					dic[ftype][f] = last_info[ftype][f]
 				else:
-#					dic[ftype][f] = {"hash" : fhash,
-#							"size" : prop.st_size,
-#							"modTime" : prop.st_mtime,
-#							"mode" : prop.st_mode
-#							}
+					dic[ftype][f] = {"hash" : fhash,
+							"size" : prop.st_size,
+							"modTime" : prop.st_mtime,
+							"mode" : prop.st_mode
+							}
 					if ftype == "symlinks":
-#						dic[ftype][f]["linkURL"] = linkURL
-						dic[ftype][f] = symbolic_link(f, fhash) #
+						dic[ftype][f]["linkURL"] = linkURL
+#						dic[ftype][f] = symbolic_link(f, fhash) #
 					elif ftype == "basics":
-#						dic[ftype][f]["serverName"] : str(id_max)
-						dic[ftype][f] = basic_file(f, fhash, str(id_max))
+						dic[ftype][f]["serverName"] = str(id_max)
+#						dic[ftype][f] = basic_file(f, fhash, str(id_max))
 						id_max += 1
 						to_upload.append(f)
-					elif ftype == "dirs":
-						dic[ftype][f] = directory(f, fhash)
+#					elif ftype == "dirs":
+#						dic[ftype][f] = directory(f, fhash)
 			except KeyError:
-#				dic[ftype][f] = {"hash" : fhash,
-#						"size" : prop.st_size,
-#						"modTime" : prop.st_mtime,
-#						"mode" : prop.st_mode
-#						}
+				dic[ftype][f] = {"hash" : fhash,
+						"size" : prop.st_size,
+						"modTime" : prop.st_mtime,
+						"mode" : prop.st_mode
+						}
 				if ftype == "symlinks":
-#					dic[ftype][f]["linkURL"] = linkURL
-					dic[ftype][f] = symbolic_link(f, fhash) #
+					dic[ftype][f]["linkURL"] = linkURL
+#					dic[ftype][f] = symbolic_link(f, fhash) #
 				elif ftype == "basics":
-#					dic[ftype][f]["serverName"] : str(id_max)
-					dic[ftype][f] = basic_file(f, fhash, str(id_max))
+					dic[ftype][f]["serverName"] = str(id_max)
+#					dic[ftype][f] = basic_file(f, fhash, str(id_max))
 					id_max += 1
 					to_upload.append(f)
-				elif ftype == "dirs":
-						dic[ftype][f] = directory(f, fhash)
+#				elif ftype == "dirs":
+#						dic[ftype][f] = directory(f, fhash)
 	if to_upload:
 		if not isNew:
 			# rename previous
@@ -145,17 +142,15 @@ def buildSID(protocol, path = "", isNew = False):
 			prev.write(o.read())
 			o.close()
 			prev.close()
-			to_upload.append(os.path.join(path, prevSid))
+			to_upload.append(prevSid)
 		# create new
 		dic["id_max"] = id_max
-		o = open(os.path.join(path, "last.sid"), "w")
-		json.dump(dic, o, sort_keys=True, indent=2)
+		o = open(os.path.join(path, "last.sid"), "wb")
+		#print(dic)
+		js = json.dumps(dic, o, sort_keys=True, indent=2).encode("ASCII")
+		o.write(js)
 		o.close()
-#		js = crypto.encrypt(os.path.join(path, "last.sid"))
-#		o = open(os.path.join(path, "last.sid"), "wb")
-#		o.write(js)
-#		o.close()
-		to_upload.append(os.path.join(path, "last.sid"))
+		to_upload.append("last.sid")
 	return to_upload, dic["basics"]
 
 
@@ -165,10 +160,12 @@ def buildSID(protocol, path = "", isNew = False):
 def SIDSave(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path)
 	for f in to_upload:
+		o = open(os.path.join(path, f), "rb")
 		try:
-			protocol.put(dic[f].getServerName(), f)
+			protocol.put(dic[f]["serverName"], o.read())
 		except KeyError:
-			protocol.put(rsplit(os.sep, 1)[-1], f)
+			protocol.put(f.rsplit(os.sep, 1)[-1], o.read())
+		o.close()
 
 ## Upload directory "path" to create new backup
 # @protocol : server_connection
@@ -176,20 +173,23 @@ def SIDSave(protocol, path = ""):
 def SIDCreate(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path, True)
 	for f in to_upload:
+		o = open(os.path.join(path, f), "rb")
 		try:
-			protocol.put(dic[f].getServerName(), f)
+			protocol.put(dic[f]["serverName"], o.read())
+#			protocol.put(dic[f].getServerName(), f)
 		except KeyError:
-			protocol.put("last.sid", f)
+			protocol.put("last.sid", o.read())
+		o.close()
 		
 
 ## Restore directory in "path" from backup (latest version or previous)
 # @protocol : server_connection
 # @ver : int
 # @path : str
-def SIDRestore(protocol, path = "", ver = -1):
+def SIDRestore(protocol, path = "", ver = -1, force = False):
 	downloaded = []
 	if ver < 0:
-		lastSID = json.loads(protocol.get("last.sid"))
+		lastSID = json.loads(protocol.get("last.sid").decode("ASCII"))
 #		o = open(os.path.join(path, "last.sid"), "wb")
 #		o.write(lastSID) # keep track on local machine
 #		o.close()
@@ -213,12 +213,26 @@ def SIDRestore(protocol, path = "", ver = -1):
 
 	for f, v in lastSID["basics"].items():
 		try:
-			fhash = crypto.hash(os.path.join(path, f), h_file=True)
 			fstat = os.lstat(f)
+			fhash = crypto.hash(os.path.join(path, f), hash_file=True)
+			print("[SID-DEBUG] -- File found : %s" % f)
 		except IOError:
-			fhash = ""
-		if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime() or fhash != v.getHash():
-			fcontent = protocol.get(v.getServerName())
+			fhash = None
+			fcontent = protocol.get(v["serverName"]).decode("ASCII")
+			o = open(os.path.join(path, f), "w")
+			o.write(fcontent)
+			o.close()
+			try:
+				os.chmod(os.path.join(path, f), v["mode"])
+			except: ""
+			try:
+				os.utime(os.path.join(path, f), v["modTime"])
+			except: ""
+			downloaded.append(f)
+# base64.b64encode(crypto.hash(f, hash_file=True)).decode("ASCII")
+		"""
+		if fstat.st_size != v["size"] or fstat.st_mtime != v["modTime"] or fhash != base64.b64decode(v["hash"].encode("ASCII")):
+			fcontent = protocol.get(v["serverName"])
 			o = open(os.path.join(path, f), "w")
 			o.write(fcontent)
 			o.close()
@@ -229,17 +243,18 @@ def SIDRestore(protocol, path = "", ver = -1):
 				os.utime(os.path.join(path, f), v.getModTime())
 			except: ""
 			downloaded.append(f)
-
+		"""
 	for l, v in lastSID["symlinks"].items():
 		try:
-			lhash = crypto.hash(os.path.join(path, l), h_file=True)
+			lhash = crypto.hash(os.path.join(path, l), hash_file=True)
 			lstat = os.lstat(l)
-			if lstat.st_mtime != v.getModTime() or lhash != v.getHash():
+			"""
+			if lstat.st_mtime != v["modTime"] or lhash != v["hash"]:
 				os.unlink(os.path.join(path, l))
 				os.symlink(v.getLinkURL(), os.path.join(path, l))
 				try:
-					os.utime(os.path.join(path, l), v.getModTime())
-				except: ""
+					os.utime(os.path.join(path, l), v["modTime"])
+				except: "" - """
 		except IOError:
 			os.symlink(v.getLinkURL(), os.path.join(path, l))
 			try:
@@ -255,9 +270,9 @@ def SIDStatus(protocol):
 	print("Latest backend version: v%i" % lastSID["version"])
 	return lastSID["version"]
 
-## List files
+## List files in backend
 # @protocol : server_connection
-def SIDList(details=False):
+def SIDList(details=False): # TODO
 	lastSID = json.loads(protocol.get("last.sid"))
 	flist = []
 	for f in lastSID["basics"]:
@@ -271,7 +286,8 @@ def SIDList(details=False):
 	return flist
 
 
-protocol_test = File('test_dir2/')
+#protocol_test = Protocol(File('test_dir2/'), crypto)
+
 #SIDCreate(protocol_test, "test_dir1/")
 #SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
