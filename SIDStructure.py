@@ -220,14 +220,10 @@ def SIDRestore(protocol, path = "", ver = -1):
 #protocol_test = File(test_destination_path)
 
 #SIDCreate(protocol_test, "test_dir1/")
-<<<<<<< HEAD
 
 #SIDRestore(protocol_test, "dir3/")
 #SIDRestore(None, "test_dir")
-=======
-SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
->>>>>>> 03f152ac04727b32515b9c344caacd733efbd991
 
 
 # status : derniere ver en ligne

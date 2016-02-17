@@ -13,6 +13,7 @@ import server_connection
 import getpass
 from file import File
 from SIDStructure import SIDCreate, SIDSave
+from SIDCrypto import SIDCrypto
 from cach import save, read_save
 
 parser = ap.ArgumentParser(description="sid command")
@@ -98,6 +99,19 @@ def absPath(path):
 	else:
 		return os.path.join(os.getcwd(), path)
 
+class Protocol():
+	def __init__(self, protocolName, backupPath, crypto):
+		self.protocolName = protocolName
+		self.backupPath = backupPath
+		self.crypto = crypto
+		if self.protocolName == 'file':
+			self.protocol = File(backupPath)
+	# backupFile : file's name
+	# toBackup : file's name
+	def put(self, backupFile, toBackup):
+		toWrite = self.crypto.encrypt(toBackup)
+		self.protocol.put(backupFile, toWrite)
+
 ########################################################### PROGRAM 
 
 if opts.op == 'none':
@@ -105,10 +119,12 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-	pw = getpass.getpass()
-	protocolName,adress = getProtocol(url)
-	if protocolName == 'file':
-		protocol = File(adress)
+	#crypto
+	password = getpass.getpass()
+	crypto = SIDCrypto(password)
+	#protocol
+	protocolName, backupPath = getProtocol(opts.url)
+	protocol = Protocol(protocolName, backupPath, crypto)
 	SIDCreate(protocol, opts.directory)
 	save(opts.name, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
