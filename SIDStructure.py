@@ -7,7 +7,7 @@ import os.path
 import json
 import stat
 from file import File
-#import SIDCrypto
+import SIDCrypto
 #import sid
 
 
@@ -80,7 +80,7 @@ def buildSID(protocol, path = "", isNew = False):
 		id_max = 0
 	dic["version"] = ver
 	for f in listFiles(path):
-		fhash = crypto.hash(f, h_file=True)
+		fhash = crypto.hash(f)#, hash_file=True)
 		prop = os.lstat(f)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
@@ -98,7 +98,7 @@ def buildSID(protocol, path = "", isNew = False):
 			if ftype == "symlinks":
 				dic[ftype][f]["linkURL"] = linkURL
 			elif ftype == "files":
-				dic[ftype][f]["serverName"] : str(id_max)
+				dic[ftype][f]["serverName"] = str(id_max)
 				id_max += 1
 				to_upload.append(f)
 		else:
@@ -114,7 +114,7 @@ def buildSID(protocol, path = "", isNew = False):
 					if ftype == "symlinks":
 						dic[ftype][f]["linkURL"] = linkURL
 					elif ftype == "files":
-						dic[ftype][f]["serverName"] : str(id_max)
+						dic[ftype][f]["serverName"] = str(id_max)
 						id_max += 1
 						to_upload.append(f)
 			except KeyError:
@@ -126,7 +126,7 @@ def buildSID(protocol, path = "", isNew = False):
 				if ftype == "symlinks":
 					dic[ftype][f]["linkURL"] = linkURL
 				elif ftype == "files":
-					dic[ftype][f]["serverName"] : str(id_max)
+					dic[ftype][f]["serverName"] = str(id_max)
 					id_max += 1
 					to_upload.append(f)
 	if to_upload:
@@ -169,9 +169,9 @@ def SIDCreate(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path, True)
 	for f in to_upload:
 		try:
-			protocol.put(dic[f]["serverName"], crypto.encrypt(f))
+			protocol.put(dic[f]["serverName"], open(f, 'rb').read())
 		except KeyError:
-			protocol.put("last.sid", crypto.encrypt(os.path.join(path, "last.sid")))
+			protocol.put("last.sid", open(os.path.join(path, "last.sid"), 'rb').read())
 		
 
 ## Restore directory in "path" from backup (latest version or previous)
