@@ -3,11 +3,9 @@
 class server_connection():
 
 	def __init__(self):
+		print("Abstract class : Cannot create instance")		
 		self.__del__()
 	
-	def __del__(self):
-		print("Abstract class : Cannot create instances")	
-
 	def put(self,k, v) :
 		pass
     		#créer sur le serveur le fichier envoyé, ou le modifier s'il existe déjà
