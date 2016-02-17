@@ -67,11 +67,11 @@ def delete_save(name,crypto): #test first if good password
 
 if False:    
     cryptoEx = SIDCrypto("adrien")
-    create_cach('save0',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
+    create_cach('nvsvg',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
     create_cach('save1',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
     list_saves()
-    read_save('save0',cryptoEx)
-    update_cach('save0',cryptoEx,version=1)
-    read_save('save0',cryptoEx)
-    delete_save('save0',cryptoEx)
+    read_save('nvsvg',cryptoEx)
+    update_cach('nvsvg',cryptoEx,version=1)
+    read_save('nvsvg',cryptoEx)
+    delete_save('nvsvg',cryptoEx)
     list_saves()
