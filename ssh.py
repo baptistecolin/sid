@@ -5,7 +5,7 @@ import os
 import getpass
 
 
-class Ssh():
+class Ssh(server_connection):
     def __init__(self, path, login, password, server):
         self.savePath=path
         self.transport=paramiko.Transport((server,22))
@@ -41,7 +41,6 @@ class Ssh():
 
 
 def main():
-    server_connection.register(Ssh)
     server=input('Serveur :')
     login=input('Login :')
     password=getpass.getpass('Password :')
