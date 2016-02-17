@@ -50,7 +50,7 @@ class SIDCrypto:
         return self.rand(self.globalkeylen)
         
 
-    def key_iv_salt_generator(self,globalkey):
+    def key_iv_salt_generator(self,password):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
         salt = (self.rand).read(self.saltlen) #random generation of the salt
         password_bytes = password.encode('utf-8')

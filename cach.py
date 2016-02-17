@@ -24,7 +24,7 @@ def update_cach(name,crypto,version):
     
 
 #save a save 
-def save(name,crypto,url='',directory_path='',version=0):
+def save(name,crypto, url='',directory_path='',version=0):
     dic = {'version' : version,
         'url' : url,
         'directory_path' : directory_path}
@@ -65,7 +65,7 @@ def delete_save(name,crypto): #test first if good password
     if os.path.exists(os.path.join(cach_dir,name)):
         os.remove(os.path.join(cach_dir,name))
 
-if False:    
+if True:    
     cryptoEx = SIDCrypto("adrien")
     create_cach('nvsvg',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
     create_cach('save1',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
