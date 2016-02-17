@@ -8,6 +8,8 @@ class Webdav(server_connection):
 		self.server=httplib2.Http()
 		self.server.add_credentials(username,pwd)
 		self.dest=os.path.join(uri,path)
+		print(self.dest)
+		self.server.request(self.dest,'MKCOL')
 
 	def put(self,k,v):
 		response,content=self.server.request(self.create(self.dest,k),'PUT',body=v)
@@ -37,7 +39,8 @@ class Webdav(server_connection):
 
 #Testing the module	
 def main():
-	web=Webdav()
+	web=Webdav('titiBis/')
+	#web=Webdav()
 	web.get('hello')
 	web.put('1234','hello')
 	web.get('1234')
