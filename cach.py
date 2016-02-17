@@ -57,7 +57,7 @@ def read_save(name,crypto):
             found = o.read() 
             o.close()
             j_dic = json.loads(crypto.decryptBytes(found).decode('utf-8'))
-            print(j_dic)
+            print('j_dic renvoyé par read_save : ' + str(j_dic))
             return (j_dic['version'],j_dic['url'],j_dic['directory_path']) #return (version,url,directory_address) 
 
 #delete cached save

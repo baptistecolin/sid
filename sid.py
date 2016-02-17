@@ -136,6 +136,8 @@ def getStorage(url):
 		storage = Ssh(backupPath, login, password, server)
 	elif protocolName == 'imap' or protocolName == 'imaps':
 		from imaps import Imaps
+	elif protocolName == 'http' or protocolName == 'https':
+		from webdav import Webdav
 	return storage
 
 
@@ -182,8 +184,9 @@ elif opts.op == 'restore':
 		os.mkdir(directory_path)
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
+	print('Appel de SIDRestore sur : ' + directory_path)
 	SIDRestore(protocol, directory_path)
-	if False:
+	if True:
 		print('Sauvegarde : ')
 		if opts.name != None:
 			print('Nom : ' + opts.name)
