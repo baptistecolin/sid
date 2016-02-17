@@ -60,9 +60,18 @@ def read_save(name,crypto):
             print(j_dic)
             return (j_dic['version'],j_dic['url'],j_dic['directory_path']) #return (version,url,directory_address) 
 
-#cryptoEx = SIDCrypto("adrien")
-#create_cach('save0',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
-#list_saves()
-#read_save('save0',cryptoEx)
-#update_cach('save0',cryptoEx,version=1)
-#read_save('save0',cryptoEx)
+#delete cached save
+def delete_save(name,crypto): #test first if good password
+    if os.path.exists(os.path.join(cach_dir,name)):
+        os.remove(os.path.join(cach_dir,name))
+
+if False:    
+    cryptoEx = SIDCrypto("adrien")
+    create_cach('save0',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
+    create_cach('save1',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
+    list_saves()
+    read_save('save0',cryptoEx)
+    update_cach('save0',cryptoEx,version=1)
+    read_save('save0',cryptoEx)
+    delete_save('save0',cryptoEx)
+    list_saves()
