@@ -31,9 +31,11 @@ class SIDCrypto:
 
 
 
-###ENCRYPTION FUNCTION
-    def encrypt(self, path, keylen=16, ivlen=16, saltlen=8): #the path is the one of the file that will be ciphered
 
+###ENCRYPTION FUNCTION
+    def encrypt(self, path):
+        #the path is the one of the file that will be ciphered
+        
         if (self.algo_cipher == None):
             o = open(path, 'rb')
             c = o.read() #the file is ciphered
@@ -42,7 +44,7 @@ class SIDCrypto:
             return b'encrypt: ' + c #the output is the clear message
 
         else:
-            (key,iv,salt) = self.key_iv_salt_generator(password)
+            (key,iv,salt) = self.key_iv_salt_generator(self.password)
 
             #generating a cipher
             if self.algo_cipher == "AES":
@@ -53,11 +55,11 @@ class SIDCrypto:
                 cipher = ARC4.new(key, ARC4.MODE_CBC, iv)
             elif self.algo_cipher == "Blowfish":
                 cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
-            elif self.algo_cipher == "DES":
+            elif self.algo_cipher == "DES3":
                 cipher = DES3.new(key, DES3.MODE_CBC, iv)
             elif self.algo_cipher == "CAST":
                 cipher = CAST.new(key, CAST.MODE_CBC, iv)
-            elif self.algo_cipher == "DES3":
+            elif self.algo_cipher == "DES":
                 cipher = DES.new(key, DES.MODE_CBC, iv)
             
             o = open(path, 'rb')
@@ -160,15 +162,13 @@ class SIDCrypto:
         h.update(s)
         return h.digest()
 
-if False:
-    rand=Random.new()
-    keylen = 16
-
+if __name__ == "__main__":
     import getpass
     password = getpass.getpass('password: ')
-    sid = SIDCrypto(password)
+    algo = input("algorithme a utiliser : ")
+    sid = SIDCrypto(password, algo_cipher=algo)
                 
-    message_clair = input().encode('utf-8')
+    message_clair = input("message a chiffrer : ").encode('utf-8')
     clear = open("clear.txt", 'bw')
     clear.write(message_clair)
     clear.close()
