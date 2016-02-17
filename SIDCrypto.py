@@ -1,12 +1,5 @@
-
-# FC: ne pas recréer un Random à chaque fois ? padding ?
-#     version dans hash maintenant inutile ?
-#     tests : éviter les chemins en durs ?!
-
 from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
-from os import urandom
-import sys
 from Crypto import Random
 
 algos = {"AES":AES, "ARC2":ARC2, "ARC4":ARC4, "Blowfish":Blowfish, "DES":DES, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
@@ -32,8 +25,6 @@ class SIDCrypto:
         key = key[:self.keylen]
         
         return (key,iv,salt)        
-
-
 
 
 ###ENCRYPTION FUNCTION
