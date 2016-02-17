@@ -16,14 +16,14 @@ class NullCipher:
         self.key = key
         self.mode = mode
         self.iv = iv
+        self.block_size = 8
 
     def encrypt(self, s):
+        assert len(s)%self.block_size == 0
         return s
 
     def decrypt(self, s):
         return s
-
-    block_size = 8
 
 algos = {"AES":AES, "ARC2":ARC2, "ARC4":ARC4, "Blowfish":Blowfish, "DES":DES, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
          "MD5":MD5, "None":Null}
@@ -63,7 +63,7 @@ class SIDCrypto:
         o.close()
 
         m = self.encryptBytes(clear)
-
+        
         return m
 
     def encryptBytes(self, clear):
@@ -74,7 +74,9 @@ class SIDCrypto:
             cipher = ARC2.new(key)
         else:
             cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
-            
+
+        clear += self.hash(clear)
+        
         #begin padding
         padlen = cipher.block_size
         if padlen != len(clear)%padlen:
@@ -102,7 +104,7 @@ class SIDCrypto:
         return m #the output is a byte array containing the message.
 
     def decryptBytes(self,s):
-        #the string is splitted into the actual ciphered message, the iv, and the salt
+        #the string is splitted into the actual ciphered message, the hash, the iv, and the salt
         c = s[:len(s)-(self.saltlen + self.ivlen)]
         iv = s[len(s)-(self.ivlen+self.saltlen):len(s)-self.saltlen]
         salt = s[len(s)-self.saltlen:]
@@ -125,7 +127,10 @@ class SIDCrypto:
         padlen = m[-1]
         m = m[:-padlen]
 
-        return m #the output is a byte array containing the message.
+        #integrity control
+        assert self.hash(m[:-self.algo_hash.digest_size], converting_bytes = True) == m[-self.algo_hash.digest_size:]
+        
+        return m[:-self.algo_hash.digest_size] #the output is a byte array containing the message.
 
 ###HASH FUNCTION
     def hash(self, name, version = -1, converting_bytes = False, hash_file = False):
