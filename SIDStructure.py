@@ -148,7 +148,7 @@ def buildSID(protocol, path = "", isNew = False):
 		# create new
 		dic["id_max"] = id_max
 		o = open(os.path.join(path, "last.sid"), "wb")
-		#print(dic)
+		print(dic)
 		js = json.dumps(dic, o, sort_keys=True, indent=2).encode("ASCII")
 		o.write(js)
 		o.close()
