@@ -6,7 +6,7 @@ if [ $# -eq 1 ] ; then
   dst=$1
   shift 1
 else
-  dst=file://$HOME/save.dir
+  dst=file://$PWD/save.dir
 fi
 
 nom=test
