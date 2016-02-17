@@ -8,12 +8,12 @@ import os
 import json
 import stat
 #from file import File ##
-#from SIDCrypto import *
+from SIDCrypto import *
 import base64
 
 
-#crypto = SIDCrypto("orage", algo_cipher = None)
-
+crypto = SIDCrypto("orage")
+"""
 ## TEMP TODO remove
 class Protocol():
 	def __init__(self, storage, crypto):
@@ -31,7 +31,7 @@ class Protocol():
 		m = self.crypto.decryptBytes(toDecrypt)
 		print("type(m): %s" % type(m))
 		return m
-
+"""
 # @path : chemin depuis le repertoire sauvegarde
 class files:
 	def __init__(self, path, hash = ""):
