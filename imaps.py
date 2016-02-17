@@ -48,7 +48,7 @@ class Imaps(server_connection):
 		result, data = self.mail.uid('search', None, 'Header Subject ' + subject)
 		if len(data[0]) > 0:
 			latest_email_uid = data[0].split()[-1]		
-			return True
+			
 		else:	
 			print('no result from key -- ' , k)
 			return False 

@@ -1,6 +1,7 @@
 from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from Crypto import Random
+import SIDStructure
 
 class Null:
     def new(key, mode, iv):
@@ -29,11 +30,11 @@ algos = {"AES":AES, "ARC2":ARC2, "ARC4":ARC4, "Blowfish":Blowfish, "DES":DES, "C
          "MD5":MD5, "None":Null}
 
 class SIDCrypto:
-    def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8):
+    def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8, globalkeylen = 32):
         self.password = password
         self.algo_hash = algos[algo_hash]
         self.saltlen = saltlen
-
+        
         self.algo_cipher = algos[algo_cipher]
 
         if self.algo_cipher == DES: #DES implementation is different...
@@ -42,6 +43,12 @@ class SIDCrypto:
             self.keylen, self.ivlen = self.algo_cipher.key_size[-1], self.algo_cipher.block_size
 
         self.rand = Random.new()
+        #self.globalKey = SIDStructure.getKey(password)    quand la fonction getkey sera codée
+
+
+    def globalKeyGenerator():
+        return self.rand(self.globalkeylen)
+        
 
     def key_iv_salt_generator(self,password):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
