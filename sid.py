@@ -12,7 +12,12 @@ import re
 import server_connection
 import getpass
 from file import File
+<<<<<<< HEAD
+from ssh import Ssh
 from SIDStructure import SIDCreate, SIDSave
+=======
+#from SIDStructure import SIDCreate, SIDSave
+>>>>>>> 63b8faa7ca830d8605c18e5e26f85cc16891a736
 from SIDCrypto import * 
 from cach import save, read_save
 
@@ -36,7 +41,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('-n','--name', type=str, help='Give a save name')
-snameurl.add_argument('-p','--pass', type=str, help='Give a password')
+snameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -98,10 +103,10 @@ def absPath(path):
 		return os.path.join(os.getcwd(), path)
 
 def getPw():
-    if not opts.p == None:
-        return opts.p
+    if not opts.password == None:
+        return opts.password
     else: 
-        password = getpass.getpass()
+        password = getpass.getpass('sid\'s password : ')
         return password
 
 class Protocol():
@@ -118,10 +123,22 @@ class Protocol():
 		toDecrypt = self.storage.get(k)
 		return self.crypto.decryptBytes(toDecrypt)
 
+	def delete(self, k):
+		self.storage.delete(k)
+
 def getStorage(url):
-	protocolName, backupPath = splitUrl(url)
+	protocolName, address = splitUrl(url)
 	if protocolName == 'file':
-		storage = File(backupPath)
+		storage = File(address)
+	elif protocolName == 'ssh':
+		# get login, server, path
+		parsePath = re.match(r'^(.*)@([^/]*)/(.*)$', address)
+		login = parsePath.group(1)
+		server = parsePath.group(2)
+		backupPath = parsePath.group(3)
+		print(backupPath)
+		password = getpass.getpass(login+'@'+server+'\'s password : ')
+		storage = Ssh(backupPath, login, password, server)
 	return storage
 
 
@@ -132,13 +149,14 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-    #crypto
-    password = getPw()
-    crypto = SIDCrypto(password)
-    #protocol
-    protocol = Protocol(getStorage(opts.url), crypto)
-    SIDCreate(protocol, opts.directory)
-    save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	#crypto
+	password = getPw()
+	crypto = SIDCrypto(password)
+	#protocol
+	storage = getStorage(opts.url)
+	protocol = Protocol(storage, crypto)
+	SIDCreate(protocol, opts.directory)
+	save(opts.name, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
 elif opts.op == 'ls':
