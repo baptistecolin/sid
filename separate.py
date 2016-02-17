@@ -1,17 +1,24 @@
 # -*- coding:utf-8 -*-
-
 import math
 import io
 
-
 class Separate():
-    def __init__(self, k, v):
-        self.content = []
-        n = len(v)
-        block = io.BytesIO()
-        i = 0
-        while i <= math.ceil(n / 1000000):
-            block = v[1000000 * i:1000000 * (i + 1)]
-            self.content += block
+	
+    def __init__(self, store):
+    	self.MAX = 10
+    	self.store = store
+    
+    def get(self, k):
+        content = []
+        subject = list()
+        while True:
+        	result, uid = 
+            block = message[MAX * i:	MAX * (i + 1)]
+            self.content += [block]
             i+=1
-        return(k, self.content)
+        
+    	
+    
+if __name__ == '__main__':
+	pass	   
+    	

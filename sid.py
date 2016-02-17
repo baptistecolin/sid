@@ -14,7 +14,7 @@ import getpass
 from file import File
 from SIDStructure import SIDCreate, SIDRestore, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save, list_saves
+from cach import save, read_save, list_saves, update_cach
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
