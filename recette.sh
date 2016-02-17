@@ -6,8 +6,7 @@ if [ $# -eq 1 ] ; then
   dst=$1
   shift 1
 else
-#  dst=file://$PWD/save.dir
-  dst=ssh://14alarro@ccdl70:Documents/MSI/Projet/backup
+  dst=file://$PWD/save.dir
 fi
 
 nom=test
@@ -20,10 +19,13 @@ function sid()
   ./sid.py "$@"
 }
 
-# arborescence minimale
+# arborescence minimale avec sous répertoire
 mkdir $src
 echo "fichier initial titi" >> $src/titi
 echo "fichier initial toto" >> $src/toto
+mkdir $src/subdir
+echo "fichier initial subdir/titi" >> $src/subdir/titi
+ln -s ./titi $src/lien
 
 # création de la sauvegarde
 sid create --pass foo -n $nom -d $src -u $dst "$@"
@@ -41,6 +43,7 @@ rm -rf $tst
 
 # modifications M D A
 echo "titi modifié" >> $src/titi
+echo "titi modifié 2" >> $src/subdir/titi
 rm -f $src/toto
 echo "fichier initial tata" > $src/tata
 
