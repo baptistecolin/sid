@@ -39,7 +39,7 @@ class basic_file(files):
 class symbolic_link(files):
 	def __init__(self, path, hash = ""):
 		files.__init__(self, path, hash)
-			self.linkURL = os.readlink(path)
+		self.linkURL = os.readlink(path)
 
 class directory(files):
 	def __init__(self, path, hash = ""):

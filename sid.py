@@ -12,12 +12,8 @@ import re
 import server_connection
 import getpass
 from file import File
-<<<<<<< HEAD
 from ssh import Ssh
 from SIDStructure import SIDCreate, SIDSave
-=======
-#from SIDStructure import SIDCreate, SIDSave
->>>>>>> 63b8faa7ca830d8605c18e5e26f85cc16891a736
 from SIDCrypto import * 
 from cach import save, read_save
 
@@ -156,7 +152,7 @@ elif opts.op == 'create':
 	storage = getStorage(opts.url)
 	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
-	save(opts.name, opts.url, absPath(opts.directory)) 
+	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
 elif opts.op == 'ls':
@@ -171,7 +167,9 @@ elif opts.op == 'update':
 	save(opts.name, url, absPath(directory_path), version+1)
 elif opts.op == 'dump':
 	pw = getpass.getpass()
-elif opts.op == 'update':
-	pw = getpass.getpass()
 elif opts.op == 'restore':
-	pw = getpass.getpass()
+	password = getPw()
+	crypto = SIDCrypto(password)
+	storage = getStorage(opts.url)
+	protocol = Protocol(storage, crypto)
+	SIDRestore(protocol, opts.directory)
