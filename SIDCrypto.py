@@ -111,6 +111,8 @@ class SIDCrypto:
                 cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
             
             m = cipher.decrypt(c)
+            
+            assert len(m)%(cipher.bock_size) == 0 #makes sure m is conveniently padded. Else, throws an error.
 
             #begin unpadding
             padlen = m[-1]
