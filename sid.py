@@ -12,8 +12,12 @@ import re
 import server_connection
 import getpass
 from file import File
+<<<<<<< HEAD
 from ssh import Ssh
 from SIDStructure import SIDCreate, SIDSave
+=======
+#from SIDStructure import SIDCreate, SIDSave
+>>>>>>> 63b8faa7ca830d8605c18e5e26f85cc16891a736
 from SIDCrypto import * 
 from cach import save, read_save
 
