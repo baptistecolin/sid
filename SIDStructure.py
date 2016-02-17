@@ -246,11 +246,11 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		except: ""
 
 	for f, v in lastSID["basics"].items():
-		try:
-			fstat = os.lstat(f)
+		if os.path.exists(os.path.join(path, f)):
 			fhash = crypto.hash(os.path.join(path, f), hash_file=True)
+			fstat = os.lstat(f)
 			print("[SID-DEBUG] -- File found : %s" % f)
-		except IOError:
+		else:
 			fhash = None
 			fcontent = protocol.get(v["serverName"]).decode("ASCII")
 			o = open(os.path.join(path, f), "w")
