@@ -40,11 +40,11 @@ class SIDCrypto:
         clear = o.read() #message contained in the file
         o.close()
 
-        m = self.encryptString(clear)
+        m = self.encryptBytes(clear)
 
         return m
 
-    def encryptString(self, clear):
+    def encryptBytes(self, clear):
     
         if (self.algo_cipher == None):
             return b'encrypt: ' + clear #the output is the clear message
@@ -90,11 +90,11 @@ class SIDCrypto:
         o = open(path, 'rb')
         c = o.read()
 
-        m = self.decryptString(c,self.password)
+        m = self.decryptBytes(c)
 
         return m #the output is a string containing the message.
 
-    def decryptString(self,s,password):
+    def decryptBytes(self,s):
         
         if self.algo_cipher is None:
             assert s[:9] == b'encrypt: '
@@ -107,7 +107,7 @@ class SIDCrypto:
             iv = s[len(s)-(self.ivlen+self.saltlen):len(s)-self.saltlen]
             salt = s[len(s)-self.saltlen:]
 
-            password_bytes = password.encode('utf-8')
+            password_bytes = self.password.encode('utf-8')
 
             #the key is the hash of the password+the salt
             key = self.hash(password_bytes+salt , converting_bytes = True)
