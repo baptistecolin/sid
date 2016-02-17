@@ -42,12 +42,12 @@ class server_connection(metaclass=ABCMeta):
 	def __setitem__(self, key, value) :
 		self.put(key, value)
     		#set self[key] to value
-	
+	'''
 	@abstractmethod
 	def __new__(self,*args, **kargs) :
 		pass
     		#pour utiliser la syntaxe connection = new connection()
- 
+ 	'''
 
     
 

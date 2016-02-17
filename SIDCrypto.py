@@ -13,9 +13,7 @@ import unicodedata
 class SIDCrypto:
     def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", keylen=16, ivlen=16, saltlen=8):
         self.algo_cipher = algo_cipher
-        
-        self.password = password # password.encode('UTF-8')
-
+        self.password = password
         self.algo_hash = algo_hash
         self.keylen = keylen
         self.ivlen = ivlen
@@ -61,8 +59,6 @@ class SIDCrypto:
                 cipher = CAST.new(key, CAST.MODE_CBC, iv)
             elif self.algo_cipher == "DES3":
                 cipher = DES.new(key, DES.MODE_CBC, iv)
-            #print(cipher.block_size)
-
             
             o = open(path, 'rb')
             clear = o.read()
@@ -81,9 +77,6 @@ class SIDCrypto:
             c += salt #the salt is appended to the ciphered message after the iv
         
             return c #the output is a string containing the ciphered message + the encrypted iv
-
-
-
 
 
 
@@ -135,9 +128,7 @@ class SIDCrypto:
 
             #begin unpadding
             padlen = m[-1]
-            #print(padlen)
             m = m[:-padlen]
-            #print(len(m))
 
             return m #the output is a string containing the message.
 
@@ -187,7 +178,6 @@ if False:
     encrypted = open("encrypted.txt", 'bw')
     encrypted.write(message_chiffre)
     encrypted.close()
-    #encrypted = open("/home/baptiste/msi-p14/encrypted.txt", 'br')
 
     decrypted = open("decrypted.txt", 'bw')
     decrypted.write(sid.decrypt("encrypted.txt"))

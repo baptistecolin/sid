@@ -4,7 +4,7 @@ import os
 import getpass
 
 
-class Ssh(server_connection):
+class Ssh():
     def __init__(self, path, login, password, server):
         self.savePath=path
         self.pkey = paramiko.RSAKey.from_private_key_file('rsa.key')
