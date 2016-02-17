@@ -83,6 +83,11 @@ class SIDCrypto:
             return c #the output is a string containing the ciphered message + the encrypted iv
 
 
+
+
+
+
+
 ###DECRYPTION FUNCTION
     def decrypt(self,path):
         
@@ -137,15 +142,18 @@ class SIDCrypto:
             return m #the output is a string containing the message.
 
 ###HASH FUNCTION
-    def hash(self, name, version = -1, converting_bytes = False):
+    def hash(self, name, version = -1, converting_bytes = False, hash_file = False):
         
         if (not converting_bytes):
-            if version == -1:
-                s = name
+            if hash_file:
+                f = open(name,'br')
+                s = f.read()
             else:
-                s = name + str(version)
-            s = s.encode("utf-8")
-        
+                if version == -1:
+                    s = name
+                else:
+                    s = name + str(version)
+                    s = s.encode("utf-8")
         else:
             s = name
 
