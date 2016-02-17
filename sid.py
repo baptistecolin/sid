@@ -15,7 +15,7 @@ from file import File
 from ssh import Ssh
 from SIDStructure import SIDCreate, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save, list_saves
+from cach import * 
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
