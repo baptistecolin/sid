@@ -6,7 +6,8 @@ if [ $# -eq 1 ] ; then
   dst=$1
   shift 1
 else
-  dst=file://$PWD/save.dir
+#  dst=file://$PWD/save.dir
+  dst=ssh://14alarro@ccdl70:Documents/MSI/Projet/backup
 fi
 
 nom=test
@@ -39,7 +40,7 @@ diff -r $src $tst
 rm -rf $tst
 
 # modifications M D A
-echo "titi modifie" >> $src/titi
+echo "titi modifié" >> $src/titi
 rm -f $src/toto
 echo "fichier initial tata" > $src/tata
 

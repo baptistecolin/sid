@@ -26,10 +26,10 @@ class Ssh(server_connection):
         print("Écriture du fichier "+k+" réussie")
 
     def get(self, k):
-        if self.sftp.file(k,'r'):
+        if self.sftp.file(os.path.join(self.savePath, k),'r'):
             output=io.BytesIO()
-            size =self.sftp.getfo(k,output)
-            print("Récupération du fichier "+k+" réussie")
+            size =self.sftp.getfo(os.path.join(self.savePath, k),output)
+            print("Récupération du fichier "+os.path.join(self.savePath, k)+" réussie")
             return output.getvalue()
         else:
             print("Pas de fichier de ce nom sur le serveur")
