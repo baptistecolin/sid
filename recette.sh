@@ -39,7 +39,7 @@ diff -r $src $tst
 rm -rf $tst
 
 # modifications M D A
-echo "titi modifié" >> $src/titi
+echo "titi modifie" >> $src/titi
 rm -f $src/toto
 echo "fichier initial tata" > $src/tata
 
