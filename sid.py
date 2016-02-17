@@ -12,7 +12,7 @@ import re
 import server_connection
 import getpass
 from file import File
-from SIDStructure import SIDCreate, SIDSave
+#from SIDStructure import SIDCreate, SIDSave
 from SIDCrypto import * 
 from cach import save, read_save
 
@@ -134,12 +134,11 @@ elif opts.op == 'help':
 elif opts.op == 'create':
     #crypto
     password = getPw()
-    print(password)
     crypto = SIDCrypto(password)
     #protocol
     protocol = Protocol(getStorage(opts.url), crypto)
     #SIDCreate(protocol, opts.directory)
-    #save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+    save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
 elif opts.op == 'ls':
