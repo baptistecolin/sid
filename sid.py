@@ -15,7 +15,7 @@ from file import File
 from ssh import Ssh
 from SIDStructure import SIDCreate, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save
+from cach import save, read_save, list_saves
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -154,9 +154,9 @@ elif opts.op == 'create':
 	SIDCreate(protocol, opts.directory)
 	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
-	pwd = getPwd()
+        list_saves()
 elif opts.op == 'ls':
-	pwd = getPwd()
+	password = getPw()
 elif opts.op == 'update':
 	pw = getpass.getpass()
 	(version, url, directory_path) = read_save(opts.name)

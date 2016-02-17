@@ -1,6 +1,7 @@
 from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
-import sys
+<<<<<<< HEAD
+>>>>>>> 270d0e132657492eae3b3da61d122e1c26fbbe0d
 from Crypto import Random
 
 class Null:
@@ -53,8 +54,6 @@ class SIDCrypto:
         key = key[:self.keylen]
         
         return (key,iv,salt)        
-
-
 
 
 ###ENCRYPTION FUNCTION
