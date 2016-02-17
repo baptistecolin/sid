@@ -12,8 +12,7 @@ import re
 import server_connection
 import getpass
 from file import File
-from SIDStructure import SIDCreate, SIDRestore
-#, SIDSave
+from SIDStructure import SIDCreate, SIDRestore, SIDSave
 from SIDCrypto import * 
 from cach import save, read_save, list_saves
 
@@ -158,16 +157,15 @@ elif opts.op == 'create':
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
-	password = getPw()
+	print('Bonjour')
 elif opts.op == 'update':
 	password = getPw()
 	crypto = SIDCrypto(password)
-	(version, url, directory_path) = read_save(opts.name)
-	protocolName, adress = splitUrl(url)
-	if protocolName == 'file':
-		protocol = File(adress)
+	(version, url, directory_path) = read_save(opts.name, crypto)
+	storage = getStorage(url)
+	protocol = Protocol(storage, crypto)
 	SIDSave(protocol, directory_path)
-	update_cach(opts.name,crypto, int(version)+1)
+	update_cach(opts.name, crypto, version+1)
 elif opts.op == 'delete':
     password = getPw()
     crypto = SIDCrypto(password)
@@ -176,7 +174,7 @@ elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
 	if opts.name != None:
-		(_, url, _) = read_save(opts.name, crypto)
+		(version, url, _) = read_save(opts.name, crypto)
 	else:
 		url = opts.url
 	directory_path = opts.directory
@@ -184,11 +182,11 @@ elif opts.op == 'restore':
 		os.mkdir(directory_path)
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
-	SIDRestore(protocol, opts.directory)
-	if True:
+	SIDRestore(protocol, directory_path)
+	if False:
 		print('Sauvegarde : ')
 		if opts.name != None:
 			print('Nom : ' + opts.name)
-			print('Version : ' + version)
+			print('Version : ' + str(version))
 		print('URl : ' + url)
 		print('Directory_path : ' + directory_path)
