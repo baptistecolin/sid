@@ -3,6 +3,7 @@
 import os.path
 import os
 import json
+import time
 from pprint import pprint
 from SIDCrypto import *
 
@@ -19,15 +20,17 @@ def create_cach(name,crypto,url='',directory_path='',version=0):
 
 def update_cach(name,crypto,version):
 #test right password
-        (v,url,directory_path) = read_save(name,crypto)
+        (v,url,directory_path,last_update) = read_save(name,crypto)
         save(name,crypto,url,directory_path,version)
     
 
 #save a save 
-def save(name,crypto,url='',directory_path='',version=0):
+def save(name,crypto, url='',directory_path='',version=0):
+    last_update = time.strftime("%d/%m/%Y - %H:%M:%S", time.localtime())
     dic = {'version' : version,
         'url' : url,
-        'directory_path' : directory_path}
+        'directory_path' : directory_path,
+        'last_update' : last_update}
     t = os.path.join(cach_dir, name)
     crypted_json = crypto.encryptBytes(bytes(json.dumps(dic).encode('utf-8')))
     o = open(t,"wb")
@@ -57,8 +60,8 @@ def read_save(name,crypto):
             found = o.read() 
             o.close()
             j_dic = json.loads(crypto.decryptBytes(found).decode('utf-8'))
-            print('j_dic renvoyé par read_save : ' + str(j_dic))
-            return (j_dic['version'],j_dic['url'],j_dic['directory_path']) #return (version,url,directory_address) 
+            #print("Dictionnary" + j_dic)
+            return (j_dic['version'],j_dic['url'],j_dic['directory_path'],j_dic['last_update'])
 
 #delete cached save
 def delete_save(name,crypto): #test first if good password

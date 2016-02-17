@@ -14,7 +14,7 @@ import getpass
 from file import File
 from SIDStructure import SIDCreate, SIDRestore, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save, list_saves, update_cach
+from cach import * 
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -155,7 +155,7 @@ elif opts.op == 'create':
 	storage = getStorage(opts.url)
 	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
-	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
@@ -163,7 +163,7 @@ elif opts.op == 'ls':
 elif opts.op == 'update':
 	password = getPw()
 	crypto = SIDCrypto(password)
-	(version, url, directory_path) = read_save(opts.name, crypto)
+	(version, url, directory_path,last_update) = read_save(opts.name, crypto)
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
 	SIDSave(protocol, directory_path)
@@ -172,11 +172,16 @@ elif opts.op == 'delete':
     password = getPw()
     crypto = SIDCrypto(password)
     cach_delete(opts.name,crypto)
+elif opts.op == 'status':
+    password = getPw()
+    crypto = SIDCrypto(password)
+    (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
+    print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s')
 elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
 	if opts.name != None:
-		(version, url, _) = read_save(opts.name, crypto)
+		(version, url, _, _) = read_save(opts.name, crypto)
 	else:
 		url = opts.url
 	directory_path = opts.directory
