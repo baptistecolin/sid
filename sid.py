@@ -12,6 +12,7 @@ import re
 import server_connection
 import getpass
 from file import File
+from ssh import Ssh
 from SIDStructure import SIDCreate, SIDSave
 from SIDCrypto import SIDCrypto
 from cach import save, read_save
@@ -113,10 +114,22 @@ class Protocol():
 		toDecrypt = self.storage.get(k)
 		return self.crypto.decryptBytes(toDecrypt)
 
+	def delete(self, k):
+		self.storage.delete(k)
+
 def getStorage(url):
-	protocolName, backupPath = splitUrl(url)
+	protocolName, address = splitUrl(url)
 	if protocolName == 'file':
-		storage = File(backupPath)
+		storage = File(address)
+	elif protocolName == 'ssh':
+		# get login, server, path
+		parsePath = re.match(r'^(.*)@([^/]*)/(.*)$', address)
+		login = parsePath.group(1)
+		server = parsePath.group(2)
+		backupPath = parsePath.group(3)
+		print(backupPath)
+		password = getpass.getpass(login+'@'+server+'\'s password : ')
+		storage = Ssh(backupPath, login, password, server)
 	return storage
 
 
@@ -128,10 +141,11 @@ elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
 	#crypto
-	password = getpass.getpass()
+	password = getpass.getpass('sid\'s password : ')
 	crypto = SIDCrypto(password)
 	#protocol
-	protocol = Protocol(getStorage(opts.url), crypto)
+	storage = getStorage(opts.url)
+	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
 	save(opts.name, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
