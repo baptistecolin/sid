@@ -35,13 +35,19 @@ class SIDCrypto:
 ###ENCRYPTION FUNCTION
     def encrypt(self, path):
         #the path is the one of the file that will be ciphered
-        
-        if (self.algo_cipher == None):
-            o = open(path, 'rb')
-            c = o.read() #the file is ciphered
-            o.close()
 
-            return b'encrypt: ' + c #the output is the clear message
+        o = open(path, 'rb')
+        clear = o.read() #message contained in the file
+        o.close()
+
+        m = self.encryptString(clear)
+
+        return m
+
+    def encryptString(self, clear):
+    
+        if (self.algo_cipher == None):
+            return b'encrypt: ' + clear #the output is the clear message
 
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.password)
@@ -61,19 +67,14 @@ class SIDCrypto:
                 cipher = CAST.new(key, CAST.MODE_CBC, iv)
             elif self.algo_cipher == "DES":
                 cipher = DES.new(key, DES.MODE_CBC, iv)
-            
-            o = open(path, 'rb')
-            clear = o.read()
-
+        
             #begin padding
             padlen = cipher.block_size
             if padlen != len(clear)%padlen:
                 padlen = padlen - (len(clear)%padlen)
             clear += bytearray((chr(padlen)*padlen).encode("ASCII"))
             
-            c = cipher.encrypt(clear) #the file is ciphered
-            o.close()
-            
+            c = cipher.encrypt(clear) #the message is ciphered           
             
             c += iv #the iv is appended to the ciphered message
             c += salt #the salt is appended to the ciphered message after the iv
