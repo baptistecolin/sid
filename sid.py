@@ -13,9 +13,11 @@ import server_connection
 import getpass
 from file import File
 from ssh import Ssh
-from SIDStructure import SIDCreate, SIDSave
+from imaps import Imaps
+from SIDStructure import SIDCreate, SIDRestore
+#, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save, list_saves
+from cach import * 
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -82,6 +84,7 @@ srestore.set_defaults(op='restore')
 
 srestore.add_argument('-u','--url', type=str, help='specify target url')
 srestore.add_argument('-v','--version', type=str, help='specify version')
+srestore.add_argument('-d','--directory', type=str, help='specify directory to restore')
 
 # parse sub-command, options and arguments
 opts = parser.parse_args()
@@ -109,8 +112,6 @@ class Protocol():
 	def __init__(self, storage, crypto):
 		self.crypto = crypto
 		self.storage = storage
-	# backupFile : file's name
-	# toBackup : file's name
 	def put(self, k, v):
 		toWrite = self.crypto.encryptBytes(v)
 		self.storage.put(k, toWrite)
@@ -135,6 +136,7 @@ def getStorage(url):
 		print(backupPath)
 		password = getpass.getpass(login+'@'+server+'\'s password : ')
 		storage = Ssh(backupPath, login, password, server)
+#	elif protocolName == 'imaps':
 	return storage
 
 
@@ -152,24 +154,37 @@ elif opts.op == 'create':
 	storage = getStorage(opts.url)
 	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
-	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
 	password = getPw()
 elif opts.op == 'update':
-	pw = getpass.getpass()
+	password = getPw()
 	(version, url, directory_path) = read_save(opts.name)
 	protocolName, adress = splitUrl(url)
 	if protocolName == 'file':
 		protocol = File(adress)
 	SIDSave(protocol, directory_path)
-	save(opts.name, url, absPath(directory_path), version+1)
+	update_cach(opts.name, version+1)
 elif opts.op == 'dump':
 	pw = getpass.getpass()
 elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
-	storage = getStorage(opts.url)
+	if opts.name != None:
+		(version, url, directory_path) = read_save(opts.name, crypto)
+	else:
+		url = opts.url
+	if opts.directory != None:
+		directory_path = opts.directory
+	if not(os.path.exists(directory_path) and os.path.isdir(directory_path)):
+		os.mkdir(directory_path)
+	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
 	SIDRestore(protocol, opts.directory)
+	print('Sauvegarde : ')
+	print('Nom : ' + opts.name)
+	print('URl : ' + url)
+	print('Directory_path : ' + directory_path)
+	print('version : ' + str(version))

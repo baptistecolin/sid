@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 from server_connection import server_connection
 import paramiko
 import io
