@@ -34,10 +34,12 @@ sid list
 
 # restorations
 sid restore --pass foo -n $nom -d $tst
+echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
 
 sid restore --pass foo -u $dst -d $tst
+echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
 
@@ -50,6 +52,7 @@ echo "fichier initial tata" > $src/tata
 sid update --pass foo -n $nom
 
 sid restore --pass foo -u $dst -d $tst
+echo '# comparaison de la restoration'
 diff -r $src $tst
 
 # cleanup
