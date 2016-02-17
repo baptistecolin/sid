@@ -29,12 +29,12 @@ class server_connection(metaclass=ABCMeta):
 	def __delitem__(self, key) :
 		self.delete(key)
     		#pour que delete self[key] ait un sens
-	
+	'''
 	@abstractmethod
 	def __eq__(self, value) :
     		pass
 		#afin que self==value marche
-	
+	'''
 	def __getitem__(self,x) :
 		self.get(x)
     		#x.__getitem__(y)<=>x[y]
