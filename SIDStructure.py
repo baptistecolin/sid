@@ -6,16 +6,30 @@ import glob
 import os.path
 import json
 import stat
-from file import File
-import SIDCrypto
-#import sid
+from file import File ##
+from SIDCrypto import *
+import base64
+
+## TEMP TODO remove
+class Protocol():
+	def __init__(self, storage, crypto):
+		self.crypto = crypto
+		self.storage = storage
+	# backupFile : file's name
+	# toBackup : file's name
+	def put(self, k, v):
+		toWrite = self.crypto.encryptBytes(v)
+		self.storage.put(k, toWrite)
+
+	def get(self, k):
+		toDecrypt = self.storage.get(k)
+		print("type(toDecrypt): %s" % type(toDecrypt))
+		m = self.crypto.decryptBytes(toDecrypt)
+		print("type(m): %s" % type(m))
+		return m
 
 
-
-
-
-
-#crypto = SIDCrypto("orage", None) # define ??
+crypto = SIDCrypto("orage")
 
 ## Recursively lists all files in directory "path" (with included path)
 # /!\ Tested on Linux systems only (incompatible with Windows)
@@ -60,6 +74,8 @@ class cryptoTest():
 crypto = cryptoTest()
 """
 
+#def: binToHex():
+
 ### FILE TYPES :
 # 0 : basic
 # 1 : symbolic link
@@ -80,7 +96,7 @@ def buildSID(protocol, path = "", isNew = False):
 		id_max = 0
 	dic["version"] = ver
 	for f in listFiles(path):
-		fhash = crypto.hash(f)#, hash_file=True)
+		fhash = base64.b64encode(crypto.hash(f, hash_file=True)).decode("ASCII")  ## HASH_PROBLEMS
 		prop = os.lstat(f)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
@@ -98,7 +114,7 @@ def buildSID(protocol, path = "", isNew = False):
 			if ftype == "symlinks":
 				dic[ftype][f]["linkURL"] = linkURL
 			elif ftype == "basics":
-				dic[ftype][f]["serverName"] : str(id_max)
+				dic[ftype][f]["serverName"] = str(id_max)
 				id_max += 1
 				to_upload.append(f)
 		else:
@@ -114,7 +130,7 @@ def buildSID(protocol, path = "", isNew = False):
 					if ftype == "symlinks":
 						dic[ftype][f]["linkURL"] = linkURL
 					elif ftype == "basics":
-						dic[ftype][f]["serverName"] : str(id_max)
+						dic[ftype][f]["serverName"] = str(id_max)
 						id_max += 1
 						to_upload.append(f)
 			except KeyError:
@@ -126,7 +142,7 @@ def buildSID(protocol, path = "", isNew = False):
 				if ftype == "symlinks":
 					dic[ftype][f]["linkURL"] = linkURL
 				elif ftype == "basics":
-					dic[ftype][f]["serverName"] : str(id_max)
+					dic[ftype][f]["serverName"] = str(id_max)
 					id_max += 1
 					to_upload.append(f)
 	if to_upload:
@@ -141,13 +157,11 @@ def buildSID(protocol, path = "", isNew = False):
 			to_upload.append(os.path.join(path, prevSid))
 		# create new
 		dic["id_max"] = id_max
-		o = open(os.path.join(path, "last.sid"), "w")
-		json.dump(dic, o, sort_keys=True, indent=2)
+		o = open(os.path.join(path, "last.sid"), "wb")
+		print(dic)
+		js = json.dumps(dic, o, sort_keys=True, indent=2).encode("ASCII")
+		o.write(js)
 		o.close()
-#		js = crypto.encrypt(os.path.join(path, "last.sid"))
-#		o = open(os.path.join(path, "last.sid"), "wb")
-#		o.write(js)
-#		o.close()
 		to_upload.append(os.path.join(path, "last.sid"))
 	return to_upload, dic["basics"]
 
@@ -158,10 +172,12 @@ def buildSID(protocol, path = "", isNew = False):
 def SIDSave(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path)
 	for f in to_upload:
+		o = open(f, "rb").read()
 		try:
-			protocol.put(dic[f]["serverName"], f)
+			protocol.put(dic[f]["serverName"], o.read())
 		except KeyError:
-			protocol.put(rsplit(os.sep, 1)[-1], f)
+			protocol.put(rsplit(os.sep, 1)[-1], o.read())
+		o.close()
 
 ## Upload directory "path" to create new backup
 # @protocol : server_connection
@@ -169,10 +185,12 @@ def SIDSave(protocol, path = ""):
 def SIDCreate(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path, True)
 	for f in to_upload:
+		o = open(f, "rb")
 		try:
-			protocol.put(dic[f]["serverName"], f)
+			protocol.put(dic[f]["serverName"], o.read())
 		except KeyError:
-			protocol.put("last.sid", f)
+			protocol.put("last.sid", o.read())
+		o.close()
 		
 
 ## Restore directory in "path" from backup (latest version or previous)
@@ -248,7 +266,7 @@ def SIDStatus(protocol):
 	print("Latest backend version: v%i" % lastSID["version"])
 	return lastSID["version"]
 
-## List files
+## List files in backend
 # @protocol : server_connection
 def SIDList(details=False):
 	lastSID = json.loads(protocol.get("last.sid"))
@@ -264,9 +282,10 @@ def SIDList(details=False):
 	return flist
 
 
-protocol_test = File('test_dir2/')
+protocol_test = Protocol(File('test_dir2/'), crypto)
+
 #SIDCreate(protocol_test, "test_dir1/")
-#SIDSave(protocol_test, "test_dir1/")
+SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
 
 
