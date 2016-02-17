@@ -27,7 +27,7 @@ echo "fichier initial toto" >> $src/toto
 # création de la sauvegarde
 sid create --pass foo -n $nom -d $src -u $dst "$@"
 sid list
-sid list -n $nom
+sid ls -n $nom
 
 # restorations
 sid restore --pass foo -n $nom -d $tst
