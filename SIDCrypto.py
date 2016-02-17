@@ -79,7 +79,7 @@ class SIDCrypto:
             c += iv #the iv is appended to the ciphered message
             c += salt #the salt is appended to the ciphered message after the iv
         
-            return c #the output is a string containing the ciphered message + the encrypted iv
+            return c #the output is a bytes array containing the ciphered message + the encrypted iv
 
 
 
@@ -92,7 +92,7 @@ class SIDCrypto:
 
         m = self.decryptBytes(c)
 
-        return m #the output is a string containing the message.
+        return m #the output is a byte array containing the message.
 
     def decryptBytes(self,s):
         
@@ -133,7 +133,7 @@ class SIDCrypto:
             padlen = m[-1]
             m = m[:-padlen]
 
-            return m #the output is a string containing the message.
+            return m #the output is a byte array containing the message.
 
 ###HASH FUNCTION
     def hash(self, name, version = -1, converting_bytes = False, hash_file = False):
