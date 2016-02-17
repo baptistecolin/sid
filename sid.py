@@ -166,8 +166,11 @@ elif opts.op == 'update':
 	protocol = Protocol(storage, crypto)
 	SIDSave(protocol, directory_path)
 	save(opts.name, crypto, version+1)
-elif opts.op == 'dump':
-	pw = getpass.getpass()
+#	update_cach(opts.name,crypto, int(version)+1)
+elif opts.op == 'delete':
+    password = getPw()
+    crypto = SIDCrypto(password)
+    cach_delete(opts.name,crypto)
 elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
