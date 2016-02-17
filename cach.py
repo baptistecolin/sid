@@ -15,19 +15,21 @@ def create_cach(name,crypto,url='',directory_path='',version=0):
     if os.path.exists(os.path.join(cach_dir,name)):
         print("ERROR: name already taken")
     else:
-        save(name,crypto,url,directory_path,version)
+        h_password = crypto.hash(crypto.password,converting_bytes=True) 
+        save(name,crypto,h_password,url,directory_path,version)
 
 def update_cach(name,crypto,version):
 #test right password
-        (v,url,directory_path) = read_save(name,crypto)
-        save(name,crypto,url,directory_path,version)
+        (v,url,directory_path,h_password) = read_save(name,crypto)
+        save(name,crypto,h_password,url,directory_path,version)
     
 
 #save a save 
-def save(name,crypto,url='',directory_path='',version=0):
+def save(name,crypto,h_password, url='',directory_path='',version=0):
     dic = {'version' : version,
         'url' : url,
-        'directory_path' : directory_path}
+        'directory_path' : directory_path,
+        'h_password' : h_password}
     t = os.path.join(cach_dir, name)
     crypted_json = crypto.encryptBytes(bytes(json.dumps(dic).encode('utf-8')))
     o = open(t,"wb")
@@ -58,14 +60,14 @@ def read_save(name,crypto):
             o.close()
             j_dic = json.loads(crypto.decryptBytes(found).decode('utf-8'))
             print(j_dic)
-            return (j_dic['version'],j_dic['url'],j_dic['directory_path']) #return (version,url,directory_address) 
+            return (j_dic['version'],j_dic['url'],j_dic['directory_path'],j_dic['h_password']) #return (version,url,directory_address) 
 
 #delete cached save
 def delete_save(name,crypto): #test first if good password
     if os.path.exists(os.path.join(cach_dir,name)):
         os.remove(os.path.join(cach_dir,name))
 
-if False:    
+if True:    
     cryptoEx = SIDCrypto("adrien")
     create_cach('nvsvg',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')
     create_cach('save1',cryptoEx,'https://www.google.com/','/home/adrien/Documents/School/Mines/MSI/Cours/msi-p14/dossierTest')

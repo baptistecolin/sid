@@ -14,7 +14,7 @@ import getpass
 from file import File
 from SIDStructure import SIDCreate, SIDRestore, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save, list_saves
+from cach import * 
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -153,7 +153,7 @@ elif opts.op == 'create':
 	storage = getStorage(opts.url)
 	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
-	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
