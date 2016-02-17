@@ -98,7 +98,7 @@ def buildSID(protocol, path = "", isNew = False):
 			if ftype == "symlinks":
 				dic[ftype][f]["linkURL"] = linkURL
 			elif ftype == "basics":
-				dic[ftype][f]["serverName"] : str(id_max)
+				dic[ftype][f]["serverName"] = str(id_max)
 				id_max += 1
 				to_upload.append(f)
 		else:
@@ -114,7 +114,7 @@ def buildSID(protocol, path = "", isNew = False):
 					if ftype == "symlinks":
 						dic[ftype][f]["linkURL"] = linkURL
 					elif ftype == "basics":
-						dic[ftype][f]["serverName"] : str(id_max)
+						dic[ftype][f]["serverName"] = str(id_max)
 						id_max += 1
 						to_upload.append(f)
 			except KeyError:
@@ -126,7 +126,7 @@ def buildSID(protocol, path = "", isNew = False):
 				if ftype == "symlinks":
 					dic[ftype][f]["linkURL"] = linkURL
 				elif ftype == "basics":
-					dic[ftype][f]["serverName"] : str(id_max)
+					dic[ftype][f]["serverName"] = str(id_max)
 					id_max += 1
 					to_upload.append(f)
 	if to_upload:

@@ -97,6 +97,13 @@ def absPath(path):
 	else:
 		return os.path.join(os.getcwd(), path)
 
+def getPw():
+    if not opts.p == None:
+        return opts.p
+    else: 
+        password = getpass.getpass()
+        return password
+
 class Protocol():
 	def __init__(self, storage, crypto):
 		self.crypto = crypto
@@ -125,13 +132,13 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-	#crypto
-	password = getpass.getpass()
-	crypto = SIDCrypto(password)
-	#protocol
-	protocol = Protocol(getStorage(opts.url), crypto)
-	SIDCreate(protocol, opts.directory)
-	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+    #crypto
+    password = getPw()
+    crypto = SIDCrypto(password)
+    #protocol
+    protocol = Protocol(getStorage(opts.url), crypto)
+    SIDCreate(protocol, opts.directory)
+    save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
 elif opts.op == 'ls':
