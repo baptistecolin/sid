@@ -18,11 +18,11 @@ class File(server_connection):
 	def get(self,k):
 		fileContent=open(os.path.join(self.savePath,k),'rb')
 		if fileContent:
-			return fileContent
+			return fileContent.read()
 		else:
 			print("Pas de fichier de ce nom sur le serveur")
 			return None
-    
+
 	def delete(self,k):
 		for root, dirs, files in os.walk(self.savePath):
 			if k in files:
