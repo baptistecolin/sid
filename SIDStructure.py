@@ -47,7 +47,7 @@ class files:
 		return self.hash
 
 class basic_file(files):
-	def __init__(self, path, hash = "", serverName):
+	def __init__(self, path, hash = "", serverName = ""):
 		files.__init__(self, path, hash)
 		prop = os.lstat(f)
 		self.mode = prop.st_mode
@@ -58,7 +58,7 @@ class basic_file(files):
 class symbolic_link(files):
 	def __init__(self, path, hash = ""):
 		files.__init__(self, path, hash)
-			self.linkURL = os.readlink(path)
+		self.linkURL = os.readlink(path)
 
 class directory(files):
 	def __init__(self, path, hash = ""):
@@ -118,7 +118,7 @@ def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
 	dic = {"basics" : {}, "symlinks" : {}, "dirs" : {}}
 	if not isNew:
-		last_info = json.loads(protocol.get("last.sid")) ##
+		last_info = json.loads(protocol.get("last.sid").decode("ASCII")) ##
 		ver = last_info["version"] + 1
 		id_max = last_info["id_max"]
 	else:
@@ -126,16 +126,17 @@ def buildSID(protocol, path = "", isNew = False):
 		id_max = 0
 	dic["version"] = ver
 	for f in listFiles(path):
-		fhash = base64.b64encode(crypto.hash(f, hash_file=True)).decode("ASCII")  ## HASH_PROBLEMS
 		prop = os.lstat(f)
-		fhash = crypto.hash(f, hash_file=True)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
 			linkURL = os.readlink(f)
-		elif os.path.isdir(os.path.join(path, f)):
+			fhash = None
+		elif os.path.isdir(f):
 			ftype = "dirs"
+			fhash = None
 		else:
 			ftype = "basics"
+			fhash = base64.b64encode(crypto.hash(f, hash_file=True)).decode("ASCII")  ## HASH_PROBLEMS
 		if isNew:
 			dic[ftype][f] = {"hash" : fhash,
 					"size" : prop.st_size,
@@ -216,11 +217,11 @@ def buildSID(protocol, path = "", isNew = False):
 def SIDSave(protocol, path = ""):
 	to_upload, dic = buildSID(protocol, path)
 	for f in to_upload:
-		o = open(f, "rb").read()
+		o = open(f, "rb")
 		try:
 			protocol.put(dic[f]["serverName"], o.read())
 		except KeyError:
-			protocol.put(rsplit(os.sep, 1)[-1], o.read())
+			protocol.put(f.rsplit(os.sep, 1)[-1], o.read())
 		o.close()
 
 ## Upload directory "path" to create new backup
@@ -313,7 +314,7 @@ def SIDStatus(protocol):
 
 ## List files in backend
 # @protocol : server_connection
-def SIDList(details=False):
+def SIDList(details=False): # TODO
 	lastSID = json.loads(protocol.get("last.sid"))
 	flist = []
 	for f in lastSID["basics"]:
