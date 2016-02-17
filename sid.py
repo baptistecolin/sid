@@ -36,6 +36,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('-n','--name', type=str, help='Give a save name')
+snameurl.add_argument('-p','--pass', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -90,9 +91,6 @@ def splitUrl(url):
 	reUrl = re.search(r'^(.*)://(.*)',url) 
 	return reUrl.group(1),reUrl.group(2)
 
-def getPwd():
-	return input('Password?')
-
 def absPath(path):
 	if path[0] == '/':
 		return path
@@ -127,29 +125,13 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-<<<<<<< HEAD
-    pw = getpass.getpass()
-    crypto = SIDCrypto(password=pw)
-    protocolName,adress = getProtocol()
-    if protocolName == 'file':
-	    protocol = File(adress) #SIDCreate(protocol, opts.directory)
-    save(opts.name, crypto, opts.url, absPath(opts.directory))
-elif opts.op == 'list':
-	pw = getpass.getpass()
-	protocol,address = getProtocol()
-elif opts.op == 'ls':
-	pw = getpass.getpass()
-	protocol,address = getProtocol()
-elif opts.op == 'update':
-	pw = getpass.getpass()
-=======
 	#crypto
 	password = getpass.getpass()
 	crypto = SIDCrypto(password)
 	#protocol
 	protocol = Protocol(getStorage(opts.url), crypto)
 	SIDCreate(protocol, opts.directory)
-	save(opts.name, opts.url, absPath(opts.directory)) 
+	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
 elif opts.op == 'ls':
@@ -162,7 +144,6 @@ elif opts.op == 'update':
 		protocol = File(adress)
 	SIDSave(protocol, directory_path)
 	save(opts.name, url, absPath(directory_path), version+1)
->>>>>>> af47fc6f371cad26457bbf43438a5b8be19c715f
 elif opts.op == 'dump':
 	pw = getpass.getpass()
 elif opts.op == 'update':
