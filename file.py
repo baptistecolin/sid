@@ -22,7 +22,7 @@ class File(server_connection):
 		else:
 			print("Pas de fichier de ce nom sur le serveur")
 			return None
-    File
+
 	def delete(self,k):
 		for root, dirs, files in os.walk(self.savePath):
 			if k in files:
