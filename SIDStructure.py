@@ -10,7 +10,7 @@ import stat
 #from file import File ##
 from SIDCrypto import *
 import base64
-
+import StructureFile
 
 crypto = SIDCrypto("orage")
 """
@@ -32,39 +32,7 @@ class Protocol():
 		print("type(m): %s" % type(m))
 		return m
 """
-# @path : chemin depuis le repertoire sauvegarde
-class files:
-	def __init__(self, path, hash = ""):
-		self.path = path
-		if "":
-			self.hash = hash
-		else: #empty string
-			self.hash = crypto.hash(path, h_file = True)
-		prop = os.lstat(f)
-		self.size = prop.st_size,
-		self.modTime = prop.st_mtime,
-	def getHash(self):
-		return self.hash
 
-class basic_file(files):
-	def __init__(self, path, hash = "", serverName = ""):
-		files.__init__(self, path, hash)
-		prop = os.lstat(f)
-		self.mode = prop.st_mode
-		self.serverName = serverName
-	def getServerName(self):
-		return self.serverName
-
-class symbolic_link(files):
-	def __init__(self, path, hash = ""):
-		files.__init__(self, path, hash)
-		self.linkURL = os.readlink(path)
-
-class directory(files):
-	def __init__(self, path, hash = ""):
-		files.__init__(self, path, hash)
-		prop = os.lstat(f)
-		self.mode = prop.st_mode
 
 
 ## Recursively lists all files in directory "path" (with included path)
@@ -113,7 +81,7 @@ def buildSID(protocol, path = "", isNew = False):
 			fhash = None
 		else:
 			ftype = "basics"
-			fhash = base64.b64encode(crypto.hash(os.path.join(path, f), hash_file=True)).decode("ASCII")  ## HASH_PROBLEMS
+			fhash = base64.b64encode(crypto.hash(os.path.join(path, f), hash_file=True)).decode("ASCII")
 		if isNew:
 			dic[ftype][f] = {"hash" : fhash,
 					"size" : prop.st_size,
@@ -246,11 +214,24 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		except: ""
 
 	for f, v in lastSID["basics"].items():
-		try:
-			fstat = os.lstat(f)
-			fhash = crypto.hash(os.path.join(path, f), hash_file=True)
+		if os.path.exists(os.path.join(path, f)):
+			if force:
+				fstat = os.lstat(f)
+				fhash = crypto.hash(os.path.join(path, f), hash_file=True)
+				if fstat.st_size != v["size"] or fstat.st_mtime != v["modTime"] or fhash != base64.b64decode(v["hash"].encode("ASCII")):
+					fcontent = protocol.get(v["serverName"]).decode("ASCII")
+					o = open(os.path.join(path, f), "w")
+					o.write(fcontent)
+					o.close()
+					try:
+						os.chmod(os.path.join(path, f), v["mode"])
+					except: ""
+					try:
+						os.utime(os.path.join(path, f), v["modTime"])
+					except: ""
+					downloaded.append(f)
 			print("[SID-DEBUG] -- File found : %s" % f)
-		except IOError:
+		else:
 			fhash = None
 			fcontent = protocol.get(v["serverName"]).decode("ASCII")
 			o = open(os.path.join(path, f), "w")
@@ -263,33 +244,18 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 				os.utime(os.path.join(path, f), v["modTime"])
 			except: ""
 			downloaded.append(f)
-# base64.b64encode(crypto.hash(f, hash_file=True)).decode("ASCII")
-		"""
-		if fstat.st_size != v["size"] or fstat.st_mtime != v["modTime"] or fhash != base64.b64decode(v["hash"].encode("ASCII")):
-			fcontent = protocol.get(v["serverName"])
-			o = open(os.path.join(path, f), "w")
-			o.write(fcontent)
-			o.close()
-			try:
-				os.chmod(os.path.join(path, f), v["mode"])
-			except: ""
-			try:
-				os.utime(os.path.join(path, f), v["modTime"])
-			except: ""
-			downloaded.append(f)
-		"""
+
 	for l, v in lastSID["symlinks"].items():
-		try:
-			lhash = crypto.hash(os.path.join(path, l), hash_file=True)
+		if os.path.exists(os.path.join(path, l)):
 			lstat = os.lstat(l)
-			"""
+			lhash = crypto.hash(os.path.join(path, l), hash_file=True)
 			if lstat.st_mtime != v["modTime"] or lhash != v["hash"]:
 				os.unlink(os.path.join(path, l))
 				os.symlink(v["linkURL"], os.path.join(path, l))
 				try:
 					os.utime(os.path.join(path, l), v["modTime"])
-				except: "" - """
-		except IOError:
+				except: ""
+		else:
 			os.symlink(v["linkURL"], os.path.join(path, l))
 			try:
 				os.utime(os.path.join(path, l), v["modTime"])
