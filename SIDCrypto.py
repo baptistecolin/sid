@@ -51,7 +51,7 @@ class SIDCrypto:
     def encryptBytes(self, clear):
     
         if (self.algo_cipher is None):
-            return b'encrypt: ' + clear #the output is the clear message
+            return clear #the output is the clear message
 
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.password)
@@ -91,8 +91,7 @@ class SIDCrypto:
     def decryptBytes(self,s):
         
         if self.algo_cipher is None:
-            assert s[:9] == b'encrypt: '
-            return s[9:]           #it is possible not to encrypt anything by assigning "None" to "algo_cipher". Useful for debugging.
+            return s           #it is possible not to encrypt anything by assigning "None" to "algo_cipher". Useful for debugging.
 
         else:
 
