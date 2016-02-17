@@ -12,8 +12,9 @@ import re
 import server_connection
 import getpass
 from file import File
-from SIDStructure import SIDCreate
+#from SIDStructure import SIDCreate
 from cach import save
+from SIDCrypto import *
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -105,27 +106,23 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-	pw = getpass.getpass()
-	protocolName,adress = getProtocol()
-	if protocolName == 'file':
-		protocol = File(adress)
-	SIDCreate(protocol, opts.directory)
-	save(opts.name, opts.url, absPath(opts.directory)) 
+    pw = getpass.getpass()
+    crypto = SIDCrypto(password=pw)
+    protocolName,adress = getProtocol()
+    if protocolName == 'file':
+	    protocol = File(adress) #SIDCreate(protocol, opts.directory)
+    save(opts.name, crypto, opts.url, absPath(opts.directory))
 elif opts.op == 'list':
-	pwd = getPwd()
+	pw = getpass.getpass()
 	protocol,address = getProtocol()
-	print(address)
-	print(protocol)
-	print(pwd)	
 elif opts.op == 'ls':
-	pwd = getPwd()
+	pw = getpass.getpass()
 	protocol,address = getProtocol()
-	print(pwd)	
 elif opts.op == 'update':
-	pwd = getPwd()
+	pw = getpass.getpass()
 elif opts.op == 'dump':
-	pwd = getPwd()
+	pw = getpass.getpass()
 elif opts.op == 'update':
-	pwd = getPwd()
+	pw = getpass.getpass()
 elif opts.op == 'restore':
-	pwd = getPwd()
+	pw = getpass.getpass()

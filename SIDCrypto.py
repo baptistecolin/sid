@@ -44,7 +44,7 @@ class SIDCrypto:
             return b'encrypt: ' + c #the output is the clear message
 
         else:
-            (key,iv,salt) = self.key_iv_salt_generator(password)
+            (key,iv,salt) = self.key_iv_salt_generator(self.password)
 
             #generating a cipher
             if self.algo_cipher == "AES":
