@@ -38,8 +38,8 @@ class Separate():
 		
 		
 if __name__ == '__main__':
-	#password = getpass.getpass("enter password: ")
-	IM = Imaps('xiangnan.chat@gmail.com', 'www3.141592653', name=b'test')
+	password = getpass.getpass("enter password: ")
+	IM = Imaps('xiangnan.chat@gmail.com', password, name=b'test')
 	#for i in range(5):
 		#IM.put(b'toto' + bytes(str(i), 'utf8'), b'blablablablablabla')
 		
