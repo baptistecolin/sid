@@ -17,7 +17,7 @@ from imaps import Imaps
 from SIDStructure import SIDCreate, SIDRestore
 #, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save
+from cach import save, read_save, list_saves
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -156,9 +156,9 @@ elif opts.op == 'create':
 	SIDCreate(protocol, opts.directory)
 	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
-	pwd = getPwd()
+        list_saves()
 elif opts.op == 'ls':
-	pwd = getPwd()
+	password = getPw()
 elif opts.op == 'update':
 	password = getPw()
 	(version, url, directory_path) = read_save(opts.name)

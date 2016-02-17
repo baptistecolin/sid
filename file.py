@@ -9,6 +9,9 @@ class File(server_connection):
 	
 	def __init__(self,path):
 		self.savePath=path
+		if not os.path.exists(path):
+			os.makedirs(path)
+		
 
 	def put(self,k,v):
 		fileServer=open(os.path.join(self.savePath,k),'wb')
@@ -18,7 +21,7 @@ class File(server_connection):
 	def get(self,k):
 		fileContent=open(os.path.join(self.savePath,k),'rb')
 		if fileContent:
-			return fileContent.read()
+			return fileContent
 		else:
 			print("Pas de fichier de ce nom sur le serveur")
 			return None
@@ -30,7 +33,7 @@ class File(server_connection):
 				print ("le fichier %s  a ete supprime"%k)
 #Testing the above functions
 def main():
-	fileSystem=File('/home/alban/Documents')
+	fileSystem=File('/home/alban/Documents/test/')
 	test=open("test.txt", 'rb')
 	fileSystem.put('1234',test.read())
 	print(fileSystem.get('1234').read())

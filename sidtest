@@ -1,0 +1,5 @@
+echo "Creating save"
+python3 sid.py create -n sauvegarde -u file://adresse -d dossierTest/ -p motdepasse 
+echo "List saves know on the disk"
+python3 sid.py list
+
