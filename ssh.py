@@ -39,6 +39,8 @@ class Ssh(server_connection):
         else :
             print("Pas de fichier de ce nom sur le serveur")
 
+    def changePath(self, path):
+        self.savePath=path
 
 def main():
     server=input('Serveur :')
