@@ -1,40 +1,36 @@
 #coding=utf-8
 
-# FC: contains un peu violent; à quoi sert new()?
+class server_connection():
 
-from abc import ABCMeta, abstractmethod
-
-class server_connection(metaclass=ABCMeta):
-
-	@abstractmethod
+	def __init__(self):
+		print("Abstract class : Cannot create instance")		
+		self.__del__()
+	
 	def put(self,k, v) :
 		pass
     		#créer sur le serveur le fichier envoyé, ou le modifier s'il existe déjà
 	    
-	@abstractmethod
 	def get(self,k) :
 		pass
     		#récupérer le fichier à partir de sa clé (hash du nom)
     	
-	@abstractmethod
 	def delete(self,k) :
 		pass
     		#supprimer le fichier à partir de sa clé
 
 	def  __contains__(self, key)  :
-		if self.get(key) : return True
+		if self.get(key)!=None : return True
 		else : return False
     		#histoire qu'on puisse utiliser "if key in list"
 	
 	def __delitem__(self, key) :
 		self.delete(key)
     		#pour que delete self[key] ait un sens
-	
-	@abstractmethod
+'''
 	def __eq__(self, value) :
     		pass
 		#afin que self==value marche
-	
+'''
 	def __getitem__(self,x) :
 		self.get(x)
     		#x.__getitem__(y)<=>x[y]
@@ -42,13 +38,9 @@ class server_connection(metaclass=ABCMeta):
 	def __setitem__(self, key, value) :
 		self.put(key, value)
     		#set self[key] to value
-	
-	@abstractmethod
-	def __new__(self,*args, **kargs) :
-		pass
-    		#pour utiliser la syntaxe connection = new connection()
- 
+#Testing abstract type
+def main():
+	s=server_connection()
 
-    
-
-
+if __name__=='__main__':
+	main()
