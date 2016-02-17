@@ -328,10 +328,10 @@ def SIDList(details=False): # TODO
 	return flist
 
 
-protocol_test = Protocol(File('test_dir2/'), crypto)
+#protocol_test = Protocol(File('test_dir2/'), crypto)
 
 #SIDCreate(protocol_test, "test_dir1/")
-SIDSave(protocol_test, "test_dir1/")
+#SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
 
 

@@ -6,7 +6,7 @@ if [ $# -eq 1 ] ; then
   dst=$1
   shift 1
 else
-  dst=file://$HOME/save.dir
+  dst=file://$PWD/save.dir
 fi
 
 nom=test
@@ -27,7 +27,7 @@ echo "fichier initial toto" >> $src/toto
 # création de la sauvegarde
 sid create --pass foo -n $nom -d $src -u $dst "$@"
 sid list
-sid list -n $nom
+sid ls -n $nom
 
 # restoration
 sid restore --pass foo -u $dst -d $tst
