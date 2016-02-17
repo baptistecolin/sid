@@ -165,8 +165,7 @@ elif opts.op == 'update':
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
 	SIDSave(protocol, directory_path)
-	save(opts.name, crypto, version+1)
-#	update_cach(opts.name,crypto, int(version)+1)
+	update_cach(opts.name, crypto, version+1)
 elif opts.op == 'delete':
     password = getPw()
     crypto = SIDCrypto(password)
@@ -184,7 +183,7 @@ elif opts.op == 'restore':
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
 	SIDRestore(protocol, directory_path)
-	if True:
+	if False:
 		print('Sauvegarde : ')
 		if opts.name != None:
 			print('Nom : ' + opts.name)
