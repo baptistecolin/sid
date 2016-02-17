@@ -7,10 +7,10 @@ import os.path
 import json
 import stat
 from file import File
-#import SIDCrypto
+import SIDCrypto
 #import sid
 
-#crypto = SIDCrypto("orage", None) # define ??
+crypto = SIDCrypto("orage", None, "SHA256") # define ??
 
 ## Recursively lists all files in directory "path" (with included path)
 # /!\ Tested on Linux systems only (incompatible with Windows)
@@ -29,6 +29,7 @@ def listFiles(path):
 				files.append(i)
 	return files
 
+'''
 ## Pour les tests
 # @path : str
 def identity(path):
@@ -52,6 +53,7 @@ class cryptoTest():
 		self.hash = identityString
 		
 crypto = cryptoTest()
+'''
 
 # os.readlink(path) : str
 
@@ -79,12 +81,12 @@ def buildSID(protocol, path = "", isNew = False):
 		id_max = 0
 	dic["version"] = ver
 	for f in listFiles(path):
-		fhash = crypto.hash(f)
+		fhash = crypto.hash(f, hash_file=True) ###### ?
 		prop = os.lstat(f)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			linkURL = os.readlink(f)
 			ftype = 1
-		elif False: # TODO isDirectory (type 2
+		elif False: # TODO isDirectory (type 2)
 			ftype = 2
 		else:
 			ftype = 0
@@ -210,12 +212,13 @@ def SIDRestore(protocol, path = "", ver = -1):
 				downloaded.append(f)
 	return downloaded
 
-test_destination_path = 'test_dir2/'	
+test_destination_path = input('destination ? ')	
 protocol_test = File(test_destination_path)
+origin_path = input('origin ? ')
 
-#SIDCreate(protocol_test, "test_dir1/")
+SIDCreate(protocol_test, origin_path)
 
-SIDRestore(protocol_test, "dir3/")
+#SIDRestore(protocol_test, "dir3/")
 #SIDRestore(None, "test_dir")
 
 
