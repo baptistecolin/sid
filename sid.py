@@ -12,12 +12,10 @@ import re
 import server_connection
 import getpass
 from file import File
-from ssh import Ssh
-from imaps import Imaps
 from SIDStructure import SIDCreate, SIDRestore
 #, SIDSave
 from SIDCrypto import * 
-from cach import * 
+from cach import save, read_save, list_saves
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -128,15 +126,17 @@ def getStorage(url):
 	if protocolName == 'file':
 		storage = File(address)
 	elif protocolName == 'ssh':
+		from ssh import Ssh
 		# get login, server, path
-		parsePath = re.match(r'^(.*)@([^/]*)/(.*)$', address)
+		parsePath = re.match(r'^(.*)@([^:]*):(.*)$', address)
 		login = parsePath.group(1)
 		server = parsePath.group(2)
 		backupPath = parsePath.group(3)
 		print(backupPath)
 		password = getpass.getpass(login+'@'+server+'\'s password : ')
 		storage = Ssh(backupPath, login, password, server)
-#	elif protocolName == 'imaps':
+	elif protocolName == 'imap' or protocolName == 'imaps':
+		from imaps import Imaps
 	return storage
 
 
@@ -154,7 +154,7 @@ elif opts.op == 'create':
 	storage = getStorage(opts.url)
 	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
-	create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
@@ -176,18 +176,19 @@ elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
 	if opts.name != None:
-		(version, url, directory_path) = read_save(opts.name, crypto)
+		(_, url, _) = read_save(opts.name, crypto)
 	else:
 		url = opts.url
-	if opts.directory != None:
-		directory_path = opts.directory
+	directory_path = opts.directory
 	if not(os.path.exists(directory_path) and os.path.isdir(directory_path)):
 		os.mkdir(directory_path)
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
 	SIDRestore(protocol, opts.directory)
-	print('Sauvegarde : ')
-	print('Nom : ' + opts.name)
-	print('URl : ' + url)
-	print('Directory_path : ' + directory_path)
-	print('version : ' + str(version))
+	if True:
+		print('Sauvegarde : ')
+		if opts.name != None:
+			print('Nom : ' + opts.name)
+			print('Version : ' + version)
+		print('URl : ' + url)
+		print('Directory_path : ' + directory_path)

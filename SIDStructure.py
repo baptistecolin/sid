@@ -32,40 +32,6 @@ class Protocol():
 		print("type(m): %s" % type(m))
 		return m
 """
-# @path : chemin depuis le repertoire sauvegarde
-class files:
-	def __init__(self, path, hash = ""):
-		self.path = path
-		if "":
-			self.hash = hash
-		else: #empty string
-			self.hash = crypto.hash(path, h_file = True)
-		prop = os.lstat(f)
-		self.size = prop.st_size,
-		self.modTime = prop.st_mtime,
-	def getHash(self):
-		return self.hash
-
-class basic_file(files):
-	def __init__(self, path, hash = "", serverName = ""):
-		files.__init__(self, path, hash)
-		prop = os.lstat(f)
-		self.mode = prop.st_mode
-		self.serverName = serverName
-	def getServerName(self):
-		return self.serverName
-
-class symbolic_link(files):
-	def __init__(self, path, hash = ""):
-		files.__init__(self, path, hash)
-		self.linkURL = os.readlink(path)
-
-class directory(files):
-	def __init__(self, path, hash = ""):
-		files.__init__(self, path, hash)
-		prop = os.lstat(f)
-		self.mode = prop.st_mode
-
 
 ## Recursively lists all files in directory "path" (with included path)
 # /!\ Tested on Linux systems only (incompatible with Windows)
@@ -239,10 +205,10 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 	for d, v in lastSID["dirs"].items():
 		os.makedirs(os.path.join(path, d), 0o777, True)
 		try:
-			os.chmod(os.path.join(path, d), v["mode"])
+			os.chmod(os.path.join(path, d), v.getMode())
 		except: ""
 		try:
-			os.utime(os.path.join(path, d), v["modTime"])
+			os.utime(os.path.join(path, d), v.getModTime())
 		except: ""
 
 	for f, v in lastSID["basics"].items():
@@ -271,10 +237,10 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 			o.write(fcontent)
 			o.close()
 			try:
-				os.chmod(os.path.join(path, f), v["mode"])
+				os.chmod(os.path.join(path, f), v.getMode())
 			except: ""
 			try:
-				os.utime(os.path.join(path, f), v["modTime"])
+				os.utime(os.path.join(path, f), v.getModTime())
 			except: ""
 			downloaded.append(f)
 		"""
@@ -285,14 +251,14 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 			"""
 			if lstat.st_mtime != v["modTime"] or lhash != v["hash"]:
 				os.unlink(os.path.join(path, l))
-				os.symlink(v["linkURL"], os.path.join(path, l))
+				os.symlink(v.getLinkURL(), os.path.join(path, l))
 				try:
 					os.utime(os.path.join(path, l), v["modTime"])
 				except: "" - """
 		except IOError:
-			os.symlink(v["linkURL"], os.path.join(path, l))
+			os.symlink(v.getLinkURL(), os.path.join(path, l))
 			try:
-				os.utime(os.path.join(path, l), v["modTime"])
+				os.utime(os.path.join(path, l), v.getModTime())
 			except: ""
 
 	return downloaded
@@ -311,12 +277,12 @@ def SIDList(details=False): # TODO
 	flist = []
 	for f in lastSID["basics"]:
 		flist.append(f)
-		details = [f["size"], readMode(f["mode"]), datetime.datetime.fromtimestamp(f["modTime"])]
-		print("[FILE] " + f)
+		details = [f.getSize(), readMode(f.getMode()), datetime.datetime.fromtimestamp(f.getModTime())]
+		print("[FILE] " + f.getPath())
 	for l in lastSID["symlinks"]:
 		flist.append(l)
-		details = [f["size"], readMode(f["mode"]), datetime.datetime.fromtimestamp(f["modTime"])]
-		print("[LINK] " + f)
+		details = [f.getSize(), readMode(f.getMode()), datetime.datetime.fromtimestamp(f.getModTime())]
+		print("[LINK] " + f.getPath())
 	return flist
 
 
