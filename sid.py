@@ -178,9 +178,11 @@ elif opts.op == 'restore':
 		url = opts.url
 	if opts.directory != None:
 		directory_path = opts.directory
+	if not(os.path.exists(directory_path) and os.path.isdir(directory_path)):
+		os.mkdir(directory_path)
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
-#	SIDRestore(protocol, opts.directory)
+	SIDRestore(protocol, opts.directory)
 	print('Sauvegarde : ')
 	print('Nom : ' + opts.name)
 	print('URl : ' + url)

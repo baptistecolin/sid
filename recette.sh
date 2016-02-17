@@ -29,7 +29,11 @@ sid create --pass foo -n $nom -d $src -u $dst "$@"
 sid list
 sid list -n $nom
 
-# restoration
+# restorations
+sid restore --pass foo -n $nom -d $tst
+diff -r $src $tst
+rm -rf $tst
+
 sid restore --pass foo -u $dst -d $tst
 diff -r $src $tst
 rm -rf $tst
