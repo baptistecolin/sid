@@ -12,7 +12,8 @@ import re
 import server_connection
 import getpass
 from file import File
-#from SIDStructure import SIDCreate, SIDSave
+from ssh import Ssh
+from SIDStructure import SIDCreate, SIDSave
 from SIDCrypto import * 
 from cach import save, read_save
 
@@ -101,7 +102,7 @@ def getPw():
     if not opts.password == None:
         return opts.password
     else: 
-        password = getpass.getpass()
+        password = getpass.getpass('sid\'s password : ')
         return password
 
 class Protocol():
@@ -118,10 +119,22 @@ class Protocol():
 		toDecrypt = self.storage.get(k)
 		return self.crypto.decryptBytes(toDecrypt)
 
+	def delete(self, k):
+		self.storage.delete(k)
+
 def getStorage(url):
-	protocolName, backupPath = splitUrl(url)
+	protocolName, address = splitUrl(url)
 	if protocolName == 'file':
-		storage = File(backupPath)
+		storage = File(address)
+	elif protocolName == 'ssh':
+		# get login, server, path
+		parsePath = re.match(r'^(.*)@([^/]*)/(.*)$', address)
+		login = parsePath.group(1)
+		server = parsePath.group(2)
+		backupPath = parsePath.group(3)
+		print(backupPath)
+		password = getpass.getpass(login+'@'+server+'\'s password : ')
+		storage = Ssh(backupPath, login, password, server)
 	return storage
 
 
@@ -132,13 +145,14 @@ if opts.op == 'none':
 elif opts.op == 'help':
 	parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-    #crypto
-    password = getPw()
-    crypto = SIDCrypto(password)
-    #protocol
-    protocol = Protocol(getStorage(opts.url), crypto)
-    #SIDCreate(protocol, opts.directory)
-    save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	#crypto
+	password = getPw()
+	crypto = SIDCrypto(password)
+	#protocol
+	storage = getStorage(opts.url)
+	protocol = Protocol(storage, crypto)
+	SIDCreate(protocol, opts.directory)
+	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
 	pwd = getPwd()
 elif opts.op == 'ls':
@@ -153,7 +167,9 @@ elif opts.op == 'update':
 	save(opts.name, url, absPath(directory_path), version+1)
 elif opts.op == 'dump':
 	pw = getpass.getpass()
-elif opts.op == 'update':
-	pw = getpass.getpass()
 elif opts.op == 'restore':
-	pw = getpass.getpass()
+	password = getPw()
+	crypto = SIDCrypto(password)
+	storage = getStorage(opts.url)
+	protocol = Protocol(storage, crypto)
+	SIDRestore(protocol, opts.directory)

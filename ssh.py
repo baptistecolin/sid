@@ -15,6 +15,7 @@ class Ssh(server_connection):
 
 
     def put(self,k,v):
+        print('Tentative d\'ouverture de : ' + os.path.join(self.savePath, k))
         fileServer=self.sftp.open(os.path.join(self.savePath,k),'wb')
         print("ouverture du fichier "+k+" sur le serveur distant")
         fileServer.close()

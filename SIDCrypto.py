@@ -8,16 +8,19 @@ from Crypto.Hash import MD5,SHA256,SHA512
 from os import urandom
 import sys
 from Crypto import Random
-import unicodedata
+
+algos = {"AES":AES, "ARC2":ARC2, "ARC4":ARC4, "Blowfish":Blowfish, "DES":DES, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
+         "MD5":MD5, "None":None}
 
 class SIDCrypto:
-    def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", keylen=16, ivlen=16, saltlen=8):
-        self.algo_cipher = algo_cipher
+    def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8):
         self.password = password
-        self.algo_hash = algo_hash
-        self.keylen = keylen
-        self.ivlen = ivlen
+        self.algo_hash = algos[algo_hash]
         self.saltlen = saltlen
+
+        self.algo_cipher = algos[algo_cipher]
+        self.keylen, self.ivlen = self.algo_cipher.key_size[-1], self.algo_cipher.block_size
+
         self.rand = Random.new()
 
     def key_iv_salt_generator(self,password):
@@ -26,7 +29,8 @@ class SIDCrypto:
         password_bytes = password.encode('utf-8')
 
         key = self.hash(password_bytes+salt , converting_bytes = True) #the key is the hash of the password+the salt
-
+        key = key[:self.keylen]
+        
         return (key,iv,salt)        
 
 
@@ -46,28 +50,18 @@ class SIDCrypto:
 
     def encryptBytes(self, clear):
     
-        if (self.algo_cipher == None):
+        if (self.algo_cipher is None):
             return b'encrypt: ' + clear #the output is the clear message
 
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.password)
 
             #generating a cipher
-            if self.algo_cipher == "AES":
-                cipher = AES.new(key, AES.MODE_CBC, iv)
-            elif self.algo_cipher == "ARC2":
+            if self.algo_cipher == ARC2:
                 cipher = ARC2.new(key)
-            elif self.algo_cipher == "ARC4":
-                cipher = ARC4.new(key, ARC4.MODE_CBC, iv)
-            elif self.algo_cipher == "Blowfish":
-                cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
-            elif self.algo_cipher == "DES3":
-                cipher = DES3.new(key, DES3.MODE_CBC, iv)
-            elif self.algo_cipher == "CAST":
-                cipher = CAST.new(key, CAST.MODE_CBC, iv)
-            elif self.algo_cipher == "DES":
-                cipher = DES.new(key, DES.MODE_CBC, iv)
-        
+            else:
+                cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
+            
             #begin padding
             padlen = cipher.block_size
             if padlen != len(clear)%padlen:
@@ -79,7 +73,7 @@ class SIDCrypto:
             c += iv #the iv is appended to the ciphered message
             c += salt #the salt is appended to the ciphered message after the iv
         
-            return c #the output is a string containing the ciphered message + the encrypted iv
+            return c #the output is a bytes array containing the ciphered message + the encrypted iv
 
 
 
@@ -92,7 +86,7 @@ class SIDCrypto:
 
         m = self.decryptBytes(c)
 
-        return m #the output is a string containing the message.
+        return m #the output is a byte array containing the message.
 
     def decryptBytes(self,s):
         
@@ -112,28 +106,18 @@ class SIDCrypto:
             #the key is the hash of the password+the salt
             key = self.hash(password_bytes+salt , converting_bytes = True)
 
-            if self.algo_cipher == "AES":
-                cipher = AES.new(key, AES.MODE_CBC, iv)
-            elif self.algo_cipher == "ARC2":
+            if self.algo_cipher == ARC2:
                 cipher = ARC2.new(key)
-            elif self.algo_cipher == "ARC4":
-                cipher = ARC4.new(key, ARC4.MODE_CBC, iv)
-            elif self.algo_cipher == "Blowfish":
-                cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
-            elif self.algo_cipher == "DES":
-                cipher = DES3.new(key, DES3.MODE_CBC, iv)
-            elif self.algo_cipher == "CAST":
-                cipher = CAST.new(key, CAST.MODE_CBC, iv)
-            elif self.algo_cipher == "DES3":
-                cipher = DES.new(key, DES.MODE_CBC, iv)
-
+            else:
+                cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
+            
             m = cipher.decrypt(c)
 
             #begin unpadding
             padlen = m[-1]
             m = m[:-padlen]
 
-            return m #the output is a string containing the message.
+            return m #the output is a byte array containing the message.
 
 ###HASH FUNCTION
     def hash(self, name, version = -1, converting_bytes = False, hash_file = False):
@@ -151,15 +135,7 @@ class SIDCrypto:
         else:
             s = name
 
-        if self.algo_hash == "MD5":
-            h = MD5.new()
-            
-        elif self.algo_hash == "SHA256":
-            h = SHA256.new()
-            
-        elif self.algo_hash == "SHA512":
-            h = SHA512.new()
-                
+        h = self.algo_hash.new()  
         h.update(s)
         return h.digest()
 
