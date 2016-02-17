@@ -52,6 +52,7 @@ def main():
     fileSystem.put('test.txt',test.read())
     content=fileSystem.get('test.txt')
     print(content)
+    print('test.txt' in fileSystem)
     fileSystem.delete('test.txt')
 
 if __name__=='__main__':
