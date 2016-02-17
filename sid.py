@@ -161,14 +161,17 @@ elif opts.op == 'ls':
 	password = getPw()
 elif opts.op == 'update':
 	password = getPw()
+	crypto = SIDCrypto(password)
 	(version, url, directory_path) = read_save(opts.name)
 	protocolName, adress = splitUrl(url)
 	if protocolName == 'file':
 		protocol = File(adress)
 	SIDSave(protocol, directory_path)
-	update_cach(opts.name, version+1)
-elif opts.op == 'dump':
-	pw = getpass.getpass()
+	update_cach(opts.name,crypto, int(version)+1)
+elif opts.op == 'delete':
+    password = getPw()
+    crypto = SIDCrypto(password)
+    cach_delete(opts.name,crypto)
 elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
