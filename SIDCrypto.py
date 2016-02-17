@@ -72,7 +72,7 @@ class SIDCrypto:
             padlen = cipher.block_size
             if padlen != len(clear)%padlen:
                 padlen = padlen - (len(clear)%padlen)
-            clear += bytearray((chr(padlen)*padlen).encode("ASCII"))
+            clear += bytearray((chr(padlen)*padlen).encode("utf-8"))
             
             c = cipher.encrypt(clear) #the message is ciphered           
             

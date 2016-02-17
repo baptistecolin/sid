@@ -3,12 +3,16 @@
 #     fichiers temporaires ?
 
 import glob
-import os.path
+import os.path #utile ?
+import os
 import json
 import stat
 from file import File ##
 from SIDCrypto import *
 import base64
+
+
+crypto = SIDCrypto("orage")
 
 ## TEMP TODO remove
 class Protocol():
@@ -28,8 +32,40 @@ class Protocol():
 		print("type(m): %s" % type(m))
 		return m
 
+# @path : chemin depuis le repertoire sauvegarde
+class files:
+	def __init__(self, path, hash = ""):
+		self.path = path
+		if "":
+			self.hash = hash
+		else: #empty string
+			self.hash = crypto.hash(path, h_file = True)
+		prop = os.lstat(f)
+		self.size = prop.st_size,
+		self.modTime = prop.st_mtime,
+	def getHash(self):
+		return self.hash
 
-crypto = SIDCrypto("orage")
+class basic_file(files):
+	def __init__(self, path, hash = "", serverName):
+		files.__init__(self, path, hash)
+		prop = os.lstat(f)
+		self.mode = prop.st_mode
+		self.serverName = serverName
+	def getServerName(self):
+		return self.serverName
+
+class symbolic_link(files):
+	def __init__(self, path, hash = ""):
+		files.__init__(self, path, hash)
+			self.linkURL = os.readlink(path)
+
+class directory(files):
+	def __init__(self, path, hash = ""):
+		files.__init__(self, path, hash)
+		prop = os.lstat(f)
+		self.mode = prop.st_mode
+
 
 ## Recursively lists all files in directory "path" (with included path)
 # /!\ Tested on Linux systems only (incompatible with Windows)
@@ -74,14 +110,8 @@ class cryptoTest():
 crypto = cryptoTest()
 """
 
-#def: binToHex():
-
-### FILE TYPES :
-# 0 : basic
-# 1 : symbolic link
-# 2 : directory
 ## Generate "last.sid" file from version "ver" in directory "path"
-# @protocol : server_connection
+# @protocol : server_connection (?)
 # @path : str
 # @isNew : boolean
 def buildSID(protocol, path = "", isNew = False):
@@ -98,6 +128,7 @@ def buildSID(protocol, path = "", isNew = False):
 	for f in listFiles(path):
 		fhash = base64.b64encode(crypto.hash(f, hash_file=True)).decode("ASCII")  ## HASH_PROBLEMS
 		prop = os.lstat(f)
+		fhash = crypto.hash(f, hash_file=True)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
 			linkURL = os.readlink(f)
@@ -112,13 +143,18 @@ def buildSID(protocol, path = "", isNew = False):
 					"mode" : prop.st_mode
 					}
 			if ftype == "symlinks":
+#				dic[ftype][f] = symbolic_link(f, fhash) 
 				dic[ftype][f]["linkURL"] = linkURL
 			elif ftype == "basics":
 				dic[ftype][f]["serverName"] = str(id_max)
+#				dic[ftype][f] = basic_file(f, fhash, str(id_max))
 				id_max += 1
 				to_upload.append(f)
+#			elif ftype == "dirs":
+#				dic[ftype][f] = directory(f,  fhash)
 		else:
 			try:
+#				if last_info[ftype][f].getHash() == fhash:
 				if last_info[ftype][f]["hash"] == fhash:
 					dic[ftype][f] = last_info[ftype][f]
 				else:
@@ -129,10 +165,14 @@ def buildSID(protocol, path = "", isNew = False):
 							}
 					if ftype == "symlinks":
 						dic[ftype][f]["linkURL"] = linkURL
+#						dic[ftype][f] = symbolic_link(f, fhash) #
 					elif ftype == "basics":
 						dic[ftype][f]["serverName"] = str(id_max)
+#						dic[ftype][f] = basic_file(f, fhash, str(id_max))
 						id_max += 1
 						to_upload.append(f)
+#					elif ftype == "dirs":
+#						dic[ftype][f] = directory(f, fhash)
 			except KeyError:
 				dic[ftype][f] = {"hash" : fhash,
 						"size" : prop.st_size,
@@ -141,10 +181,14 @@ def buildSID(protocol, path = "", isNew = False):
 						}
 				if ftype == "symlinks":
 					dic[ftype][f]["linkURL"] = linkURL
+#					dic[ftype][f] = symbolic_link(f, fhash) #
 				elif ftype == "basics":
 					dic[ftype][f]["serverName"] = str(id_max)
+#					dic[ftype][f] = basic_file(f, fhash, str(id_max))
 					id_max += 1
 					to_upload.append(f)
+#				elif ftype == "dirs":
+#						dic[ftype][f] = directory(f, fhash)
 	if to_upload:
 		if not isNew:
 			# rename previous
@@ -188,6 +232,7 @@ def SIDCreate(protocol, path = ""):
 		o = open(f, "rb")
 		try:
 			protocol.put(dic[f]["serverName"], o.read())
+#			protocol.put(dic[f].getServerName(), f)
 		except KeyError:
 			protocol.put("last.sid", o.read())
 		o.close()
