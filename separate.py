@@ -32,12 +32,18 @@ class Separate():
 		
 	def put(self, k, v):
 		n = len(v)
+		if n<=self.MAX:
+			self.store.put(k,v)
+			return None
 		num = n // self.MAX
 		for i in range(num):
 			self.store.put(self.getKey(k,i), v[self.MAX * i : self.MAX*(i + 1)])
 		if n%self.MAX != 0:
 			self.store.put(self.getKey(k,num), v[self.MAX * num: ])
 	def delete(self,k):
+		if k in self.store:
+			self.store.delete(k)
+			return True
 		j=0
 		while True:
 			key=self.getKey(k,j)
@@ -47,8 +53,10 @@ class Separate():
 			self.store.delete(key)
 		if j==0:
 			print("There was no file to be deleted!")
+			return False
 		else:
 			print("The key was successfully deleted")
+			return True
 
 if __name__ == '__main__':
 	#Test IMAP
