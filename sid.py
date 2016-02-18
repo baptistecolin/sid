@@ -9,8 +9,7 @@ import argparse as ap
 import re
 import server_connection
 import getpass
-from urllib.parse import urlparse
-from urllib.parse import unquote
+from urllib.parse import urlparse, urljoin, unquote
 from SIDStructure import SIDCreate, SIDRestore, SIDSave, SIDDelete
 from SIDCrypto import * 
 from cach import * 
@@ -66,7 +65,7 @@ srestore = subs.add_parser('restore', help='restore a save')
 srestore.set_defaults(op='restore')
 
 srestore.add_argument('-v','--version', type=str, help='specify version')
-srestore.add_argument('identifier', type=str, help='specify save name or url')
+srestore.add_argument('identifier', type=str, help='specify save name or url - if you specify a url, you must set a new name')
 srestore.add_argument('directory', type=str, help='specify directory to restore')
 
 srestore.add_argument('-nn','--newname', type=str, help='Give a save name')
@@ -103,6 +102,12 @@ def getIds(login, password, server):
 		password = getpass.getpass(login + '@' + server + '\'s password : ')
 	return (unquote(login), unquote(password))
 
+def getCrypto():
+	password = getPw()
+	crypto = SIDCrypto(password)
+	#crypto.setGlobalKey(crypto.generateGlobalKey())
+	return password, crypto
+
 class Protocol():
         def __init__(self, storage, crypto):
                 self.crypto = crypto
@@ -122,7 +127,8 @@ class Protocol():
 def getStorage(url):
 	parseUrl = urlparse(url)
 	protocolName = parseUrl.scheme
-	backupPath = parseUrl.path
+	# Remove the / parseUrl.path always starts with
+	backupPath = parseUrl.path[1:]
 	login = parseUrl.username
 	password = parseUrl.password
 	server = parseUrl.hostname
@@ -144,7 +150,7 @@ def getStorage(url):
 	elif protocolName == 'http' or protocolName == 'https':
 		from webdav import Webdav
 		(login, password) = getIds(login, password, server)
-		storage = Webdav('', protocolName+'://'+server, login, password)
+		storage = Webdav('', urljoin(protocolName+'://'+server, backupPath), login, password)
 	return storage
 
 
@@ -156,8 +162,9 @@ elif opts.op == 'help':
         parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
         #crypto
-        password = getPw()
-        crypto = SIDCrypto(password)
+        #password = getPw()
+        #crypto = SIDCrypto(password)
+        password, crypto = getCrypto()
         #protocol
         storage = getStorage(opts.url)
         protocol = Protocol(storage, crypto)
@@ -175,8 +182,9 @@ elif opts.op == 'list':
 elif opts.op == 'ls':
         print('Bonjour')
 elif opts.op == 'update':
-    password = getPw()
-    crypto = SIDCrypto(password)
+    #password = getPw()
+    #crypto = SIDCrypto(password)
+    password, crypto = getCrypto()
     try:
         (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
     except (ValueError,AssertionError):
@@ -187,8 +195,9 @@ elif opts.op == 'update':
         SIDSave(protocol, directory_path)
         update_cach(opts.name, crypto, version+1)
 elif opts.op == 'delete':
-    password = getPw()
-    crypto = SIDCrypto(password)
+    #password = getPw()
+    #crypto = SIDCrypto(password)
+    password, crypto = getCrypto()
     try:
         (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
     except (ValueError,AssertionError): 
@@ -199,8 +208,9 @@ elif opts.op == 'delete':
         SIDDelete(protocol)
         cach_delete(opts.name,crypto)
 elif opts.op == 'status':
-    password = getPw()
-    crypto = SIDCrypto(password)
+    #password = getPw()
+    #crypto = SIDCrypto(password)
+    password, crypto = getCrypto()
     try:
         (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
     except (ValueError,AssertionError):
@@ -208,9 +218,9 @@ elif opts.op == 'status':
     else:
         print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s\n Version: %s' % (opts.name,url,directory_path,last_update,version))
 elif opts.op == 'restore':
-        password = getPw()
-        crypto = SIDCrypto(password)
-
+        #password = getPw()
+        #crypto = SIDCrypto(password)
+        password, crypto = getCrypto()
         # check if url or name is specified
         try:
             parseIdentifier = re.search(r'/', opts.identifier)
@@ -240,10 +250,12 @@ elif opts.op == 'restore':
                 print("Restore cached on drive")
             else:
                 if opts.newname != None:
-                    create_cach(opts.newname, crypto, opts.identifier, absPath(opts.directory),version=restored_version,restore=True) 
+                    newname = opts.newname
                     print("Restore cached on drive")
                 else:
-                    print("Please give a name for the restoration") 
+                    #print("Please give a name for the restoration")
+                    newname = input('Enter a new name for this backup : ')
+                create_cach(newname, crypto, opts.identifier, absPath(opts.directory),version=restored_version,restore=True) 
             if True:
                 print('Sauvegarde : ')
                 if opts.identifier == None:
@@ -251,11 +263,11 @@ elif opts.op == 'restore':
                         print('Version : ' + str(version))
                 print('URl : ' + url)
                 print('Directory_path : ' + directory_path)
-elif opts.op == 'changepassword':
-        password = getPw()
-        
+elif opts.op == 'chpass':
+        #password = getPw()
+        password, crypto = getCrypto()
         try: #if the password is valid
-                crypto = SIDCrypto(password)
+                #crypto = SIDCrypto(password)
                 (_, url, directory_path, _) = read_save(opts.name, crypto)
                 storage = getStorage(url)
                 protocol = Protocol(storage, crypto)

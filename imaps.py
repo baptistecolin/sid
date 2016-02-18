@@ -148,10 +148,11 @@ class Imaps(server_connection):
 
 if __name__ == '__main__':
 	IM = Imaps('sid.msip14@gmail.com', 'savefiles', name=b'test')
+	#IM = Imaps('ribs.sid@gmail.com', 'ribsribs', name=b'testArnaud')
 	IM.affichage()
 	#for i in range(5):
 	IM.put('toto', b'blablablablablabla')
-	print("get: ", IM.get('tototo'))
+	print("get: ", IM.get('toto'))
 	#IM.get(b'hello2')
 	
 	#IM.__contains__(b'toto'):
