@@ -8,7 +8,7 @@ from file import File ##
 from SIDCrypto import *
 import base64
 
-crypto = SIDCrypto("orage", algo_cipher = None)
+crypto = SIDCrypto("orage", algo_cipher = "None")
 
 ## TEMP TODO REMOVE
 class Protocol():
@@ -60,12 +60,12 @@ def buildSID(protocol, path = "", isNew = False):
 	if isNew:
 		ver = 0
 		id_max = 0
-		sidKey = "AZERTY"#base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8")  ### CHANGE
+		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8")  ### CHANGE
 	else:
 		try: ### CHANGE
 			last_info = json.loads(protocol.get("last.sid").decode("UTF-8")) ###
-		except AssertionError:
-			print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+		except AssertionError: ### CHANGE
+			print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
 		ver = last_info["version"] + 1
 		sidKey = last_info["sidKey"] ### CHANGE
 		id_max = last_info["id_max"]
@@ -82,7 +82,7 @@ def buildSID(protocol, path = "", isNew = False):
 			fhash = None
 		else:
 			ftype = "basics"
-			fhash = base64.b64encode(crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8")
+			fhash = base64.b64encode(protocol.crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8") ### CHANGE
 		if isNew:
 			dic[ftype][f] = {"hash" : fhash,
 					"size" : prop.st_size,
@@ -206,18 +206,12 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 			lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 		except AssertionError: ### CHANGE
 			print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
-#		o = open(os.path.join(path, "last.sid"), "wb")
-#		o.write(lastSID) # keep track on local machine
-#		o.close()
 	else:
 		try: ### CHANGE
 			lastSID = json.loads(protocol.get("v" + str(ver) + ".sid"))
 		except:
 			print("[SID-Structure] ERROR: version %i not found on backend, or is impossible to read (file may be corrupt, retry)." % ver)
-#		o = open(os.path.join(path, "last.sid"), "wb")
-#		o.write(lastSID) # keep track on local machine
-#		o.close()
-	
+
 	for d, v in lastSID["dirs"].items():
 		os.makedirs(os.path.join(path, d), 0o777, True)
 		try:
@@ -231,7 +225,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		if os.path.exists(os.path.join(path, f)):
 			if force:
 				fstat = os.lstat(f)
-				fhash = crypto.hash(os.path.join(path, f), hash_file=True)
+				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True) ### CHANGE
 				if fstat.st_size != v["size"] or fstat.st_mtime != v["modTime"] or fhash != base64.b64decode(v["hash"].encode("UTF-8")):
 					try: ### CHANGE
 						fcontent = protocol.get(v["serverName"]).decode("UTF-8")
@@ -268,7 +262,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 	for l, v in lastSID["symlinks"].items():
 		if os.path.exists(os.path.join(path, l)):
 			lstat = os.lstat(l)
-			lhash = crypto.hash(os.path.join(path, l), hash_file=True)
+			lhash = protocol.crypto.hash(os.path.join(path, l), hash_file=True) ### CHANGE
 			if lstat.st_mtime != v["modTime"] or lhash != v["hash"]:
 				os.unlink(os.path.join(path, l))
 				os.symlink(v["linkURL"], os.path.join(path, l))
@@ -287,7 +281,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 # @protocol : sid.Protocol
 def SIDStatus(protocol): ### CHANGE un peu tout
 	try:
-		lastSID = json.loads(protocol.get("last.sid"))
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
 		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
 		return None
@@ -298,7 +292,7 @@ def SIDStatus(protocol): ### CHANGE un peu tout
 # @detailed : bool
 def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 	try:
-		lastSID = json.loads(protocol.get("last.sid"))
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
 		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
 		return None
@@ -334,11 +328,14 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 
 
 
-SIDCreate(protocol_test, "test_dir1/")
+#SIDCreate(protocol_test, "test_dir1/")
 #SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
+SIDStatus(protocol)
+
 
 # fichiers temporaires
+# supprimer repertoire SID
 
 # ne pas hasher les petits fichiers
 # forcer restoration
