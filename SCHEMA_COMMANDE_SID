@@ -12,7 +12,7 @@ sid delete name
 #delete save
 sid status name
 #give the status of a save (last online version, url)
-sid restore [version] name destination 
+sid restore [version] [name]/[url] destination 
 #download the save "name" in "version" (last version by default)
 sid help
 #get some help
