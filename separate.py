@@ -110,7 +110,7 @@ if __name__ == '__main__':
 			if key not in self.store:
 				break
 			j+=1
-			self.store.delete(k)
+			self.store.delete(key)
 		if j==0:
 			print("There was no file to be deleted!")
 		else:
