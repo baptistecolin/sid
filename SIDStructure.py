@@ -1,4 +1,4 @@
-import glob
+ 
 import os
 import json
 import stat
@@ -360,7 +360,6 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 	except:
 		errors.append("last.sid")
 	return deleted, errors
-
 
 
 ###########################################

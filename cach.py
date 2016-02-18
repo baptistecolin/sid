@@ -12,11 +12,13 @@ cach_dir = os.environ['HOME'] + '/.sid'
 
 def create_cach(name,crypto,url='',directory_path='',version=0):
     if not os.path.isdir(cach_dir):
-       os.mkdir(cach_dir) 
+        os.mkdir(cach_dir) 
+        print("Directory to cach .sid created")
     if os.path.exists(os.path.join(cach_dir,name)):
         print("ERROR: name already taken")
     else:
         save(name,crypto,url,directory_path,version)
+        print("Save %s created successfully" % name)
 
 def update_cach(name,crypto,version):
 #test right password
@@ -36,6 +38,7 @@ def save(name,crypto, url='',directory_path='',version=0):
     o = open(t,"wb")
     o.write(crypted_json)
     o.close()
+    print("Data cached on the disk")
 
 def list_saves():
     if not os.path.isdir(cach_dir):
@@ -67,6 +70,7 @@ def read_save(name,crypto):
 def cach_delete(name,crypto): #test first if good password
     if os.path.exists(os.path.join(cach_dir,name)):
         os.remove(os.path.join(cach_dir,name))
+        print("Save %s delete from the cach successful" % name)
 
 if False:    
     cryptoEx = SIDCrypto("adrien")
