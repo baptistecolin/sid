@@ -366,7 +366,7 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 #SIDRestore(protocol_test, "dir3/")
 #print(SIDStatus(protocol_test))
 #print(SIDList(protocol_test, True))
-print(SIDDelete(protocol_test))
+#print(SIDDelete(protocol_test))
 
 # fichiers temporaires
 # supprimer repertoire SID
