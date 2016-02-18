@@ -52,10 +52,9 @@ class Imaps(server_connection):
 		result, data = self.mail.uid('search', None, 'Header Subject ' + subject)
 		if len(data[0]) > 0:
 			latest_email_uid = data[0].split()[-1]		
-			
 		else:	
 			print('no result from key -- ' , k)
-			return False 
+			raise FileNotFoundError()
 				# , form de bytes, Le plus récent email dans un mail list
 		result, data = self.mail.uid('fetch', latest_email_uid, 'BODY[TEXT]')
 		#raw_email = 
@@ -148,12 +147,11 @@ class Imaps(server_connection):
 
 
 if __name__ == '__main__':
-	password = getpass.getpass('password: ')
-	IM = Imaps('xiangnan.chat@gmail.com', password, name=b'test')
+	IM = Imaps('sid.msip14@gmail.com', 'savefiles', name=b'test')
 	IM.affichage()
 	#for i in range(5):
 	IM.put('toto', b'blablablablablabla')
-	print("get: ", IM.get('toto'))
+	print("get: ", IM.get('tototo'))
 	#IM.get(b'hello2')
 	
 	#IM.__contains__(b'toto'):

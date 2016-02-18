@@ -1,39 +1,41 @@
 # -*- coding:utf-8 -*-
 
-from file import *
+import file, ssh, imaps, webdav
 
 
 class Raid5():
-    def __init__(self, store):
-        self.store = store
-
-    def getKey(self, k, i):
-        return '%s--%s' % (k, i)
+    def __init__(self, stores):
+        self.size=len(stores)
+        self.store = stores
 
     def put(self, k, v):
-        disk1 = self.store("./" + k + '-1')
-        disk2 = self.store("./" + k + '-2')
-        disk3 = self.store("./" + k + '-3')
-
-        n = len(v)
+        len_v = len(v)
+        block_size = (len_v + self.size - 2) // (self.size - 1)
+        last_padding = block_size * (self.size - 1) -len_v
         parts = []
-        parts.append(v[:n // 2])
-        parts.append(v[n // 2:])
-        control_sum = b''
-        for i in range(0, n // 2):
-            control_sum += v[i] ^ v[n // 2 + i]
-        parts.append(control_sum)
-        if n % 2 != 0: control_sum += v[n]
+        for i in range(self.size-2):
+            parts.append(v[i*block_size:(i+1)*block_size]+bytearray(chr(1).encode('ASCII')))
+        parts.append(v[(self.size - 2)*block_size:] + bytearray((chr(last_padding+1) * (last_padding+1)).encode('ASCII')))
 
-        disk1.put(self.getKey(k, 1), parts[0])
-        disk2.put(self.getKey(k, 2), parts[1])
-        disk3.put(self.getKey(k, 3), parts[2])
+        # xor
+        control_sum = b''
+        for i in range(block_size+1):
+            value=parts[0][i]
+            #print(value)
+            for j in range(1, self.size-1):
+                value ^= parts[j][i]
+            control_sum += bytearray(chr(value).encode('ASCII'))
+        parts.append(control_sum)
+
+        for i in range(self.size):
+            self.store[i].put(k + "-" + str(i+1), parts[i])
 
 
 def main():
-    raid5 = Raid5(File('.'))
+    server=file.File('.')
+    raid5 = Raid5([server,server,server])
     raid5.put('helloworld',
-              b'blablablabalbalbalbalbalablabalbalbalabalbalbalabalbalablabalbalbalbalablabalbalbalbalbalablabalbalbalbalablabalbalbalbalbalablablablablabalbalblabalbalbalablab')
+              b'lablablab')
 
 
 if __name__ == '__main__':

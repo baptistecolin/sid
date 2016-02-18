@@ -1,9 +1,15 @@
 from file import *
 
 class Raid0():
-	def __init__(self,n,stores):
+	def __init__(self,n,stores,weight=[]):
 		self.n=n
 		self.stores=stores
+		if len(weight)==len(stores):
+			self.weight=weight
+		else:
+			self.weight=[]
+			for i in range(len(stores)):
+				self.weight.append(1/len(stores))
 	
 	def getKey(self,k,i):
 		return '%s-%i'%(k,i)

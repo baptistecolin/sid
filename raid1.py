@@ -16,10 +16,15 @@ class Raid1():
 		for s in self.stores:
 			if s.get(k) != None:
 				return s.get(k)
+		raise FileNotFoundError('File not found') 
+
+	def delete(self, k):
+		for s in self.stores:
+			return s.delete(k)
 			
 def main():
 	raid=Raid1([File('disk1'), File('disk2')])
-	raid.put('helloworld',b'blablablabalbalbalbalbalablabalbalbalabalbalbalabalbalablabalbalbalbalablabalbalbalbalbalablabalbalbalbalablabalbalbalbalbalablablablablabalbalblabalbalbalablab')
+	#raid.put('helloworld',b'blablablabalbalbalbalbalablabalbalbalabalbalbalabalbalablabalbalbalbalablabalbalbalbalbalablabalbalbalbalablabalbalbalbalbalablablablablabalbalblabalbalbalablab')
 	a = raid.get('helloworld')
 	print(a)
 	
