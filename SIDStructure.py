@@ -85,6 +85,7 @@ def getSIDKey(protocol): ### CHANGE
 # @isNew : boolean
 def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
+	sids = {}
 	sldChanged = False ### CHANGE
 	dic = {"basics" : {}, "symlinks" : {}, "dirs" : {}}
 	if isNew:
@@ -176,49 +177,46 @@ def buildSID(protocol, path = "", isNew = False):
 			# rename previous
 			o = open(os.path.join(path, "last.sid"), "rb")
 			prevSid = "v" + str(last_info["version"]) + ".sid"
-			prev = open(os.path.join(path, prevSid), "wb")
-			prev.write(o.read())
+#			prev = open(os.path.join(path, prevSid), "wb") ### CHANGE
+#			prev.write(o.read()) ### CHANGE
+#			prev.close() ### CHANGE
+			sids[prevSid] = o.read() ### CHANGE
 			o.close()
-			prev.close()
-			to_upload.append(prevSid)
 		# create new
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S") ### CHANGE
-		o = open(os.path.join(path, "last.sid"), "wb")
-		js = json.dumps(dic, o, sort_keys=True, indent=2).encode("UTF-8")
-		o.write(js)
-		o.close()
-		to_upload.append("last.sid")
-	return to_upload, dic["basics"]
+#		o = open(os.path.join(path, "last.sid"), "wb") ### CHANGE
+		js = json.dumps(dic, sort_keys=True, indent=2).encode("UTF-8") ### CHANGE
+#		o.write(js) ### CHANGE
+#		o.close() ### CHANGE
+		sids["last.sid"] = js ### CHANGE
+	return to_upload, dic["basics"], sids
 
 
 ## Upload directory "path" to update backup
 # @protocol : sid.Protocol
 # @path : str
-def SIDSave(protocol, path = ""):
-	to_upload, dic = buildSID(protocol, path)
+def SIDSave(protocol, path = ""): ### CHANGE all
+	to_upload, dic, sids = buildSID(protocol, path)
 	for f in to_upload:
 		o = open(os.path.join(path, f), "rb")
-		try:
-			protocol.put(dic[f]["serverName"], o.read())
-		except KeyError:
-			protocol.put(f.rsplit(os.sep, 1)[-1], o.read())
+		protocol.put(dic[f]["serverName"], o.read())
 		o.close()
+	for k, v in sids:
+		protocol.put(k, v)
+			
 
 
 ## Upload directory "path" to create new backup
 # @protocol : sid.Protocol
 # @path : str
-def SIDCreate(protocol, path = ""):
-	to_upload, dic = buildSID(protocol, path, True)
+def SIDCreate(protocol, path = ""): ### CHANGE all
+	to_upload, dic, sids = buildSID(protocol, path, True)
 	for f in to_upload:
 		o = open(os.path.join(path, f), "rb")
-		try:
-			protocol.put(dic[f]["serverName"], o.read())
-#			protocol.put(dic[f].getServerName(), f)
-		except KeyError:
-			protocol.put("last.sid", o.read())
-		o.close()
+		protocol.put(dic[f]["serverName"], o.read())
+		o.close() ### CHANGE
+	protocol.put("last.sid", sids["last.sid"])
 
 
 ## Restore directory in "path" from backup (latest version or previous)
@@ -396,36 +394,41 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 ## Returns the number of deletions and errors
 # @protocol : sid.Protocol
 # @version : int
-def SIDDelete(protocol, ver=-1): ### CHANGE un peu tout
-	toRemove = []
+def SIDRemove(protocol, ver=-1): ### CHANGE un peu tout
 	deleted = 0
 	errors = 0
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 		if ver < -1 or ver > lastSID["version"]:
 			ERROR("Version %i not found on backend. Latest version is: %i" % (ver, lastSID["version"]))
-		for i in range(0, lastSID["id_max"]):
-			toRemove[i] = True
+		toRemove = [True for i in range(0, lastSID["id_max"])]
 		holeList = lastSID["sidHoles"]
 		for i in range(0, lastSID["version"]):
 			if i != ver:
-				prevSID = json.loads(protocol.get("v" + i + ".sid").decode("UTF-8"))
+				prevSID = json.loads(protocol.get("v" + str(i) + ".sid").decode("UTF-8"))
 				for f, v in prevSID["basics"].items():
 					toRemove[int(v["serverName"])] = False
+		if ver != lastSID["version"]:
+			for f, v in lastSID["basics"].items():
+				toRemove[int(v["serverName"])] = False
 		for v in holeList:
 			toRemove[v] = False
 		for i in range(0, lastSID["id_max"]):
-			if toRemove(i):
+			if toRemove[i]:
 				try:
 					protocol.delete(str(i))
 					holeList.append(i)
 					deleted += 1
 				except:
 					errors += 1
-		
+		## TODO : upload new last.sid if just deleted
+		try:
+			protocol.delete("last.sid" if ver == lastSID["version"] else "v" + str(ver) + ".sid")
+		except:
+			ERROR("Could not delete corresponding .sid distant file.")
 		lastSID["sidHoles"] = holeList
-		protocol.put("last.sid", json.dumps(lastSID, o, sort_keys=True, indent=2).encode("UTF-8"))
-
+		protocol.put("last.sid", json.dumps(lastSID, sort_keys=True, indent=2).encode("UTF-8"))
+		## END TODO
 	except AssertionError:
 		ERROR("Impossible to read data from .sid files on backend: data is corrupt.")
 		return None
@@ -439,23 +442,21 @@ def SIDDelete(protocol, ver=-1): ### CHANGE un peu tout
 ########  TESTING AREA  #######################################################
 
 if __name__ == '__main__':
-	#SIDCreate(protocol_test, "test_dir1/")
-	SIDSave(protocol_test, "test_dir1/")
+	SIDCreate(protocol_test, "test_dir1/")
+	#SIDSave(protocol_test, "test_dir1/")
 	#SIDRestore(protocol_test, "dir3/")
 	print(SIDStatus(protocol_test))
 	print(SIDList(protocol_test, True))
-	#print(SIDDelete(protocol_test))
-	#print(SIDRemove(protocol_test, 0)
+	print(SIDDelete(protocol_test))
+	#print(SIDRemove(protocol_test, 0))
 	
 
 
 # fichiers temporaires
 	
 # ne pas hasher les petits fichiers
-# garbage collector : suppression de version particulière
-# => liste de trous dans last.sid
 # forcer restoration
-	
+
 # gros fichiers ?
 # grosses arborescences
 
