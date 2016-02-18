@@ -54,6 +54,9 @@ def error(msg, errID=-1):
 	errIDString = "" if errID == -1 else " (ID:" + errID + ")"
 	print("[SID-Structure] ERROR%s: %s" % (errIDString, msg))
 
+def DEBUG(msg):
+	print("[SID-Structure] DEBUG: %s" % msg)
+
 
 ########  END AUXILIARY  ######################################################
 ###############################################################################
@@ -124,9 +127,10 @@ def buildSID(protocol, path = "", isNew = False):
 #				dic[ftype][f] = directory(f,  fhash)
 		else:
 			try:
+				DEBUG(")
 #				if last_info[ftype][f].getHash() == fhash:
-				if last_info[ftype][f]["hash"] == fhash:
-					dic[ftype][f] = last_info[ftype][f]
+				elif last_info[ftype][f]["hash"] == fhash:
+					dic[ftype][f] = last_info[ftype][f]					
 				else:
 					dic[ftype][f] = {"hash" : fhash,
 							"size" : prop.st_size,
@@ -224,7 +228,13 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		try: ### CHANGE
 			lastSID = json.loads(protocol.get("v" + str(ver) + ".sid"))
 		except:
-			print("[SID-Structure] ERROR: version %i not found on backend, or is impossible to read (file may be corrupt, retry)." % ver)
+			try: ### CHANGE
+				lastSID = json.loads(protocol.get("last.sid"))
+				if lastSID["version"] != ver:
+					raise Exception("Invalid version error.")
+			except: ### CHANGE
+				error("version %i not found on backend, or is impossible to read (file may be corrupt, retry)." % ver)
+				return None
 
 	for d, v in lastSID["dirs"].items():
 		os.makedirs(os.path.join(path, d), 0o777, True)
@@ -289,7 +299,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 				os.utime(os.path.join(path, l), v["modTime"])
 			except: ""
 
-	return downloaded
+	return downloaded, lastSID["version"] ### CHANGE
 
 
 ## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1. ### CHANGE
@@ -383,11 +393,11 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 
 if __name__ == '__main__':
 	#SIDCreate(protocol_test, "test_dir1/")
-	#SIDSave(protocol_test, "test_dir1/")
+	SIDSave(protocol_test, "test_dir1/")
 	#SIDRestore(protocol_test, "dir3/")
-	#print(SIDStatus(protocol_test))
-	#print(SIDList(protocol_test, True))
-	print(SIDDelete(protocol_test))
+	print(SIDStatus(protocol_test))
+	print(SIDList(protocol_test, True))
+	#print(SIDDelete(protocol_test))
 	
 
 
