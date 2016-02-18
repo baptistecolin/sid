@@ -34,7 +34,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('name', type=str, help='Give a save name')
-nameurl.add_argument('-p','--password', type=str, help='Give a password')
+snameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -209,7 +209,7 @@ elif opts.op == 'restore':
             parseIdentifier = re.search(r'/', opts.identifier)
             if parseIdentifier == None:
                 opts.name = opts.identifier
-                (version, url, _, _) = read_save(opts.identifier, crypto)
+                (version, url, source_path, _) = read_save(opts.identifier, crypto)
             else:
                 url = opts.identifier
         except (ValueError,AssertionError):
@@ -229,11 +229,11 @@ elif opts.op == 'restore':
             #Cache
             #if opts.name != None:
             if parseIdentifier == None:
-                create_cach(opts.identifier, crypto, url, absPath(opts.directory),version=restored_version,restore=True) 
+                create_cach(opts.identifier, crypto, url, absPath(source_path),version=restored_version,restore=True) 
                 print("Restore cached on drive")
             else:
                 if opts.newname != None:
-                    create_cach(opts.newname, crypto, opts.url, absPath(opts.directory),version=restored_version,restore=True) 
+                    create_cach(opts.newname, crypto, opts.identifier, absPath(opts.directory),version=restored_version,restore=True) 
                     print("Restore cached on drive")
                 else:
                     print("Please give a name for the restoration") 
