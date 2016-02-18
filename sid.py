@@ -77,9 +77,10 @@ srestore.add_argument('-v','--version', type=str, help='specify version')
 srestore.add_argument('identifier', type=str, help='specify save name or url')
 srestore.add_argument('directory', type=str, help='specify directory to restore')
 
-#srestore.add_argument('-n','--name', type=str, help='Give a save name')
+srestore.add_argument('-n','--name', type=str, help='Give a save name')
+srestore.add_argument('-nn','--newname', type=str, help='Give a save name')
 srestore.add_argument('-p','--password', type=str, help='Give a password')
-#srestore.add_argument('-u','--url', type=str, help='specify target url')
+srestore.add_argument('-u','--url', type=str, help='specify target url')
 
 # parse sub-command, options and arguments
 opts = parser.parse_args()
@@ -231,6 +232,7 @@ elif opts.op == 'restore':
         try:
             parseIdentifier = re.search(r'/', opts.identifier)
             if parseIdentifier == None:
+                opts.name = opts.identifier
                 (version, url, _, _) = read_save(opts.identifier, crypto)
             else:
                 url = opts.identifier
@@ -243,7 +245,21 @@ elif opts.op == 'restore':
             storage = getStorage(url)
             protocol = Protocol(storage, crypto)
             print('Appel de SIDRestore sur : ' + directory_path)
-            SIDRestore(protocol, directory_path)
+            #SIDRestore
+            if opts.version != None:
+                (files_list,restored_version) = SIDRestore(protocol, directory_path,ver=opts.version)
+            else:
+                (files_list,restored_version) = SIDRestore(protocol, directory_path)
+            #Cache
+            if opts.name != None:
+                create_cach(opts.name, crypto, opts.url, absPath(opts.directory),version=restored_version,restore=True) 
+                print("Restore cached on drive")
+            else:
+                if opts.newname != None:
+                    create_cach(opts.newname, crypto, opts.url, absPath(opts.directory),version=restored_version,restore=True) 
+                    print("Restore cached on drive")
+                else:
+                    print("Please give a name for the restoration") 
             if True:
                 print('Sauvegarde : ')
                 if opts.identifier == None:
