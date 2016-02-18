@@ -12,19 +12,20 @@ crypto = SIDCrypto("orage", algo_cipher = "None")
 
 ## TEMP TODO REMOVE
 class Protocol():
-	def __init__(self, storage, crypto):
-		self.crypto = crypto
-		self.storage = storage
-	# backupFile : file's name
-	# toBackup : file's name
-	def put(self, k, v):
-		toWrite = self.crypto.encryptBytes(v)
-		self.storage.put(k, toWrite)
+        def __init__(self, storage, crypto):
+                self.crypto = crypto
+                self.storage = storage
+        def put(self, k, v):
+                toWrite = self.crypto.encryptBytes(v)
+                self.storage.put(k, toWrite)
 
-	def get(self, k):
-		toDecrypt = self.storage.get(k)
-		m = self.crypto.decryptBytes(toDecrypt)
-		return m
+        def get(self, k):
+                toDecrypt = self.storage.get(k)
+                return self.crypto.decryptBytes(toDecrypt)
+
+        def delete(self, k):
+                self.storage.delete(k)
+
 
 protocol_test = Protocol(File('test_dir2/'), crypto)
 
@@ -277,6 +278,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 
 	return downloaded
 
+
 ## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1. ### CHANGE
 # @protocol : sid.Protocol
 def SIDStatus(protocol): ### CHANGE un peu tout
@@ -286,6 +288,7 @@ def SIDStatus(protocol): ### CHANGE un peu tout
 #		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
 #		return None
 	return str(lastSID["version"]), lastSID["lastUpdate"]
+
 
 ## List files in backend
 # @protocol : sid.Protocol
@@ -327,13 +330,43 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 	return flist
 
 
+## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1. ### CHANGE
+# @protocol : sid.Protocol
+def SIDDelete(protocol): ### CHANGE un peu tout
+	deleted = []
+	errors = []
+	try:
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
+	except AssertionError:
+		""
+		# TODO : blind removal ?
+	for f, v in lastSID["basics"].items():
+		try:
+			protocol.delete(v["serverName"])
+			deleted.append(f)
+		except:
+			errors.append(f)
+	ver = lastSID["version"]
+	for i in range(0, ver):
+		prevSid = "v" + i + ".sid"
+		try:
+			protocol.delete(prevSid)
+			deleted.append(prevSid)
+		except:
+			errors.append(prevSid)
+	try:
+		protocol.delete("last.sid")
+		deleted.append("last.sid")
+	except:
+		errors.append("last.sid")
+	return deleted, errors
 
 #SIDCreate(protocol_test, "test_dir1/")
 #SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
 #print(SIDStatus(protocol_test))
 #print(SIDList(protocol_test, True))
-
+print(SIDDelete(protocol_test))
 
 # fichiers temporaires
 # supprimer repertoire SID

@@ -45,13 +45,11 @@ class SIDCrypto:
     def generateGlobalKey(self):
         self.globalKey = self.rand.read(self.algo_cipher.key_size[0])
 
-    def key_iv_salt_generator(self,globalKey):
+    def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
         salt = (self.rand).read(self.saltlen) #random generation of the salt
         
-        assert self.globalKey != None #error thrown if globalKey has not been defined
-
-        key = self.hash(globalKey + salt , converting_bytes = True) #the key is the hash of the global key +the salt
+        key = self.hash(seed + salt , converting_bytes = True) #the key is the hash of the global key +the salt
         key = key[:self.keylen]
         
         return (key,iv,salt)        
