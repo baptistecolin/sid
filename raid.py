@@ -11,6 +11,7 @@ class Raid():
 
 	def put(self, k, v):
 		if self.version==10:
+
 			disk1=File('/home/alban/raid/%s-1'%k)
 			disk2=File('/home/alban/raid/%s-2'%k)
 			disk3=File('/home/alban/raid/%s-3'%k)
