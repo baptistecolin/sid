@@ -421,10 +421,14 @@ def SIDRemove(protocol, ver=-1): ### CHANGE un peu tout
 					deleted += 1
 				except:
 					errors += 1
-
+		## TODO : upload new last.sid if just deleted
+		try:
+			protocol.delete("last.sid" if ver == lastSID["version"] else "v" + str(ver) + ".sid")
+		except:
+			ERROR("Could not delete corresponding .sid distant file.")
 		lastSID["sidHoles"] = holeList
 		protocol.put("last.sid", json.dumps(lastSID, sort_keys=True, indent=2).encode("UTF-8"))
-
+		## END TODO
 	except AssertionError:
 		ERROR("Impossible to read data from .sid files on backend: data is corrupt.")
 		return None
@@ -440,10 +444,10 @@ def SIDRemove(protocol, ver=-1): ### CHANGE un peu tout
 if __name__ == '__main__':
 	SIDCreate(protocol_test, "test_dir1/")
 	#SIDSave(protocol_test, "test_dir1/")
-	SIDRestore(protocol_test, "dir3/")
-	#print(SIDStatus(protocol_test))
-	#print(SIDList(protocol_test, True))
-	#print(SIDDelete(protocol_test))
+	#SIDRestore(protocol_test, "dir3/")
+	print(SIDStatus(protocol_test))
+	print(SIDList(protocol_test, True))
+	print(SIDDelete(protocol_test))
 	#print(SIDRemove(protocol_test, 0))
 	
 
