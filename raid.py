@@ -6,16 +6,15 @@ class Raid():
 	def __init__(self, version=10):
 		self.version=version
 		
-
 	def getKey(self,k,i):
 		return '%s--%s'%(k,i)
 
 	def put(self, k, v):
-		if version==10:
-			disk1=File('/home/alban/raid1/%s-1'%k)
-			disk2=File('/home/alban/raid1/%s-2'%k)
-			disk3=File('/home/alban/raid1/%s-3'%k)
-			disk4=File('/home/alban/raid1/%s-4'%k)
+		if self.version==10:
+			disk1=File('/home/alban/raid/%s-1'%k)
+			disk2=File('/home/alban/raid/%s-2'%k)
+			disk3=File('/home/alban/raid/%s-3'%k)
+			disk4=File('/home/alban/raid/%s-4'%k)
 
 			n=len(v)
 			parts_number=7
@@ -32,7 +31,8 @@ class Raid():
 				else :
 					disk2.put(self.getKey(k,i+1), parts[i])
 					disk4.put(self.getKey(k,i+1), parts[i])
-		elif version==5:
+		elif self.version==5:
+
 			disk2 = self.store("./" + k + '-2')
 			disk3 = self.store("./" + k + '-3')
 			parts = []
