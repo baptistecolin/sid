@@ -1,7 +1,7 @@
 from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from Crypto import Random
-from SIDStructure import *
+#from SIDStructure import *
 
 class Null:
     def new(key, mode, iv):
@@ -26,29 +26,24 @@ class NullCipher:
     def decrypt(self, s):
         return s
 
-algos = {"AES":AES, "ARC2":ARC2, "ARC4":ARC4, "Blowfish":Blowfish, "DES":DES, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
+algos = {"AES":AES, "ARC4":ARC4, "Blowfish":Blowfish, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
          "MD5":MD5, "None":Null}
 
 class SIDCrypto:
-    def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8, globalkeylen = 32):
+    def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8, globalkey=None):
         self.password = password
         self.algo_hash = algos[algo_hash]
         self.saltlen = saltlen
-        self.globalkeylen = globalkeylen
 
         self.algo_cipher = algos[algo_cipher]
 
-        if self.algo_cipher == DES: #DES implementation is different...
-            self.keylen, self.ivlen = DES.key_size, DES.block_size
-        else:
-            self.keylen, self.ivlen = self.algo_cipher.key_size[-1], self.algo_cipher.block_size
+        self.keylen, self.ivlen = self.algo_cipher.key_size[-1], self.algo_cipher.block_size
 
         self.rand = Random.new()
-        self.globalKey = None
+        self.globalKey = globalkey
 
-    def globalKeyGenerator():
-        return self.rand(self.globalkeylen)
-
+    def generateGlobalKey(self):
+        self.globalKey = self.rand.read(self.algo_cipher.key_size[0])
 
     def key_iv_salt_generator(self,globalKey):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
@@ -75,17 +70,14 @@ class SIDCrypto:
         return m
 
     def encryptBytes(self, clear, usePassword = False):
-        if not usePassword :
-            (key,iv,salt) = self.key_iv_salt_generator(self.globalKey)
-        else:
+
+        if self.globalKey is None or usePassword:
             password_bytes = self.password.encode('utf-8')
             (key,iv,salt) = self.key_iv_salt_generator(password_bytes)
-    
-        #generating a cipher
-        if self.algo_cipher == ARC2:
-            cipher = ARC2.new(key)
         else:
-            cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
+            (key,iv,salt) = self.key_iv_salt_generator(self.globalKey)
+    
+        cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
 
         clear += self.hash(clear)
         
@@ -106,36 +98,32 @@ class SIDCrypto:
 
 
 ###DECRYPTION FUNCTION
-    def decrypt(self,path, usePassword = False):
+    def decrypt(self, path, usePassword=False):
         
         o = open(path, 'rb')
         c = o.read()
 
-        m = self.decryptBytes(c, usePassword)
+        m = self.decryptBytes(c)
 
         return m #the output is a byte array containing the message.
 
-    def decryptBytes(self,s, usePassword = False):
+    def decryptBytes(self, s, usePassword=False):
         #the string is splitted into the actual ciphered message, the hash, the iv, and the salt
         c = s[:len(s)-(self.saltlen + self.ivlen)]
         iv = s[len(s)-(self.ivlen+self.saltlen):len(s)-self.saltlen]
         salt = s[len(s)-self.saltlen:]
 
-        assert self.globalKey != None #an error is thrown if globalKey has not been defined
+        #assert self.globalKey != None #an error is thrown if globalKey has not been defined
 
         #the key is the hash of the password+the salt
-        if not usePassword :
-            key = self.hash(self.globalKey + salt , converting_bytes = True)
-        else :
+        if self.globalKey is None or usePassword:
             password_bytes = self.password.encode('utf-8')
             key = self.hash(password_bytes + salt , converting_bytes = True)
-
-
-        if self.algo_cipher == ARC2:
-            cipher = ARC2.new(key)
         else:
-            cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
-            
+            key = self.hash(self.globalKey + salt , converting_bytes = True)
+
+        cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
+        
         m = cipher.decrypt(c)
             
         assert len(m)%(cipher.block_size) == 0 #makes sure m is conveniently padded. Else, throws an error.
@@ -174,7 +162,7 @@ if __name__ == "__main__":
     password = getpass.getpass('password: ')
     algo = input("algorithme a utiliser : ")
     sid = SIDCrypto(password, algo_cipher=algo)
-    sid.globalKey = sid.rand.read(sid.globalkeylen)
+    sid.globalKey = sid.rand.read(sid.algo_cipher.key_size[0])
                 
     message_clair = input("message a chiffrer : ").encode('utf-8')
     clear = open("clear.txt", 'bw')
