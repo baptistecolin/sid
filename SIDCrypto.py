@@ -2,6 +2,9 @@ from Crypto.Cipher import AES,Blowfish,CAST,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from Crypto import Random
 
+############################################## NULLCIPHER
+#Implements a cipher which doesnt change anything. Useful for debugging.
+
 class Null:
     def new(key, mode, iv):
         res = NullCipher(key, mode, iv)
@@ -28,6 +31,7 @@ class NullCipher:
 algos = {"AES":AES, "Blowfish":Blowfish, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
          "MD5":MD5, "None":Null}
 
+
 class SIDCrypto:
     def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8, globalkey=None):
         self.password = password
@@ -50,6 +54,9 @@ class SIDCrypto:
     def setPassword(self, newpassword): #usual setter
         self.password = newpassword
 
+    def isPassword(self, string):
+        return string == password
+
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
         salt = (self.rand).read(self.saltlen) #random generation of the salt
@@ -60,7 +67,8 @@ class SIDCrypto:
         return (key,iv,salt)        
 
 
-###ENCRYPTION FUNCTION
+############################################################ ENCRYPTION FUNCTION
+
     def encrypt(self, path, usePassword = False):
         #the path is the one of the file that will be ciphered
 
@@ -100,7 +108,8 @@ class SIDCrypto:
 
 
 
-###DECRYPTION FUNCTION
+########################################################## DECRYPTION FUNCTION
+
     def decrypt(self, path, usePassword=False):
         
         o = open(path, 'rb')
@@ -140,7 +149,8 @@ class SIDCrypto:
         
         return m[:-self.algo_hash.digest_size] #the output is a byte array containing the message.
 
-###HASH FUNCTION
+############################################################### HASH FUNCTION
+
     def hash(self, name, version = -1, converting_bytes = False, hash_file = False):
         
         if (not converting_bytes):
