@@ -1,11 +1,15 @@
 import SIDCrypto
 import os
 
-# @path : chemin depuis le repertoire sauvegarde
-class StructureFile:
+## Classe mère ("abstraite") pour le stockage d'infos sur les fichiers, répertoires ou liens
+# n'est pas censée être instanciée
+# @path : chemin relatif
+# si size ou modTime non donnés au constructeur,
+# recherche de la valeur
+class AbstractFile:
 	def __init__(self,path,size=-1,modTime=-1):
 		self.path = path
-		prop = os.lstat(f)
+		prop = os.lstat(path)
 		if size < 0: 
 			self.size = prop.st_size
 		else : 
@@ -15,8 +19,8 @@ class StructureFile:
 		else: 
 			self.modTime = modTime
 
-	def getHash(self):
-		return self.hash
+	def getPath(self):
+		return self.path
 	
 	def getSize(self):
 		return self.size
@@ -26,32 +30,54 @@ class StructureFile:
 	
 	# before encoding in json
 	def encode(self):
-		if isinstance(self, StructureFile):
-			return {'__StructureFile__' : True,
+		if isinstance(self, AbstractFile):
+			return {'type' : 'AbstractFile',
 				'path' : self.path,
 				'size' : self.size,
 				'modTime' : self.modTime}
 		raise TypeError(repr(o)+" is not JSON serializable")
 	
 	# to decode from json
-	# usage: json.loads(obj, object_hook = StructureFile.decode)
+	# usage: json.loads(obj, object_hook = AbstractFile.decode)
 	@staticmethod
 	def decode(dic):
-		if '__StructureFile__' in dic:
-			return StructureFile(dic['path'],
+		if dic['type'] == 'AbstractFile:
+			return AbstractFile(dic['path'],
 				     dic['size'],
 				     dic['modTime'])
 		return None
-	
+    
+    TYPES = {'AbstractFile' : AbstractFile, 
+             'BasicFile' : BasicFile,
+             'SymbolicLink': SymbolicLink, 
+             'Directory' : Directory}
 
-class BasicFile(StructureFile):
+    # before encoding in json (any type)
+    # usage: json.dumps(obj, default=FileStructure.universalEncode, sort_keys=True, indent=2)
+    def universalEncode(obj):
+	    if isinstance(obj, AbstractFile):
+	    	return obj.encode()
+	    else:
+	    	print("DEBUG appel de universalEncode sur un type inconnu. Type de base ?")
+	       	return obj
+
+    # to decode from json (any type)
+    # usage: json.loads(data, object_hook = AbstractFile.UniversalDecode)    
+    @staticmethod
+    def universalDecode(dic):
+        return TYPES[dic['type']].decode(dic)
+	
+# Pour le stockage d'infos sur les fichiers
+# si hash, size, modTime ou mode non donnés au constructeur,
+# recherche ou calcul de la valeur
+class BasicFile(AbstractFile):
 	def __init__(self,path,serverName,hash=None,size=-1,modTime=-1,mode=None):
-		StructureFile.__init__(self,path,size,modTime)
+		AbstractFile.__init__(self,path,size,modTime)
 		if hash == None:
 			self.hash = crypto.hash(path, hash_file = True)
 		else: 
 			self.hash = hash
-		prop = os.lstat(f)
+		prop = os.lstat(hash)
 		if mode == None: 
 			self.mode = prop.st_mode
 		else: 
@@ -70,8 +96,8 @@ class BasicFile(StructureFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, BasicFile):
-			dic = StructureFile.encode(self)  ### ?
-			dic['__BasicFile__'] = True
+			dic = AbstractFile.encode(self)  ### ?
+			dic['type'] = 'BasicFile'
 			dic['mode'] = self.mode
 			dic['serverName'] = self.serverName
 			dic['hash'] = self.hash
@@ -81,19 +107,28 @@ class BasicFile(StructureFile):
 	# to decode from json
 	@staticmethod
 	def decode(dic):
-		if '__BasicFile__' in dic:
-			dic['__StructureFile__'] = True
-			bf = StructureFile.decode(dic)
-			bf.mode = dic['mode']
-			bf.serverName = dic['serverName']
+		if 'type' == 'BasicFile' in dic:
+			bf = BasicFile(dic['path'], 
+                           dic['serverName'], 
+                           dic['hash'], 
+                           dic['size'], 
+                           dic['modTime'], 
+                           dic['mode'])
 			return bf
 		return dic
 
-class SymbolicLink(StructureFile):
+## TODO : SmallFile ??
+
+# Pour le stockage d'infos sur les liens symboliques
+# si size, modTime ou adresse de la cible non donnés au constructeur,
+# recherche de la valeur
+class SymbolicLink(AbstractFile):
 	def __init__(self,path,size=-1,modTime=-1,linkURL=None):
-		StructureFile.__init__(self,path,size,modTime)
-			if linkURL == None: self.linkURL = os.readlink(path)
-			else: self.linkURL = linkURL
+		AbstractFile.__init__(self,path,size,modTime)
+		if linkURL == None: 
+			self.linkURL = os.readlin(path)
+		else: 
+			self.linkURL = linkURL
 
 	def getLinkURL(self):
 		return self.linkURL
@@ -101,8 +136,8 @@ class SymbolicLink(StructureFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, SymbolicLink):
-			dic = StructureFile.encode(self)
-			dic['__SymbolicLink__'] = True
+			dic = AbstractFile.encode(self)
+			dic['type'] = 'SymbolicLink'
 			dic['linkURL'] = self.linkURL
 			return dic
 		raise TypeError(repr(o)+" is not JSON serializable")
@@ -110,18 +145,22 @@ class SymbolicLink(StructureFile):
 	# to decode from json
 	@staticmethod
 	def decode(dic):
-		if '__SymbolicLink__' in dic:
-			dic['__StructureFile__'] = True
-			sl = StructureFile.decode(dic)
-			sl.linkURL = dic['linkURL']
+		if 'type' == 'SymbolicLink':
+			sl = SymbolicLink(dic['path'],
+                              dic['size'],
+                              dic['modTime'],
+                              dic['linkURL'])
 			return sl
 		return dic
 
-class Directory(StructureFile):
+# Pour le stockage d'infos sur les répertoires
+# si size, modTime ou mode non donnés au constructeur,
+# recherche de la valeur
+class Directory(AbstractFile):
 	def __init__(self,path,size=-1,modTime=-1,mode=None):
-		StructureFile.__init__(self,path,size,modTime)
+		AbstractFile.__init__(self,path,size,modTime)
 		if mode == None: 
-			prop = os.lstat(f)
+			prop = os.lstat(path)
 			self.mode = prop.st_mode
 		else: self.mode = mode
 
@@ -131,8 +170,8 @@ class Directory(StructureFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, Directory):
-			dic = StructureFile.encode(self)
-			dic['__Directory__'] = True
+			dic = AbstractFile.encode(self)
+			dic['type'] = 'Directory'
 			dic['mode'] = self.mode
 			return dic
 		raise TypeError(repr(o)+" is not JSON serializable")
@@ -140,9 +179,15 @@ class Directory(StructureFile):
 	# to decode from json
 	@staticmethod
 	def decode(dic):
-		if '__Directory__' in dic:
-			dic['__StructureFile__'] = True
-			di = StructureFile.decode(dic)
-			di.mode = dic['mode']
+		if 'type' == 'Directory':
+			di = Directory(dic['path'],
+                           dic['size'],
+                           dic['modTime'],
+                           dic['mode'])
 			return di
 		return dic
+
+
+
+
+
