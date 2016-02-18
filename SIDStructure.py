@@ -361,6 +361,8 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 		errors.append("last.sid")
 	return deleted, errors
 
+
+
 #SIDCreate(protocol_test, "test_dir1/")
 #SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
@@ -369,7 +371,6 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 print(SIDDelete(protocol_test))
 
 # fichiers temporaires
-# supprimer repertoire SID
 
 # ne pas hasher les petits fichiers
 # forcer restoration
