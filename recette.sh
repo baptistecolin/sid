@@ -31,7 +31,8 @@ echo "fichier initial subdir/titi" >> $src/subdir/titi
 ln -s ./titi $src/lien
 
 # création de la sauvegarde
-sid create --pass foo $nom $src $dst "$@"
+rm $HOME/.sid/$nom
+sid create --pass foo -n $nom -d $src -u $dst "$@"
 sid list
 #sid ls -n $nom
 

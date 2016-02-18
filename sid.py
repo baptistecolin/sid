@@ -118,24 +118,42 @@ class Protocol():
                 self.storage.delete(k)
 
 def getStorage(url):
-        protocolName, address = splitUrl(url)
-        if protocolName == 'file':
-                storage = File(address)
-        elif protocolName == 'ssh':
-                from ssh import Ssh
-                # get login, server, path
-                parsePath = re.match(r'^(.*)@([^:]*):(.*)$', address)
-                login = parsePath.group(1)
-                server = parsePath.group(2)
-                backupPath = parsePath.group(3)
-                print(backupPath)
-                password = getpass.getpass(login+'@'+server+'\'s password : ')
-                storage = Ssh(backupPath, login, password, server)
-        elif protocolName == 'imap' or protocolName == 'imaps':
-                from imaps import Imaps
-        elif protocolName == 'http' or protocolName == 'https':
-                from webdav import Webdav
-        return storage
+	protocolName, address = splitUrl(url)
+	if protocolName == 'file':
+		storage = File(address)
+	elif protocolName == 'ssh':
+		from ssh import Ssh
+		
+		# get login, server, path
+		parsePath = re.match(r'^(.*)@([^:]*):(.*)$', address)
+		login = parsePath.group(1)
+		server = parsePath.group(2)
+		backupPath = parsePath.group(3)
+		#print(backupPath)
+		
+		password = getpass.getpass(login+'@'+server+'\'s password : ')
+		storage = Ssh(backupPath, login, password, server)
+	elif protocolName == 'imap' or protocolName == 'imaps':
+		from imaps import Imaps
+		login = input('Login : ')
+		server = address
+		password = getpass.getpass(login+'@'+server+'\'s password : ')
+		storage = Imaps(login, password)
+	elif protocolName == 'http' or protocolName == 'https':
+		from webdav import Webdav
+		
+		#get login, uri (path = '')
+		parsePath = re.match(r'^([^@]*)@(.*)$', address)
+		#premier cas : pas de nom d'utilisateur dans l'url envoyée
+		if parsePath == None:
+			login = input('Login : ')
+			uri = address
+		else:
+			login = parsePath.group(1)
+			uri = parsePath.group(2)
+		password = getpass.getpass(login+'@'+uri+'\'s password : ')
+		storage = Webdav('', protocolName+'://'+uri, login, password)
+	return storage
 
 
 ########################################################### PROGRAM 
