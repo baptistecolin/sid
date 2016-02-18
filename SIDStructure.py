@@ -50,12 +50,15 @@ def listFiles(path, addEntryPath = True, entryPath = ""):
 			files.append(totalPath)
 	return files
 
-def error(msg, errID=-1):
+def ERROR(msg, errID=-1):
 	errIDString = "" if errID == -1 else " (ID:" + errID + ")"
-	print("[SID-Structure] ERROR%s: %s" % (errIDString, msg))
+	print("[SID-Structure] ERROR%s: %s" % (errIDString, str(msg)))
+
+def ATTENTION(msg):
+	print("[SID-Structure] ATTENTION: %s" % str(msg))
 
 def DEBUG(msg):
-	print("[SID-Structure] DEBUG: %s" % msg)
+	print("[SID-Structure] DEBUG: %s" % str(msg))
 
 
 ########  END AUXILIARY  ######################################################
@@ -68,7 +71,7 @@ def getSIDKey(protocol): ### CHANGE
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
-		print("[SID-Structure] ERROR: impossible to get key from last.sid: file is corrupt.")
+		ERROR("Impossible to get key from last.sid: file is corrupt.")
 	return lastSID["sidKey"]
 
 
@@ -91,7 +94,7 @@ def buildSID(protocol, path = "", isNew = False):
 		try: ### CHANGE
 			last_info = json.loads(protocol.get("last.sid").decode("UTF-8")) ###
 		except AssertionError: ### CHANGE
-			error("Impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
+			ERROR("Impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
 		ver = last_info["version"] + 1
 		sidKey = last_info["sidKey"] ### CHANGE
 		id_max = last_info["id_max"]
@@ -127,9 +130,9 @@ def buildSID(protocol, path = "", isNew = False):
 #				dic[ftype][f] = directory(f,  fhash)
 		else:
 			try:
-				DEBUG(")
+				DEBUG(f)
 #				if last_info[ftype][f].getHash() == fhash:
-				elif last_info[ftype][f]["hash"] == fhash:
+				if last_info[ftype][f]["hash"] == fhash:
 					dic[ftype][f] = last_info[ftype][f]					
 				else:
 					dic[ftype][f] = {"hash" : fhash,
@@ -223,7 +226,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		try: ### CHANGE
 			lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 		except AssertionError: ### CHANGE
-			print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+			ERROR("Impossible to read downloaded last.sid: data is corrupt.")
 	else:
 		try: ### CHANGE
 			lastSID = json.loads(protocol.get("v" + str(ver) + ".sid"))
@@ -231,9 +234,9 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 			try: ### CHANGE
 				lastSID = json.loads(protocol.get("last.sid"))
 				if lastSID["version"] != ver:
-					raise Exception("Invalid version error.")
+					raise Exception("Invalid version ERROR.")
 			except: ### CHANGE
-				error("version %i not found on backend, or is impossible to read (file may be corrupt, retry)." % ver)
+				ERROR("version %i not found on backend, or is impossible to read (data may be corrupt, retry)." % ver)
 				return None
 
 	for d, v in lastSID["dirs"].items():
@@ -265,7 +268,6 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 						os.utime(os.path.join(path, f), v["modTime"])
 					except: ""
 					downloaded.append(f)
-			print("[SID-DEBUG] -- File found : %s" % f) # REMOVE LATER
 		else:
 			fhash = None
 			try: ### CHANGE
@@ -308,7 +310,7 @@ def SIDStatus(protocol): ### CHANGE un peu tout
 #	try:
 	lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 #	except AssertionError:
-#		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+#		ERROR("impossible to read downloaded last.sid: data is corrupt.")
 #		return None
 	return str(lastSID["version"]), lastSID["lastUpdate"]
 
@@ -320,7 +322,7 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
-		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+		ERROR("impossible to read downloaded last.sid: data is corrupt.")
 		return None
 	flist = []
 	for f, v in lastSID["basics"].items():
