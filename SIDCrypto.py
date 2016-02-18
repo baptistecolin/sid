@@ -1,7 +1,6 @@
 from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from Crypto import Random
-import SIDStructure
 
 class Null:
     def new(key, mode, iv):
