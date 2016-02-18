@@ -16,6 +16,10 @@ class Raid1():
 		for s in self.stores:
 			if s.get(k) != None:
 				return s.get(k)
+	
+	def delete(self, k):
+		for s in self.stores:
+			return s.delete(k)
 			
 def main():
 	raid=Raid1([File('disk1'), File('disk2')])
