@@ -2,11 +2,13 @@
 #
 # $0 [url]
 
+defdst=$PWD/save.dir
+
 if [ $# -eq 1 ] ; then
   dst=$1
   shift 1
 else
-  dst=file://$PWD/save.dir
+  dst=file://$defdst
 fi
 
 nom=test
@@ -56,4 +58,4 @@ echo '# comparaison de la restoration'
 diff -r $src $tst
 
 # cleanup
-rm -rf $src $dst $tst
+rm -rf $src $tst $defdst
