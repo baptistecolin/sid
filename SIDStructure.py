@@ -151,7 +151,7 @@ def buildSID(protocol, path = "", isNew = False):
 		if not isNew:
 			# rename previous
 			prevSid = "v" + str(last_info["version"]) + ".sid"
-			sids[prevSid] = data
+			sids[prevSid] = data.encode('UTF-8') # Ajout d'Arnaud - data est un get().decode et on va appeler put dessus -> il doit être en bytes ?
 		# create new
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S")

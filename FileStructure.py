@@ -139,7 +139,7 @@ class SymbolicLink(AbstractFile):
 	def __init__(self,filePath,currPath='.',size=-1,modTime=-1,linkURL=None):
 		AbstractFile.__init__(self,filePath,currPath,size,modTime)
 		if linkURL == None: 
-			self.linkURL = os.readlin(os.path.join(currPath,filePath))
+			self.linkURL = os.readlink(os.path.join(currPath,filePath))
 		else: 
 			self.linkURL = linkURL
 
