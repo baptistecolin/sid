@@ -25,8 +25,8 @@ class Webdav(server_connection):
 		if response.status==200:
 			return content
 		else:
-			return None
-				
+			raise FileNotFoundError()
+
 	def create(self,uri,k):
 		return os.path.join(uri,k)
 

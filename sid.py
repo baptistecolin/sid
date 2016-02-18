@@ -10,6 +10,7 @@ import re
 import server_connection
 import getpass
 from urllib.parse import urlparse
+from urllib.parse import unquote
 from SIDStructure import SIDCreate, SIDRestore, SIDSave, SIDDelete
 from SIDCrypto import * 
 from cach import * 
@@ -22,7 +23,7 @@ subs = parser.add_subparsers()
 help = subs.add_parser('help', help='show help')
 help.set_defaults(op='help')
 
-help.add_argument('about', nargs='?', choices=['help','create','list','ls','update','status','restore', 'changepassword'],
+help.add_argument('about', nargs='?', choices=['help','create','list','ls','update','status','restore', 'chpass'],
                                   default='help', help='sub-command name')
 
 # list sub-command
@@ -33,7 +34,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('name', type=str, help='Give a save name')
-nameurl.add_argument('-p','--password', type=str, help='Give a password')
+snameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -71,9 +72,9 @@ srestore.add_argument('directory', type=str, help='specify directory to restore'
 srestore.add_argument('-nn','--newname', type=str, help='Give a save name')
 srestore.add_argument('-p','--password', type=str, help='Give a password')
 
-# changepassword sub-command
-schangepassword = subs.add_parser('changepassword', help='change the backup\'s password', parents=[snameurl])
-schangepassword.set_defaults(op='changepassword')
+# chpass sub-command
+schpass = subs.add_parser('chpass', help='change the backup\'s password', parents=[snameurl])
+schpass.set_defaults(op='chpass')
 
 # parse sub-command, options and arguments
 opts = parser.parse_args()
@@ -100,13 +101,14 @@ def getIds(login, password, server):
 		login = input('Login : ')
 	if password == None:
 		password = getpass.getpass(login + '@' + server + '\'s password : ')
-	return (login, password)
+	return (unquote(login), unquote(password))
 
 class Protocol():
         def __init__(self, storage, crypto):
                 self.crypto = crypto
                 self.storage = storage
         def put(self, k, v):
+                print('put in : ' + k)
                 toWrite = self.crypto.encryptBytes(v)
                 self.storage.put(k, toWrite)
 
@@ -129,12 +131,16 @@ def getStorage(url):
 		storage = File(backupPath)
 	elif protocolName == 'ssh':
 		from ssh import Ssh
+		print('Sauvegarde ssh dans : ' + backupPath)
 		(login, password) = getIds(login, password, server)
 		storage = Ssh(backupPath, login, password, server)
 	elif protocolName == 'imap' or protocolName == 'imaps':
 		from imaps import Imaps
 		(login, password) = getIds(login, password, server)
-		storage = Imaps(login, password)
+		if backupPath == '':
+			storage = Imaps(login, password, server)
+		else:
+			storage = Imaps(login, password, server, box=backupPath)
 	elif protocolName == 'http' or protocolName == 'https':
 		from webdav import Webdav
 		(login, password) = getIds(login, password, server)
@@ -157,6 +163,13 @@ elif opts.op == 'create':
         protocol = Protocol(storage, crypto)
         SIDCreate(protocol, opts.directory)
         create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
+
+        #creating a file containing the hash of the password, and putting it unciphered on the storage.
+        #will be useful when the password needs to be reseted.
+        #hash is performed using SHA256
+        h = crypto.hash(password)
+        protocol.put('password_hash.crypt' , h)
+
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
@@ -203,7 +216,7 @@ elif opts.op == 'restore':
             parseIdentifier = re.search(r'/', opts.identifier)
             if parseIdentifier == None:
                 opts.name = opts.identifier
-                (version, url, _, _) = read_save(opts.identifier, crypto)
+                (version, url, source_path, _) = read_save(opts.identifier, crypto)
             else:
                 url = opts.identifier
         except (ValueError,AssertionError):
@@ -221,12 +234,13 @@ elif opts.op == 'restore':
             else:
                 (files_list,restored_version) = SIDRestore(protocol, directory_path)
             #Cache
-            if opts.name != None:
-                create_cach(opts.name, crypto, opts.url, absPath(opts.directory),version=restored_version,restore=True) 
+            #if opts.name != None:
+            if parseIdentifier == None:
+                create_cach(opts.identifier, crypto, url, absPath(source_path),version=restored_version,restore=True) 
                 print("Restore cached on drive")
             else:
                 if opts.newname != None:
-                    create_cach(opts.newname, crypto, opts.url, absPath(opts.directory),version=restored_version,restore=True) 
+                    create_cach(opts.newname, crypto, opts.identifier, absPath(opts.directory),version=restored_version,restore=True) 
                     print("Restore cached on drive")
                 else:
                     print("Please give a name for the restoration") 
@@ -238,5 +252,22 @@ elif opts.op == 'restore':
                 print('URl : ' + url)
                 print('Directory_path : ' + directory_path)
 elif opts.op == 'changepassword':
-	password = getPw()
-	
+        password = getPw()
+        
+        try: #if the password is valid
+                crypto = SIDCrypto(password)
+                (_, url, directory_path, _) = read_save(opts.name, crypto)
+                storage = getStorage(url)
+                protocol = Protocol(storage, crypto)
+                h = protocol.get('password_hash.crypt')
+                print('oui bravo')
+
+###### ici : mettre en place le chiffrement / dechiffrement de last.sid
+
+
+
+
+
+        except(AssertionError): #if the password is wrong
+                print('Wrong password')
+

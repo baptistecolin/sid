@@ -150,11 +150,9 @@ def buildSID(protocol, path = "", isNew = False):
 	if to_upload or sldChanged:
 		if not isNew:
 			# rename previous
-			o = open(os.path.join(path, "last.sid"), "rb") ### bug
 			prevSid = "v" + str(last_info["version"]) + ".sid"
-			sids[prevSid] = o.read()
-			o.close()
-		# create new last.sid
+			sids[prevSid] = data
+		# create new
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S")
 		js = json.dumps(dic, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8")
@@ -171,8 +169,8 @@ def SIDSave(protocol, path = ""):
 		o = open(os.path.join(path, f), "rb")
 		protocol.put(dic[f].getServerName(), o.read())
 		o.close()
-	for k, v in sids:
-		protocol.put(k, v)		
+	for k, v in sids.items():
+		protocol.put(k, v)
 
 
 ## Upload directory "path" to create new backup
