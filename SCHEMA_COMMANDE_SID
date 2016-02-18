@@ -1,4 +1,4 @@
-sid create name url folder 
+sid create name folder url 
 #create a save "name" from "local_file/folder" to "url" 
 sid list 
 #list all the saves cashed on the computer 
@@ -6,13 +6,13 @@ sid setName name url
 #set a name for a save at url
 sid update name 
 #update the save 
-sid ls name/url (version)
+sid ls [version] name
 #list saved content + version
-sid delete name/url
+sid delete name
 #delete save
-sid status name/url
+sid status name
 #give the status of a save (last online version, url)
-sid restore name/url (version) 
+sid restore [version] [name]/[url] destination 
 #download the save "name" in "version" (last version by default)
 sid help
 #get some help
