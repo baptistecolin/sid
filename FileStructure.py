@@ -9,7 +9,8 @@ import os
 class AbstractFile:
 	def __init__(self,filePath,currPath='.',size=-1,modTime=-1):
 		self.path = filePath
-		prop = os.lstat(os.path.join(currPath,filePath))
+		if size < 0 or modTime < 0:
+			prop = os.lstat(os.path.join(currPath,filePath))
 		if size < 0: 
 			self.size = prop.st_size
 		else : 
@@ -42,9 +43,11 @@ class AbstractFile:
 	@staticmethod
 	def decode(dic):
 		if dic['type'] == 'AbstractFile':
+			print("DEBUG : appel de AbstractFile.decode() sur {0}".format(dic))
 			return AbstractFile(dic['path'],
-					 dic['size'],
-					 dic['modTime'])
+					 currPath=None,
+					 size=dic['size'],
+					 modTime=dic['modTime'])
 		return None
 	
 	# before encoding in json (any type)
@@ -54,16 +57,31 @@ class AbstractFile:
 		if isinstance(obj, AbstractFile):
 			return obj.encode()
 		else:
-			print("DEBUG appel de universalEncode sur un type inconnu. Type de base ?")
+			print("DEBUG : unknown type in universalEncode. Handled as basic type")
 			return obj
 
 	# to decode from json (any type)
 	# usage: json.loads(data, object_hook = AbstractFile.UniversalDecode)	
 	@staticmethod
-	def universalDecode(dic):
+	def universalDecode(data, rep_path='.'):
 		TYPES = {'AbstractFile' : AbstractFile, 'BasicFile' : BasicFile, 'SymbolicLink': SymbolicLink, 'Directory' : Directory}
-		return TYPES[dic['type']].decode(dic)
-	
+		if type(data) == dict:
+			try:
+				print("DEBUG : known type, returns object in universalDecode")
+				print("data :",data)
+				obj = TYPES[data['type']].decode(data)
+				print("obj :",obj)
+				return obj 
+			except KeyError:
+				print("DEBUG : unknown type, following dict handled recursively in universalDecode :")
+				print(data)
+				obj_dic = {}
+				for k in data:
+					obj_dic[k] = AbstractFile.universalDecode(data[k])
+				return data
+		else:
+			return data
+
 # Pour le stockage d'infos sur les fichiers
 # si hash, size, modTime ou mode non donnés au constructeur,
 # recherche ou calcul de la valeur
@@ -74,7 +92,8 @@ class BasicFile(AbstractFile):
 			self.hash = crypto.hash(path, hash_file = True)
 		else: 
 			self.hash = hash
-		prop = os.lstat(os.path.join(currPath,filePath))
+		if size < 0 or modTime < 0 or mode < 0:
+			prop = os.lstat(os.path.join(currPath,filePath))
 		if mode == None: 
 			self.mode = prop.st_mode
 		else: 
@@ -104,13 +123,15 @@ class BasicFile(AbstractFile):
 	# to decode from json
 	@staticmethod
 	def decode(dic):
-		if 'type' == 'BasicFile' in dic:
+		if dic['type'] == 'BasicFile':
 			bf = BasicFile(dic['path'], 
-						   dic['serverName'], 
-						   dic['hash'], 
-						   dic['size'], 
-						   dic['modTime'], 
-						   dic['mode'])
+						   dic['serverName'],
+						   currPath=None, 
+						   hash=dic['hash'], 
+						   size=dic['size'], 
+						   modTime=dic['modTime'], 
+						   mode=dic['mode'])
+			print("DEBUG : BasicFile instanciated")
 			return bf
 		return dic
 
@@ -142,11 +163,13 @@ class SymbolicLink(AbstractFile):
 	# to decode from json
 	@staticmethod
 	def decode(dic):
-		if 'type' == 'SymbolicLink':
+		if dic['type'] == 'SymbolicLink':
 			sl = SymbolicLink(dic['path'],
-							  dic['size'],
-							  dic['modTime'],
-							  dic['linkURL'])
+					  currPath=None,
+					  size=dic['size'],
+					  modTime=dic['modTime'],
+					  linkURL=dic['linkURL'])
+			print("DEBUG : SymbolicLink instanciated")
 			return sl
 		return dic
 
@@ -176,10 +199,12 @@ class Directory(AbstractFile):
 	# to decode from json
 	@staticmethod
 	def decode(dic):
-		if 'type' == 'Directory':
+		if dic['type'] == 'Directory':
 			di = Directory(dic['path'],
-						   dic['size'],
-						   dic['modTime'],
-						   dic['mode'])
+						   currPath=None,
+						   size=dic['size'],
+						   modTime=dic['modTime'],
+						   mode=dic['mode'])
+			print("DEBUG : Directory intanciated")
 			return di
 		return dic
