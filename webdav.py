@@ -37,7 +37,7 @@ class Webdav(server_connection):
 #Testing the module	
 def main():
 	web=Webdav('titiBis/')
-	#web=Webdav()
+#	web=Webdav()
 	web.get('hello')
 	web.put('1234','hello')
 	web.get('1234')
