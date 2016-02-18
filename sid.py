@@ -36,7 +36,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('name', type=str, help='Give a save name')
-snameurl.add_argument('-p','--password', type=str, help='Give a password')
+nameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -101,6 +101,7 @@ def getPw():
         return opts.password
     else: 
         password = getpass.getpass('sid\'s password : ')
+        
         return password
 
 class Protocol():
