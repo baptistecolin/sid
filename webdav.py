@@ -4,7 +4,7 @@ from server_connection import server_connection
 
 class Webdav(server_connection):
 	#Enter 
-	def __init__(self,path='',uri='http://10.0.2.15/webdav/',username='sid',pwd='sid'):
+	def __init__(self,path='',uri='http://localhost/webdav/',username='sid',pwd='sid'):
 		self.server=httplib2.Http()
 		self.server.add_credentials(username,pwd)
 		self.dest=os.path.join(uri,path)

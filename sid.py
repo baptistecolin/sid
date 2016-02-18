@@ -12,7 +12,6 @@ import re
 import server_connection
 import getpass
 from urllib.parse import urlparse
-from file import File
 from SIDStructure import SIDCreate, SIDRestore, SIDSave, SIDDelete
 from SIDCrypto import * 
 from cach import * 
@@ -121,41 +120,55 @@ class Protocol():
                 self.storage.delete(k)
 
 def getStorage(url):
-	protocolName, address = splitUrl(url)
+#	protocolName, address = splitUrl(url)
+	parseUrl = urlparse(url)
+	protocolName = parseUrl.scheme
+	backupPath = parseUrl.path
+	login = parseUrl.username
+	password = parseUrl.password
+	server = parseUrl.hostname
 	if protocolName == 'file':
-		storage = File(address)
+		from file import File
+		storage = File(backupPath)
 	elif protocolName == 'ssh':
 		from ssh import Ssh
 		
 		# get login, server, path
-		parsePath = re.match(r'^(.*)@([^:]*):(.*)$', address)
-		login = parsePath.group(1)
-		server = parsePath.group(2)
-		backupPath = parsePath.group(3)
+		# parsePath = re.match(r'^(.*)@([^:]*):(.*)$', address)
+		# login = parsePath.group(1)
+		# server = parsePath.group(2)
+		# backupPath = parsePath.group(3)
 		#print(backupPath)
-		
-		password = getpass.getpass(login+'@'+server+'\'s password : ')
+		if login == None:
+			login = input('Login : ')
+		if password == None:
+			password = getpass.getpass(login+'@'+server+'\'s password : ')
 		storage = Ssh(backupPath, login, password, server)
 	elif protocolName == 'imap' or protocolName == 'imaps':
 		from imaps import Imaps
-		login = input('Login : ')
-		server = address
-		password = getpass.getpass(login+'@'+server+'\'s password : ')
+		if login == None:
+			login = input('Login : ')
+		# server = address
+		if password == None:
+			password = getpass.getpass(login+'@'+server+'\'s password : ')
 		storage = Imaps(login, password)
 	elif protocolName == 'http' or protocolName == 'https':
 		from webdav import Webdav
 		
 		#get login, uri (path = '')
-		parsePath = re.match(r'^([^@]*)@(.*)$', address)
+		# parsePath = re.match(r'^([^@]*)@(.*)$', address)
 		#premier cas : pas de nom d'utilisateur dans l'url envoyée
-		if parsePath == None:
+		#if parsePath == None:
+		#	login = input('Login : ')
+		#	uri = address
+		#else:
+		#	login = parsePath.group(1)
+		#	uri = parsePath.group(2)
+		if login == None:
 			login = input('Login : ')
-			uri = address
-		else:
-			login = parsePath.group(1)
-			uri = parsePath.group(2)
-		password = getpass.getpass(login+'@'+uri+'\'s password : ')
-		storage = Webdav('', protocolName+'://'+uri, login, password)
+		if password == None:
+			password = getpass.getpass(login+'@'+server+'\'s password : ')
+		storage = Webdav('', protocolName+'://'+server, login, password)
 	return storage
 
 
