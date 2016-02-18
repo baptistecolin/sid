@@ -77,6 +77,7 @@ srestore.add_argument('-v','--version', type=str, help='specify version')
 srestore.add_argument('directory', type=str, help='specify directory to restore')
 
 srestore.add_argument('-n','--name', type=str, help='Give a save name')
+srestore.add_argument('-nn','--newname', type=str, help='Give a save name')
 srestore.add_argument('-p','--password', type=str, help='Give a password')
 srestore.add_argument('-u','--url', type=str, help='specify target url')
 
@@ -225,7 +226,10 @@ elif opts.op == 'restore':
             storage = getStorage(url)
             protocol = Protocol(storage, crypto)
             print('Appel de SIDRestore sur : ' + directory_path)
-            SIDRestore(protocol, directory_path)
+            if opts.version != None:
+                (files_list,restored_version) = SIDRestore(protocol, directory_path,ver=opts.version)
+            else:
+                (files_list,restored_version) = SIDRestore(protocol, directory_path)
             if True:
                 print('Sauvegarde : ')
                 if opts.name != None:
