@@ -2,6 +2,9 @@ from Crypto.Cipher import AES,Blowfish,CAST,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from Crypto import Random
 
+############################################## NULLCIPHER
+#Implements a cipher which doesnt change anything. Useful for debugging.
+
 class Null:
     def new(key, mode, iv):
         res = NullCipher(key, mode, iv)
@@ -28,12 +31,13 @@ class NullCipher:
 algos = {"AES":AES, "Blowfish":Blowfish, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
          "MD5":MD5, "None":Null}
 
+
 class SIDCrypto:
     def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8, globalkey=None):
-        self.password = password
+        
         self.algo_hash = algos[algo_hash]
         self.saltlen = saltlen
-
+        self.password = self.hash(password)
         self.algo_cipher = algos[algo_cipher]
 
         self.keylen, self.ivlen = self.algo_cipher.key_size[-1], self.algo_cipher.block_size
@@ -47,6 +51,12 @@ class SIDCrypto:
     def setGlobalKey(self, key): #usual setter
         self.globalKey = key
 
+    def setPassword(self, newpassword): #usual setter
+        self.password = newpassword
+
+    def isPassword(self, string):
+        return hash(string) == password
+
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
         salt = (self.rand).read(self.saltlen) #random generation of the salt
@@ -57,7 +67,8 @@ class SIDCrypto:
         return (key,iv,salt)        
 
 
-###ENCRYPTION FUNCTION
+############################################################ ENCRYPTION FUNCTION
+
     def encrypt(self, path, usePassword = False):
         #the path is the one of the file that will be ciphered
 
@@ -72,14 +83,13 @@ class SIDCrypto:
     def encryptBytes(self, clear, usePassword = False):
 
         if self.globalKey is None or usePassword:
-            password_bytes = self.password.encode('utf-8')
             (key,iv,salt) = self.key_iv_salt_generator(password_bytes)
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.globalKey)
     
         cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
 
-        clear += self.hash(clear)
+        clear += self.hash(clear, converting_bytes = True)
         
         #begin padding
         padlen = cipher.block_size
@@ -97,7 +107,8 @@ class SIDCrypto:
 
 
 
-###DECRYPTION FUNCTION
+########################################################## DECRYPTION FUNCTION
+
     def decrypt(self, path, usePassword=False):
         
         o = open(path, 'rb')
@@ -117,7 +128,6 @@ class SIDCrypto:
 
         #the key is the hash of the password+the salt
         if self.globalKey is None or usePassword:
-            password_bytes = self.password.encode('utf-8')
             key = self.hash(password_bytes + salt , converting_bytes = True)[:self.keylen]
         else:
             key = self.hash(self.globalKey + salt , converting_bytes = True)[:self.keylen]
@@ -137,7 +147,8 @@ class SIDCrypto:
         
         return m[:-self.algo_hash.digest_size] #the output is a byte array containing the message.
 
-###HASH FUNCTION
+############################################################### HASH FUNCTION
+
     def hash(self, name, version = -1, converting_bytes = False, hash_file = False):
         
         if (not converting_bytes):
@@ -149,11 +160,11 @@ class SIDCrypto:
                     s = name
                 else:
                     s = name + str(version)
-                    s = s.encode("utf-8")
+                s = s.encode("utf-8")
         else:
             s = name
 
-        h = self.algo_hash.new()  
+        h = (self.algo_hash).new()  
         h.update(s)
         return h.digest()
 

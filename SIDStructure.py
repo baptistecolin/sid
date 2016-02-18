@@ -50,12 +50,15 @@ def listFiles(path, addEntryPath = True, entryPath = ""):
 			files.append(totalPath)
 	return files
 
-def error(msg, errID=-1):
+def ERROR(msg, errID=-1):
 	errIDString = "" if errID == -1 else " (ID:" + errID + ")"
-	print("[SID-Structure] ERROR%s: %s" % (errIDString, msg))
+	print("[SID-Structure] ERROR%s: %s" % (errIDString, str(msg)))
+
+def ATTENTION(msg):
+	print("[SID-Structure] ATTENTION: %s" % str(msg))
 
 def DEBUG(msg):
-	print("[SID-Structure] DEBUG: %s" % msg)
+	print("[SID-Structure] DEBUG: %s" % str(msg))
 
 
 ########  END AUXILIARY  ######################################################
@@ -68,7 +71,7 @@ def getSIDKey(protocol): ### CHANGE
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
-		print("[SID-Structure] ERROR: impossible to get key from last.sid: file is corrupt.")
+		ERROR("Impossible to get key from last.sid: file is corrupt.")
 	return lastSID["sidKey"]
 
 
@@ -82,21 +85,25 @@ def getSIDKey(protocol): ### CHANGE
 # @isNew : boolean
 def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
+	sldChanged = False ### CHANGE
 	dic = {"basics" : {}, "symlinks" : {}, "dirs" : {}}
 	if isNew:
 		ver = 0
 		id_max = 0
-		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8")  ### CHANGE
+		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8")  ### CHANGE # TODO ?
+		sidHoles = [] ### CHANGE
 	else:
 		try: ### CHANGE
 			last_info = json.loads(protocol.get("last.sid").decode("UTF-8")) ###
 		except AssertionError: ### CHANGE
-			error("Impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
+			ERROR("Impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
 		ver = last_info["version"] + 1
 		sidKey = last_info["sidKey"] ### CHANGE
 		id_max = last_info["id_max"]
+		sidHoles = last_info["sidHoles"] ### CHANGE
 	dic["sidKey"] = sidKey  ### CHANGE
 	dic["version"] = ver
+	dic["sidHoles"] = sidHoles ### CHANGE
 	for f in listFiles(path, False):
 		prop = os.lstat(os.path.join(path, f))
 		if stat.S_ISLNK(prop.st_mode) != 0:
@@ -127,9 +134,8 @@ def buildSID(protocol, path = "", isNew = False):
 #				dic[ftype][f] = directory(f,  fhash)
 		else:
 			try:
-				DEBUG(")
 #				if last_info[ftype][f].getHash() == fhash:
-				elif last_info[ftype][f]["hash"] == fhash:
+				if last_info[ftype][f]["hash"] == fhash:
 					dic[ftype][f] = last_info[ftype][f]					
 				else:
 					dic[ftype][f] = {"hash" : fhash,
@@ -147,6 +153,7 @@ def buildSID(protocol, path = "", isNew = False):
 						to_upload.append(f)
 #					elif ftype == "dirs":
 #						dic[ftype][f] = directory(f, fhash)
+					sldChanged = True ### CHANGE
 			except KeyError:
 				dic[ftype][f] = {"hash" : fhash,
 						"size" : prop.st_size,
@@ -163,7 +170,8 @@ def buildSID(protocol, path = "", isNew = False):
 					to_upload.append(f)
 #				elif ftype == "dirs":
 #						dic[ftype][f] = directory(f, fhash)
-	if to_upload:
+				sldChanged = True ### CHANGE
+	if to_upload or sldChanged:
 		if not isNew:
 			# rename previous
 			o = open(os.path.join(path, "last.sid"), "rb")
@@ -223,7 +231,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		try: ### CHANGE
 			lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 		except AssertionError: ### CHANGE
-			print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+			ERROR("Impossible to read downloaded last.sid: data is corrupt.")
 	else:
 		try: ### CHANGE
 			lastSID = json.loads(protocol.get("v" + str(ver) + ".sid"))
@@ -231,9 +239,9 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 			try: ### CHANGE
 				lastSID = json.loads(protocol.get("last.sid"))
 				if lastSID["version"] != ver:
-					raise Exception("Invalid version error.")
+					raise Exception("Invalid version ERROR.")
 			except: ### CHANGE
-				error("version %i not found on backend, or is impossible to read (file may be corrupt, retry)." % ver)
+				ERROR("version %i not found on backend, or is impossible to read (data may be corrupt, retry)." % ver)
 				return None
 
 	for d, v in lastSID["dirs"].items():
@@ -254,7 +262,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 					try: ### CHANGE
 						fcontent = protocol.get(v["serverName"]).decode("UTF-8")
 					except AssertionError: ### CHANGE
-						print("[SID-Structure] ATTENTION: impossible to read downloaded file %s: file is corrupt." % f)
+						ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
 					o = open(os.path.join(path, f), "w")
 					o.write(fcontent)
 					o.close()
@@ -265,13 +273,12 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 						os.utime(os.path.join(path, f), v["modTime"])
 					except: ""
 					downloaded.append(f)
-			print("[SID-DEBUG] -- File found : %s" % f) # REMOVE LATER
 		else:
 			fhash = None
 			try: ### CHANGE
 				fcontent = protocol.get(v["serverName"]).decode("UTF-8")
 			except AssertionError: ### CHANGE
-				print("[SID-Structure] ATTENTION: impossible to read downloaded file %s: file is corrupt." % f)
+				ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
 			o = open(os.path.join(path, f), "w")
 			o.write(fcontent)
 			o.close()
@@ -308,7 +315,7 @@ def SIDStatus(protocol): ### CHANGE un peu tout
 #	try:
 	lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 #	except AssertionError:
-#		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+#		ERROR("impossible to read downloaded last.sid: data is corrupt.")
 #		return None
 	return str(lastSID["version"]), lastSID["lastUpdate"]
 
@@ -320,7 +327,7 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
-		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+		ERROR("impossible to read downloaded last.sid: data is corrupt.")
 		return None
 	flist = []
 	for f, v in lastSID["basics"].items():
@@ -353,7 +360,7 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 	return flist
 
 
-## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1. ### CHANGE
+## Delete the entire backend repository. For single-version deletion, see 'SIDRemove' ### CHANGE
 # @protocol : sid.Protocol
 def SIDDelete(protocol): ### CHANGE un peu tout
 	deleted = []
@@ -361,8 +368,8 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
-		""
 		# TODO : blind removal ?
+		return None
 	for f, v in lastSID["basics"].items():
 		try:
 			protocol.delete(v["serverName"])
@@ -385,6 +392,46 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 	return deleted, errors
 
 
+## Delete a version backup on the backend repository, with garbage collector at work ### CHANGE
+## Returns the number of deletions and errors
+# @protocol : sid.Protocol
+# @version : int
+def SIDDelete(protocol, ver=-1): ### CHANGE un peu tout
+	toRemove = []
+	deleted = 0
+	errors = 0
+	try:
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
+		if ver < -1 or ver > lastSID["version"]:
+			ERROR("Version %i not found on backend. Latest version is: %i" % (ver, lastSID["version"]))
+		for i in range(0, lastSID["id_max"]):
+			toRemove[i] = True
+		holeList = lastSID["sidHoles"]
+		for i in range(0, lastSID["version"]):
+			if i != ver:
+				prevSID = json.loads(protocol.get("v" + i + ".sid").decode("UTF-8"))
+				for f, v in prevSID["basics"].items():
+					toRemove[int(v["serverName"])] = False
+		for v in holeList:
+			toRemove[v] = False
+		for i in range(0, lastSID["id_max"]):
+			if toRemove(i):
+				try:
+					protocol.delete(str(i))
+					holeList.append(i)
+					deleted += 1
+				except:
+					errors += 1
+		
+		lastSID["sidHoles"] = holeList
+		protocol.put("last.sid", json.dumps(lastSID, o, sort_keys=True, indent=2).encode("UTF-8"))
+
+	except AssertionError:
+		ERROR("Impossible to read data from .sid files on backend: data is corrupt.")
+		return None
+	return deleted, errors
+
+
 ########  END SID CORE  #######################################################
 ###############################################################################
 ###############################################################################
@@ -398,12 +445,15 @@ if __name__ == '__main__':
 	print(SIDStatus(protocol_test))
 	print(SIDList(protocol_test, True))
 	#print(SIDDelete(protocol_test))
+	#print(SIDRemove(protocol_test, 0)
 	
 
 
 # fichiers temporaires
 	
 # ne pas hasher les petits fichiers
+# garbage collector : suppression de version particulière
+# => liste de trous dans last.sid
 # forcer restoration
 	
 # gros fichiers ?

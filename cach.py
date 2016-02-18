@@ -10,12 +10,15 @@ from SIDCrypto import *
 #name of the cach directory
 cach_dir = os.environ['HOME'] + '/.sid'
 
-def create_cach(name,crypto,url='',directory_path='',version=0):
+def create_cach(name,crypto,url='',directory_path='',version=0,restore=False):
     if not os.path.isdir(cach_dir):
         os.mkdir(cach_dir) 
         print("Directory to cach .sid created")
     if os.path.exists(os.path.join(cach_dir,name)):
-        print("ERROR: name already taken")
+        if restore:
+            save(name,crypto,url,directory_path,version)
+        else:
+            print("ERROR: name already taken")
     else:
         save(name,crypto,url,directory_path,version)
         print("Save %s created successfully" % name)
@@ -25,7 +28,6 @@ def update_cach(name,crypto,version):
         (v,url,directory_path,last_update) = read_save(name,crypto)
         save(name,crypto,url,directory_path,version)
     
-
 #save a save 
 def save(name,crypto, url='',directory_path='',version=0):
     last_update = time.strftime("%d/%m/%Y - %H:%M:%S", time.localtime())
