@@ -32,7 +32,7 @@ ln -s ./titi $src/lien
 
 # création de la sauvegarde
 rm $HOME/.sid/$nom
-sid create --pass foo -n $nom -d $src -u $dst "$@"
+sid create --pass foo $nom $src $dst "$@"
 sid list
 #sid ls -n $nom
 
