@@ -127,9 +127,9 @@ def buildSID(protocol, path = "", isNew = False):
 #				dic[ftype][f] = directory(f,  fhash)
 		else:
 			try:
-				DEBUG(")
+				DEBUG("")
 #				if last_info[ftype][f].getHash() == fhash:
-				elif last_info[ftype][f]["hash"] == fhash:
+				if last_info[ftype][f]["hash"] == fhash:
 					dic[ftype][f] = last_info[ftype][f]					
 				else:
 					dic[ftype][f] = {"hash" : fhash,
