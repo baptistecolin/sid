@@ -10,6 +10,7 @@ import re
 import server_connection
 import getpass
 from urllib.parse import urlparse
+from urllib.parse import unquote
 from SIDStructure import SIDCreate, SIDRestore, SIDSave, SIDDelete
 from SIDCrypto import * 
 from cach import * 
@@ -22,7 +23,7 @@ subs = parser.add_subparsers()
 help = subs.add_parser('help', help='show help')
 help.set_defaults(op='help')
 
-help.add_argument('about', nargs='?', choices=['help','create','list','ls','update','status','restore', 'changepassword'],
+help.add_argument('about', nargs='?', choices=['help','create','list','ls','update','status','restore', 'chpass'],
                                   default='help', help='sub-command name')
 
 # list sub-command
@@ -71,9 +72,9 @@ srestore.add_argument('directory', type=str, help='specify directory to restore'
 srestore.add_argument('-nn','--newname', type=str, help='Give a save name')
 srestore.add_argument('-p','--password', type=str, help='Give a password')
 
-# changepassword sub-command
-schangepassword = subs.add_parser('changepassword', help='change the backup\'s password', parents=[snameurl])
-schangepassword.set_defaults(op='changepassword')
+# chpass sub-command
+schpass = subs.add_parser('chpass', help='change the backup\'s password', parents=[snameurl])
+schpass.set_defaults(op='chpass')
 
 # parse sub-command, options and arguments
 opts = parser.parse_args()
@@ -99,13 +100,14 @@ def getIds(login, password, server):
 		login = input('Login : ')
 	if password == None:
 		password = getpass.getpass(login + '@' + server + '\'s password : ')
-	return (login, password)
+	return (unquote(login), unquote(password))
 
 class Protocol():
         def __init__(self, storage, crypto):
                 self.crypto = crypto
                 self.storage = storage
         def put(self, k, v):
+                print('put in : ' + k)
                 toWrite = self.crypto.encryptBytes(v)
                 self.storage.put(k, toWrite)
 
@@ -128,12 +130,16 @@ def getStorage(url):
 		storage = File(backupPath)
 	elif protocolName == 'ssh':
 		from ssh import Ssh
+		print('Sauvegarde ssh dans : ' + backupPath)
 		(login, password) = getIds(login, password, server)
 		storage = Ssh(backupPath, login, password, server)
 	elif protocolName == 'imap' or protocolName == 'imaps':
 		from imaps import Imaps
 		(login, password) = getIds(login, password, server)
-		storage = Imaps(login, password)
+		if backupPath == '':
+			storage = Imaps(login, password, server)
+		else:
+			storage = Imaps(login, password, server, box=backupPath)
 	elif protocolName == 'http' or protocolName == 'https':
 		from webdav import Webdav
 		(login, password) = getIds(login, password, server)
@@ -220,8 +226,9 @@ elif opts.op == 'restore':
             else:
                 (files_list,restored_version) = SIDRestore(protocol, directory_path)
             #Cache
-            if opts.name != None:
-                create_cach(opts.name, crypto, opts.url, absPath(opts.directory),version=restored_version,restore=True) 
+            #if opts.name != None:
+            if parseIdentifier == None:
+                create_cach(opts.identifier, crypto, url, absPath(opts.directory),version=restored_version,restore=True) 
                 print("Restore cached on drive")
             else:
                 if opts.newname != None:
@@ -236,6 +243,6 @@ elif opts.op == 'restore':
                         print('Version : ' + str(version))
                 print('URl : ' + url)
                 print('Directory_path : ' + directory_path)
-elif opts.op == 'changepassword':
+elif opts.op == 'chpass':
 	password = getPw()
 	
