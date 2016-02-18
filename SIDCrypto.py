@@ -52,10 +52,10 @@ class SIDCrypto:
         self.globalKey = key
 
     def setPassword(self, newpassword): #usual setter
-        self.password = newpassword
+        self.password = self.hash(newpassword)
 
     def isPassword(self, string):
-        return hash(string) == password
+        return hash(string) == self.password
 
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
@@ -83,7 +83,7 @@ class SIDCrypto:
     def encryptBytes(self, clear, usePassword = False):
 
         if self.globalKey is None or usePassword:
-            (key,iv,salt) = self.key_iv_salt_generator(password_bytes)
+            (key,iv,salt) = self.key_iv_salt_generator(self.password)
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.globalKey)
     
@@ -128,7 +128,7 @@ class SIDCrypto:
 
         #the key is the hash of the password+the salt
         if self.globalKey is None or usePassword:
-            key = self.hash(password_bytes + salt , converting_bytes = True)[:self.keylen]
+            key = self.hash(self.password + salt , converting_bytes = True)[:self.keylen]
         else:
             key = self.hash(self.globalKey + salt , converting_bytes = True)[:self.keylen]
 
