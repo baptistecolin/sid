@@ -33,7 +33,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('name', type=str, help='Give a save name')
-nameurl.add_argument('-p','--password', type=str, help='Give a password')
+snameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -157,6 +157,13 @@ elif opts.op == 'create':
         protocol = Protocol(storage, crypto)
         SIDCreate(protocol, opts.directory)
         create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
+
+        #creating a file containing the hash of the password, and putting it unciphered on the storage.
+        #will be useful when the password needs to be reseted.
+        #hash is performed using SHA256
+        h = crypto.hash(password)
+        protocol.put('password_hash.crypt' , h)
+
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
@@ -237,6 +244,24 @@ elif opts.op == 'restore':
                         print('Version : ' + str(version))
                 print('URl : ' + url)
                 print('Directory_path : ' + directory_path)
+
 elif opts.op == 'changepassword':
-	password = getPw()
-	
+        password = getPw()
+        
+        try: #if the password is valid
+                crypto = SIDCrypto(password)
+                (_, url, directory_path, _) = read_save(opts.name, crypto)
+                storage = getStorage(url)
+                protocol = Protocol(storage, crypto)
+                h = protocol.get('password_hash.crypt')
+                print('oui bravo')
+
+###### ici : mettre en place le chiffrement / dechiffrement de last.sid
+
+
+
+
+
+        except(AssertionError): #if the password is wrong
+                print('Wrong password')
+
