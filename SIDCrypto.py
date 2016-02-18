@@ -52,10 +52,10 @@ class SIDCrypto:
         self.globalKey = key
 
     def setPassword(self, newpassword): #usual setter
-        self.password = newpassword
+        self.password = self.hash(newpassword)
 
     def isPassword(self, string):
-        return hash(string) == password
+        return hash(string) == self.password
 
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
