@@ -33,7 +33,7 @@ class Ssh(server_connection):
             return output.getvalue()
         else:
             print("Pas de fichier de ce nom sur le serveur")
-            return None
+			raise FileNotFoundError()
 
     def delete(self, k):
         if k in self.sftp.listdir():
