@@ -22,7 +22,10 @@ class Webdav(server_connection):
 	def get(self,k):
 		response,content=self.server.request(self.create(self.dest,k),'GET')
 		self.printStatus("get", response)
-		return content
+		if response.status==200:
+			return content
+		else:
+			return None
 				
 	def create(self,uri,k):
 		return os.path.join(uri,k)
