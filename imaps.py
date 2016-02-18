@@ -16,19 +16,23 @@ class Imaps(server_connection):
 		self.flag = flag
 		self.mail = imaplib.IMAP4_SSL(server)
 		self.mail.login(login, password) #('myusername@gmail.com', 'mypassword')
+		self.mail.create(box)
 		
 	def affichage(self):
 		for list in (self.mail.list()[1]):
 			print(bytes.decode(list))
 	
+	def create_box(self, box = 'OTHERS'):
+		self.mail.create(box)
+	
 	def keyId(self, k):
-		return b'sid-' + self.name + b'-' + k
+		return b'sid-' + self.name + b'-' + bytes(k, 'utf8')
 					
 	# k est le hash du nom et v est le content qui a été encodé 
 	def put(self, k, v):
 		# MessageId: k k est bytes
 		# ...
-		message = b'Message-Id: ' + k + b'\n'
+		message = b'Message-Id: ' + bytes(k, 'utf8') + b'\n'
 		message += b'Subject: ' + self.keyId(k) + b'\n'
 		message += b'From: x\n'
 		message += b'To: y\n'
@@ -148,15 +152,15 @@ if __name__ == '__main__':
 	IM = Imaps('xiangnan.chat@gmail.com', password, name=b'test')
 	IM.affichage()
 	#for i in range(5):
-	IM.put(b'toto', b'blablablablablabla')
-	print("get: ", IM.get(b'toto'))
+	IM.put('toto', b'blablablablablabla')
+	print("get: ", IM.get('toto'))
 	#IM.get(b'hello2')
 	
 	#IM.__contains__(b'toto'):
-	print(b'toto' in IM)
+	print('toto' in IM)
 	
 	#IM.delete(b'toto')
-	del IM[b'toto'] 
+	del IM['toto'] 
 	
 	#MP = Imaps('xiangnan.yue@mines-paristech.fr','','imapel.ensmp.fr')
 	#MP.affichage()

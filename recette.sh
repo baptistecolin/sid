@@ -12,6 +12,7 @@ else
 fi
 
 nom=test
+autrenom=test2
 src=init.dir
 tst=test.dir
 
@@ -30,17 +31,18 @@ echo "fichier initial subdir/titi" >> $src/subdir/titi
 ln -s ./titi $src/lien
 
 # création de la sauvegarde
-sid create --pass foo -n $nom -d $src -u $dst "$@"
+rm $HOME/.sid/$nom
+sid create --pass foo $nom $src $dst "$@"
 sid list
 #sid ls -n $nom
 
 # restorations
-sid restore --pass foo -n $nom -d $tst
+sid restore --pass foo $nom $tst
 echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
 
-sid restore --pass foo -u $dst -d $tst
+sid restore --pass foo $dst $tst
 echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
@@ -51,9 +53,9 @@ echo "titi modifié 2" >> $src/subdir/titi
 rm -f $src/toto
 echo "fichier initial tata" > $src/tata
 
-sid update --pass foo -n $nom
+sid update --pass foo $nom
 
-sid restore --pass foo -u $dst -d $tst
+sid restore --pass foo -u $dst $tst
 echo '# comparaison de la restoration'
 diff -r $src $tst
 
