@@ -51,7 +51,7 @@ class AbstractFile:
 		return None
 	
 	# before encoding in json (any type)
-	# usage: json.dumps(obj, default=FileStructure.universalEncode, sort_keys=True, indent=2)
+	# usage: json.dumps(obj, default=AbstractFile.universalEncode, sort_keys=True, indent=2)
 	@staticmethod
 	def universalEncode(obj):
 		if isinstance(obj, AbstractFile):
