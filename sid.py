@@ -14,7 +14,7 @@ import getpass
 from file import File
 from SIDStructure import SIDCreate, SIDRestore, SIDSave
 from SIDCrypto import * 
-from cach import save, read_save, list_saves
+from cach import * 
 
 parser = ap.ArgumentParser(description="sid command")
 parser.set_defaults(op='none')
@@ -136,6 +136,8 @@ def getStorage(url):
 		storage = Ssh(backupPath, login, password, server)
 	elif protocolName == 'imap' or protocolName == 'imaps':
 		from imaps import Imaps
+	elif protocolName == 'http' or protocolName == 'https':
+		from webdav import Webdav
 	return storage
 
 
@@ -153,7 +155,7 @@ elif opts.op == 'create':
 	storage = getStorage(opts.url)
 	protocol = Protocol(storage, crypto)
 	SIDCreate(protocol, opts.directory)
-	save(opts.name, crypto, opts.url, absPath(opts.directory)) 
+	create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
@@ -161,7 +163,7 @@ elif opts.op == 'ls':
 elif opts.op == 'update':
 	password = getPw()
 	crypto = SIDCrypto(password)
-	(version, url, directory_path) = read_save(opts.name, crypto)
+	(version, url, directory_path,last_update) = read_save(opts.name, crypto)
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
 	SIDSave(protocol, directory_path)
@@ -170,11 +172,20 @@ elif opts.op == 'delete':
     password = getPw()
     crypto = SIDCrypto(password)
     cach_delete(opts.name,crypto)
+elif opts.op == 'status':
+    password = getPw()
+    crypto = SIDCrypto(password)
+    try:
+        (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
+    except ValueError:
+        print('Wrong password')
+    else:
+        print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s\n Version: %s' % (opts.name,url,directory_path,last_update,version))
 elif opts.op == 'restore':
 	password = getPw()
 	crypto = SIDCrypto(password)
 	if opts.name != None:
-		(version, url, _) = read_save(opts.name, crypto)
+		(version, url, _, _) = read_save(opts.name, crypto)
 	else:
 		url = opts.url
 	directory_path = opts.directory
@@ -182,8 +193,9 @@ elif opts.op == 'restore':
 		os.mkdir(directory_path)
 	storage = getStorage(url)
 	protocol = Protocol(storage, crypto)
+	print('Appel de SIDRestore sur : ' + directory_path)
 	SIDRestore(protocol, directory_path)
-	if False:
+	if True:
 		print('Sauvegarde : ')
 		if opts.name != None:
 			print('Nom : ' + opts.name)

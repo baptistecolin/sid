@@ -2,11 +2,13 @@
 #
 # $0 [url]
 
+defdst=$PWD/save.dir
+
 if [ $# -eq 1 ] ; then
   dst=$1
   shift 1
 else
-  dst=file://$PWD/save.dir
+  dst=file://$defdst
 fi
 
 nom=test
@@ -19,34 +21,41 @@ function sid()
   ./sid.py "$@"
 }
 
-# arborescence minimale
+# arborescence minimale avec sous répertoire
 mkdir $src
 echo "fichier initial titi" >> $src/titi
 echo "fichier initial toto" >> $src/toto
+mkdir $src/subdir
+echo "fichier initial subdir/titi" >> $src/subdir/titi
+ln -s ./titi $src/lien
 
 # création de la sauvegarde
 sid create --pass foo -n $nom -d $src -u $dst "$@"
 sid list
-sid ls -n $nom
+#sid ls -n $nom
 
 # restorations
 sid restore --pass foo -n $nom -d $tst
+echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
 
 sid restore --pass foo -u $dst -d $tst
+echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
 
 # modifications M D A
-echo "titi modifie" >> $src/titi
+echo "titi modifié" >> $src/titi
+echo "titi modifié 2" >> $src/subdir/titi
 rm -f $src/toto
 echo "fichier initial tata" > $src/tata
 
 sid update --pass foo -n $nom
 
 sid restore --pass foo -u $dst -d $tst
+echo '# comparaison de la restoration'
 diff -r $src $tst
 
 # cleanup
-rm -rf $src $dst $tst
+rm -rf $src $tst $defdst
