@@ -361,22 +361,24 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 		errors.append("last.sid")
 	return deleted, errors
 
-#SIDCreate(protocol_test, "test_dir1/")
-#SIDSave(protocol_test, "test_dir1/")
-#SIDRestore(protocol_test, "dir3/")
-#print(SIDStatus(protocol_test))
-#print(SIDList(protocol_test, True))
-print(SIDDelete(protocol_test))
-
-# fichiers temporaires
-# supprimer repertoire SID
-
-# ne pas hasher les petits fichiers
-# forcer restoration
-# stockage de cle pour crypto # OK ?
-
-# gros fichiers ?
-# grosses arborescences
+#tests
+if __name__ == '__main__':
+	#SIDCreate(protocol_test, "test_dir1/")
+	#SIDSave(protocol_test, "test_dir1/")
+	#SIDRestore(protocol_test, "dir3/")
+	#print(SIDStatus(protocol_test))
+	#print(SIDList(protocol_test, True))
+	print(SIDDelete(protocol_test))
+	
+	# fichiers temporaires
+	# supprimer repertoire SID
+	
+	# ne pas hasher les petits fichiers
+	# forcer restoration
+	# stockage de cle pour crypto # OK ?
+	
+	# gros fichiers ?
+	# grosses arborescences
 
 # rsync : algo qui check si morceaux identiques
 
