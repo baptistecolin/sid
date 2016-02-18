@@ -107,6 +107,8 @@ class SIDCrypto:
 
 
 
+
+
 ########################################################## DECRYPTION FUNCTION
 
     def decrypt(self, path, usePassword=False):

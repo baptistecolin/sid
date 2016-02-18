@@ -2,10 +2,11 @@
 import os
 import json
 import stat
-import time ### CHANGE
-import datetime ### CHANGE
-from file import File ##
-from SIDCrypto import *
+import time
+import datetime
+from FileStructure import *
+from file import File ## REMOVE AFTER TESTS
+from SIDCrypto import * ## REMOVE AFTER TESTS
 import base64
 
 crypto = SIDCrypto("orage", algo_cipher = "None")
@@ -79,252 +80,215 @@ def getSIDKey(protocol): ### CHANGE
 ###############################################################################
 ########  SID CORE  ###########################################################
 
-## Generate "last.sid" file from version "ver" in directory "path"
+## Generate "last.sid" file in directory "path". 
+# isNew is True when the repository is created.
 # @protocol : sid.Protocol
-# @path : str
+# @path : str (chemin relatif)
 # @isNew : boolean
 def buildSID(protocol, path = "", isNew = False):
 	to_upload = []
 	sids = {}
-	sldChanged = False ### CHANGE
+	sldChanged = False
 	dic = {"basics" : {}, "symlinks" : {}, "dirs" : {}}
 	if isNew:
 		ver = 0
 		id_max = 0
-		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8")  ### CHANGE # TODO ?
-		sidHoles = [] ### CHANGE
+		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8") ## TODO ?
+		sidHoles = []
 	else:
-		try: ### CHANGE
-			last_info = json.loads(protocol.get("last.sid").decode("UTF-8")) ###
-		except AssertionError: ### CHANGE
-			ERROR("Impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
+		try:
+			data = protocol.get("last.sid").decode("UTF-8")
+			last_info = json.loads(data, object_hook=AbstractFile.universalDecode)
+		except AssertionError:
+			ERROR("Impossible to read downloaded last.sid: data is corrupt.")
 		ver = last_info["version"] + 1
-		sidKey = last_info["sidKey"] ### CHANGE
+		sidKey = last_info["sidKey"]
 		id_max = last_info["id_max"]
-		sidHoles = last_info["sidHoles"] ### CHANGE
-	dic["sidKey"] = sidKey  ### CHANGE
+		sidHoles = last_info["sidHoles"]
+	dic["sidKey"] = sidKey
 	dic["version"] = ver
-	dic["sidHoles"] = sidHoles ### CHANGE
+	dic["sidHoles"] = sidHoles
 	for f in listFiles(path, False):
 		prop = os.lstat(os.path.join(path, f))
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
-			linkURL = os.readlink(os.path.join(path, f))
-			fhash = None
 		elif os.path.isdir(os.path.join(path, f)):
 			ftype = "dirs"
-			fhash = None
 		else:
 			ftype = "basics"
-			fhash = base64.b64encode(protocol.crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8") ### CHANGE
+			fhash = base64.b64encode(protocol.crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8")
 		if isNew:
-			dic[ftype][f] = {"hash" : fhash,
-					"size" : prop.st_size,
-					"modTime" : prop.st_mtime,
-					"mode" : prop.st_mode
-					}
 			if ftype == "symlinks":
-#				dic[ftype][f] = symbolic_link(f, fhash) 
-				dic[ftype][f]["linkURL"] = linkURL
-			elif ftype == "basics":
-				dic[ftype][f]["serverName"] = str(id_max)
-#				dic[ftype][f] = basic_file(f, fhash, str(id_max))
+				dic[ftype][f] = SymbolicLink(f, currPath=path)
+			elif ftype == "dirs":
+				dic[ftype][f] = Directory(f, currPath=path)
+			else: #ftype = "basics"
+				dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash)
 				id_max += 1
 				to_upload.append(f)
-#			elif ftype == "dirs":
-#				dic[ftype][f] = directory(f,  fhash)
+			sldChanged = True
 		else:
-			try:
-#				if last_info[ftype][f].getHash() == fhash:
-				if last_info[ftype][f]["hash"] == fhash:
-					dic[ftype][f] = last_info[ftype][f]					
-				else:
-					dic[ftype][f] = {"hash" : fhash,
-							"size" : prop.st_size,
-							"modTime" : prop.st_mtime,
-							"mode" : prop.st_mode
-							}
-					if ftype == "symlinks":
-						dic[ftype][f]["linkURL"] = linkURL
-#						dic[ftype][f] = symbolic_link(f, fhash) #
-					elif ftype == "basics":
-						dic[ftype][f]["serverName"] = str(id_max)
-#						dic[ftype][f] = basic_file(f, fhash, str(id_max))
+			if ftype == "symlinks":
+
+				dic[ftype][f] = SymbolicLink(f, currPath=path)
+				sldChanged = True ### TODO
+			elif ftype == "dirs":
+				dic[ftype][f] = Directory(f, currPath=path)
+				sldChanged = True ### TODO
+			else: #ftype = "basics"
+				try:
+					if last_info[ftype][f].getHash() == fhash:
+						dic[ftype][f] = last_info[ftype][f]
+					else:
+						dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash)
 						id_max += 1
 						to_upload.append(f)
-#					elif ftype == "dirs":
-#						dic[ftype][f] = directory(f, fhash)
-					sldChanged = True ### CHANGE
-			except KeyError:
-				dic[ftype][f] = {"hash" : fhash,
-						"size" : prop.st_size,
-						"modTime" : prop.st_mtime,
-						"mode" : prop.st_mode
-						}
-				if ftype == "symlinks":
-					dic[ftype][f]["linkURL"] = linkURL
-#					dic[ftype][f] = symbolic_link(f, fhash) #
-				elif ftype == "basics":
-					dic[ftype][f]["serverName"] = str(id_max)
-#					dic[ftype][f] = basic_file(f, fhash, str(id_max))
+				except KeyError:
+					dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash) ###
 					id_max += 1
 					to_upload.append(f)
-#				elif ftype == "dirs":
-#						dic[ftype][f] = directory(f, fhash)
-				sldChanged = True ### CHANGE
 	if to_upload or sldChanged:
 		if not isNew:
 			# rename previous
-			#o = open(os.path.join(path, "last.sid"), "rb")
-			o = protocol.get('last.sid')
 			prevSid = "v" + str(last_info["version"]) + ".sid"
-#			prev = open(os.path.join(path, prevSid), "wb") ### CHANGE
-#			prev.write(o.read()) ### CHANGE
-#			prev.close() ### CHANGE
-			sids[prevSid] = o#.read() ### CHANGE
-			#o.close()
+			sids[prevSid] = data
 		# create new
 		dic["id_max"] = id_max
-		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S") ### CHANGE
-#		o = open(os.path.join(path, "last.sid"), "wb") ### CHANGE
-		js = json.dumps(dic, sort_keys=True, indent=2).encode("UTF-8") ### CHANGE
-#		o.write(js) ### CHANGE
-#		o.close() ### CHANGE
+		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S")
+		js = json.dumps(dic, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8")
 		sids["last.sid"] = js ### CHANGE
 	return to_upload, dic["basics"], sids
 
 
 ## Upload directory "path" to update backup
 # @protocol : sid.Protocol
-# @path : str
-def SIDSave(protocol, path = ""): ### CHANGE all
+# @path : str (chemin relatif)
+def SIDSave(protocol, path = ""):
 	to_upload, dic, sids = buildSID(protocol, path)
 	for f in to_upload:
 		o = open(os.path.join(path, f), "rb")
-		protocol.put(dic[f]["serverName"], o.read())
+		protocol.put(dic[f].getServerName(), o.read())
 		o.close()
 	for k, v in sids.items():
 		protocol.put(k, v)
-			
 
 
 ## Upload directory "path" to create new backup
 # @protocol : sid.Protocol
-# @path : str
-def SIDCreate(protocol, path = ""): ### CHANGE all
+# @path : str (chemin relatif)
+def SIDCreate(protocol, path = ""):
 	to_upload, dic, sids = buildSID(protocol, path, True)
 	for f in to_upload:
 		o = open(os.path.join(path, f), "rb")
-		protocol.put(dic[f]["serverName"], o.read())
-		o.close() ### CHANGE
+		protocol.put(dic[f].getServerName(), o.read())
+		o.close()
 	protocol.put("last.sid", sids["last.sid"])
 
 
 ## Restore directory in "path" from backup (latest version or previous)
 # @protocol : sid.Protocol
 # @ver : int
-# @path : str
+# @path : str (chemin relatif)
 def SIDRestore(protocol, path = "", ver = -1, force = False):
 	downloaded = []
 	if ver < 0:
-		try: ### CHANGE
-			lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
-		except AssertionError: ### CHANGE
+		try:
+			lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
+		except AssertionError:
 			ERROR("Impossible to read downloaded last.sid: data is corrupt.")
 	else:
-		try: ### CHANGE
-			lastSID = json.loads(protocol.get("v" + str(ver) + ".sid"))
+		try:
+			lastSID = json.loads(protocol.get("v" + str(ver) + ".sid"), object_hook = AbstractFile.universalDecode)
 		except:
-			try: ### CHANGE
-				lastSID = json.loads(protocol.get("last.sid"))
+			try:
+				lastSID = json.loads(protocol.get("last.sid"), object_hook = AbstractFile.universalDecode)
 				if lastSID["version"] != ver:
 					raise Exception("Invalid version ERROR.")
-			except: ### CHANGE
+			except:
 				ERROR("version %i not found on backend, or is impossible to read (data may be corrupt, retry)." % ver)
 				return None
 
 	for d, v in lastSID["dirs"].items():
 		os.makedirs(os.path.join(path, d), 0o777, True)
 		try:
-			os.chmod(os.path.join(path, d), v["mode"])
+			os.chmod(os.path.join(path, d), v.getMode())
 		except: ""
 		try:
-			os.utime(os.path.join(path, d), v["modTime"])
+			os.utime(os.path.join(path, d), v.getModTime())
 		except: ""
 
 	for f, v in lastSID["basics"].items():
 		if os.path.exists(os.path.join(path, f)):
-			if force:
+			if force: # ATTENTION TODO
 				fstat = os.lstat(f)
-				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True) ### CHANGE
-				if fstat.st_size != v["size"] or fstat.st_mtime != v["modTime"] or fhash != base64.b64decode(v["hash"].encode("UTF-8")):
-					try: ### CHANGE
-						fcontent = protocol.get(v["serverName"]).decode("UTF-8")
-					except AssertionError: ### CHANGE
-						ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
-					o = open(os.path.join(path, f), "w")
-					o.write(fcontent)
-					o.close()
+				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
+				if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):
 					try:
-						os.chmod(os.path.join(path, f), v["mode"])
+						fcontent = protocol.get(v.getServerName()).decode("UTF-8")
+						o = open(os.path.join(path, f), "w")
+						o.write(fcontent)
+						o.close()
+					except AssertionError:
+						ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
+					try:
+						os.chmod(os.path.join(path, f), v.getMode())
 					except: ""
 					try:
-						os.utime(os.path.join(path, f), v["modTime"])
+						os.utime(os.path.join(path, f), v.getModTime())
 					except: ""
 					downloaded.append(f)
-		else:
+		else: # ATTENTION TODO
 			fhash = None
-			try: ### CHANGE
-				fcontent = protocol.get(v["serverName"]).decode("UTF-8")
-			except AssertionError: ### CHANGE
-				ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
-			o = open(os.path.join(path, f), "w")
-			o.write(fcontent)
-			o.close()
 			try:
-				os.chmod(os.path.join(path, f), v["mode"])
+				fcontent = protocol.get(v.getServerName()).decode("UTF-8")
+				o = open(os.path.join(path, f), "w")
+				o.write(fcontent)
+				o.close()
+			except AssertionError:
+				ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
+			try:
+				os.chmod(os.path.join(path, f), v.getMode())
 			except: ""
 			try:
-				os.utime(os.path.join(path, f), v["modTime"])
+				os.utime(os.path.join(path, f), v.getModTime())
 			except: ""
 			downloaded.append(f)
 
 	for l, v in lastSID["symlinks"].items():
 		if os.path.exists(os.path.join(path, l)):
 			lstat = os.lstat(l)
-			lhash = protocol.crypto.hash(os.path.join(path, l), hash_file=True) ### CHANGE
-			if lstat.st_mtime != v["modTime"] or lhash != v["hash"]:
+			if lstat.st_mtime != v.getModTime() or os.readlin(os.path.join(path, l)) != v.getLinkURL():
 				os.unlink(os.path.join(path, l))
-				os.symlink(v["linkURL"], os.path.join(path, l))
+				os.symlink(v.getLinkURL(), os.path.join(path, l))
 				try:
-					os.utime(os.path.join(path, l), v["modTime"])
+					os.utime(os.path.join(path, l), getModTime())
 				except: ""
 		else:
-			os.symlink(v["linkURL"], os.path.join(path, l))
+			os.symlink(v.getLinkURL(), os.path.join(path, l))
 			try:
-				os.utime(os.path.join(path, l), v["modTime"])
+				os.utime(os.path.join(path, l), v.getModTime())
 			except: ""
 
-	return downloaded, lastSID["version"] ### CHANGE
+	return downloaded, lastSID["version"]
 
 
-## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1. ### CHANGE
+## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1.
 # @protocol : sid.Protocol
-def SIDStatus(protocol): ### CHANGE un peu tout
-#	try:
-	lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
-#	except AssertionError:
-#		ERROR("impossible to read downloaded last.sid: data is corrupt.")
-#		return None
+def SIDStatus(protocol):
+	try:
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
+	except AssertionError:
+		ERROR("impossible to read downloaded last.sid: data is corrupt.")
+		return None
 	return str(lastSID["version"]), lastSID["lastUpdate"]
 
 
 ## List files in backend
 # @protocol : sid.Protocol
 # @detailed : bool
-def SIDList(protocol, detailed=False): ### CHANGE un peu tout
+def SIDList(protocol, detailed=False):
 	try:
-		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 	except AssertionError:
 		ERROR("impossible to read downloaded last.sid: data is corrupt.")
 		return None
@@ -333,9 +297,9 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 		if detailed:
 			details = {"type" : "FILE",
 					"file" : f,
-					"size" : v["size"],
-					"perms" : v["mode"],
-					"lastMod" : str(datetime.datetime.fromtimestamp(v["modTime"]))[:-7]
+					"size" : v.getSize(),
+					"perms" : v.getMode(),
+					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime()))[:-7]
 					}
 		else:
 			details = {"type" : "FILE",
@@ -347,9 +311,9 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 			flist.append(l)
 			details = {"type" : "LINK",
 					"file" : l,
-					"size" : v["size"],
-					"perms" : v["mode"],
-					"lastMod" : str(datetime.datetime.fromtimestamp(v["modTime"]))[:-7]
+					"size" : v.getSize(),
+					"perms" : v.getMode(),
+					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime()))[:-7]
 					}
 		else:
 			details = {"type" : "FILE",
@@ -359,19 +323,19 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 	return flist
 
 
-## Delete the entire backend repository. For single-version deletion, see 'SIDRemove' ### CHANGE
+## Delete the entire backend repository. For single-version deletion, see 'SIDRemove'
 # @protocol : sid.Protocol
-def SIDDelete(protocol): ### CHANGE un peu tout
+def SIDDelete(protocol):
 	deleted = []
 	errors = []
 	try:
-		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 	except AssertionError:
 		# TODO : blind removal ?
 		return None
 	for f, v in lastSID["basics"].items():
 		try:
-			protocol.delete(v["serverName"])
+			protocol.delete(v.getServerName())
 			deleted.append(f)
 		except:
 			errors.append(f)
@@ -391,27 +355,27 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 	return deleted, errors
 
 
-## Delete a version backup on the backend repository, with garbage collector at work ### CHANGE
+## Delete a version backup on the backend repository, with garbage collector at work
 ## Returns the number of deletions and errors
 # @protocol : sid.Protocol
 # @version : int
-def SIDRemove(protocol, ver=-1): ### CHANGE un peu tout
+def SIDRemove(protocol, ver=-1):
 	deleted = 0
 	errors = 0
 	try:
-		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 		if ver < -1 or ver > lastSID["version"]:
 			ERROR("Version %i not found on backend. Latest version is: %i" % (ver, lastSID["version"]))
 		toRemove = [True for i in range(0, lastSID["id_max"])]
 		holeList = lastSID["sidHoles"]
 		for i in range(0, lastSID["version"]):
 			if i != ver:
-				prevSID = json.loads(protocol.get("v" + str(i) + ".sid").decode("UTF-8"))
+				prevSID = json.loads(protocol.get("v" + str(i) + ".sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 				for f, v in prevSID["basics"].items():
-					toRemove[int(v["serverName"])] = False
+					toRemove[int(v.getServerName())] = False
 		if ver != lastSID["version"]:
 			for f, v in lastSID["basics"].items():
-				toRemove[int(v["serverName"])] = False
+				toRemove[int(v.getServerName())] = False
 		for v in holeList:
 			toRemove[v] = False
 		for i in range(0, lastSID["id_max"]):
@@ -428,7 +392,7 @@ def SIDRemove(protocol, ver=-1): ### CHANGE un peu tout
 		except:
 			ERROR("Could not delete corresponding .sid distant file.")
 		lastSID["sidHoles"] = holeList
-		protocol.put("last.sid", json.dumps(lastSID, sort_keys=True, indent=2).encode("UTF-8"))
+		protocol.put("last.sid", json.dumps(lastSID, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8"))
 		## END TODO
 	except AssertionError:
 		ERROR("Impossible to read data from .sid files on backend: data is corrupt.")
@@ -445,21 +409,19 @@ def SIDRemove(protocol, ver=-1): ### CHANGE un peu tout
 if __name__ == '__main__':
 	SIDCreate(protocol_test, "test_dir1/")
 	#SIDSave(protocol_test, "test_dir1/")
+	#print(SIDStatus(protocol_test))
+	print("LIST :",SIDList(protocol_test, True))
 	#SIDRestore(protocol_test, "dir3/")
-	print(SIDStatus(protocol_test))
-	print(SIDList(protocol_test, True))
-	print(SIDDelete(protocol_test))
-	#print(SIDRemove(protocol_test, 0))
+	#print(SIDDelete(protocol_test))
+	print(SIDRemove(protocol_test, 0))
 	
 
-
-# fichiers temporaires
-	
 # ne pas hasher les petits fichiers
 # forcer restoration
 
 # gros fichiers ?
 # grosses arborescences
 
+### NOT TODO
 # rsync : algo qui check si morceaux identiques
 

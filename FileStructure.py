@@ -51,13 +51,13 @@ class AbstractFile:
 		return None
 	
 	# before encoding in json (any type)
-	# usage: json.dumps(obj, default=FileStructure.universalEncode, sort_keys=True, indent=2)
+	# usage: json.dumps(obj, default=AbstractFile.universalEncode, sort_keys=True, indent=2)
 	@staticmethod
 	def universalEncode(obj):
 		if isinstance(obj, AbstractFile):
 			return obj.encode()
 		else:
-			print("DEBUG : unknown type in universalEncode. Handled as basic type")
+			#print("DEBUG : unknown type in universalEncode. Handled as basic type")
 			return obj
 
 	# to decode from json (any type)
@@ -67,14 +67,10 @@ class AbstractFile:
 		TYPES = {'AbstractFile' : AbstractFile, 'BasicFile' : BasicFile, 'SymbolicLink': SymbolicLink, 'Directory' : Directory}
 		if type(data) == dict:
 			try:
-				print("DEBUG : known type, returns object in universalDecode")
-				print("data :",data)
 				obj = TYPES[data['type']].decode(data)
-				print("obj :",obj)
 				return obj 
 			except KeyError:
-				print("DEBUG : unknown type, following dict handled recursively in universalDecode :")
-				print(data)
+				#print("DEBUG : unknown type, dict handled recursively in universalDecode")
 				obj_dic = {}
 				for k in data:
 					obj_dic[k] = AbstractFile.universalDecode(data[k])
@@ -131,7 +127,6 @@ class BasicFile(AbstractFile):
 						   size=dic['size'], 
 						   modTime=dic['modTime'], 
 						   mode=dic['mode'])
-			print("DEBUG : BasicFile instanciated")
 			return bf
 		return dic
 
@@ -169,7 +164,6 @@ class SymbolicLink(AbstractFile):
 					  size=dic['size'],
 					  modTime=dic['modTime'],
 					  linkURL=dic['linkURL'])
-			print("DEBUG : SymbolicLink instanciated")
 			return sl
 		return dic
 
@@ -205,6 +199,5 @@ class Directory(AbstractFile):
 						   size=dic['size'],
 						   modTime=dic['modTime'],
 						   mode=dic['mode'])
-			print("DEBUG : Directory intanciated")
 			return di
 		return dic
