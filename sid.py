@@ -25,7 +25,7 @@ help = subs.add_parser('help', help='show help')
 help.set_defaults(op='help')
 
 help.add_argument('about', nargs='?', choices=['help','create','list','ls','update','dump','status','restore'],
-				  default='help', help='sub-command name')
+                                  default='help', help='sub-command name')
 
 # list sub-command
 
@@ -89,14 +89,14 @@ opts = parser.parse_args()
 ########################################################### FUNCTIONS 
 
 def splitUrl(url): 
-	reUrl = re.search(r'^(.*)://(.*)',url) 
-	return reUrl.group(1),reUrl.group(2)
+        reUrl = re.search(r'^(.*)://(.*)',url) 
+        return reUrl.group(1),reUrl.group(2)
 
 def absPath(path):
-	if path[0] == '/':
-		return path
-	else:
-		return os.path.join(os.getcwd(), path)
+        if path[0] == '/':
+                return path
+        else:
+                return os.path.join(os.getcwd(), path)
 
 def getPw():
     if not opts.password == None:
@@ -106,19 +106,19 @@ def getPw():
         return password
 
 class Protocol():
-	def __init__(self, storage, crypto):
-		self.crypto = crypto
-		self.storage = storage
-	def put(self, k, v):
-		toWrite = self.crypto.encryptBytes(v)
-		self.storage.put(k, toWrite)
+        def __init__(self, storage, crypto):
+                self.crypto = crypto
+                self.storage = storage
+        def put(self, k, v):
+                toWrite = self.crypto.encryptBytes(v)
+                self.storage.put(k, toWrite)
 
-	def get(self, k):
-		toDecrypt = self.storage.get(k)
-		return self.crypto.decryptBytes(toDecrypt)
+        def get(self, k):
+                toDecrypt = self.storage.get(k)
+                return self.crypto.decryptBytes(toDecrypt)
 
-	def delete(self, k):
-		self.storage.delete(k)
+        def delete(self, k):
+                self.storage.delete(k)
 
 def getStorage(url):
 	protocolName, address = splitUrl(url)
@@ -162,57 +162,76 @@ def getStorage(url):
 ########################################################### PROGRAM 
 
 if opts.op == 'none':
-	opts = parser.parse_args(['help', '--help'])
+        opts = parser.parse_args(['help', '--help'])
 elif opts.op == 'help':
-	parser.parse_args([opts.about, '--help'])
+        parser.parse_args([opts.about, '--help'])
 elif opts.op == 'create':
-	#crypto
-	password = getPw()
-	crypto = SIDCrypto(password)
-	#protocol
-	storage = getStorage(opts.url)
-	protocol = Protocol(storage, crypto)
-	SIDCreate(protocol, opts.directory)
-	create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
+        #crypto
+        password = getPw()
+        crypto = SIDCrypto(password)
+        #protocol
+        storage = getStorage(opts.url)
+        protocol = Protocol(storage, crypto)
+        SIDCreate(protocol, opts.directory)
+        create_cach(opts.name, crypto, opts.url, absPath(opts.directory)) 
 elif opts.op == 'list':
         list_saves()
 elif opts.op == 'ls':
-	print('Bonjour')
+        print('Bonjour')
 elif opts.op == 'update':
-	password = getPw()
-	crypto = SIDCrypto(password)
-	(version, url, directory_path,last_update) = read_save(opts.name, crypto)
-	storage = getStorage(url)
-	protocol = Protocol(storage, crypto)
-	SIDSave(protocol, directory_path)
-	update_cach(opts.name, crypto, version+1)
+    password = getPw()
+    crypto = SIDCrypto(password)
+    try:
+        (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
+    except (ValueError,AssertionError):
+        print('Wrong password')
+    else:
+        storage = getStorage(url)
+        protocol = Protocol(storage, crypto)
+        SIDSave(protocol, directory_path)
+        update_cach(opts.name, crypto, version+1)
 elif opts.op == 'delete':
     password = getPw()
     crypto = SIDCrypto(password)
-    cach_delete(opts.name,crypto)
+    try:
+        (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
+    except ValueError: 
+        print('Wrong password')
+    else:
+        cach_delete(opts.name,crypto)
 elif opts.op == 'status':
     password = getPw()
     crypto = SIDCrypto(password)
-    (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
-    print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s')
+    try:
+        (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
+    except (ValueError,AssertionError):
+        print('Wrong password')
+    else:
+        print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s\n Version: %s' % (opts.name,url,directory_path,last_update,version))
 elif opts.op == 'restore':
-	password = getPw()
-	crypto = SIDCrypto(password)
-	if opts.name != None:
-		(version, url, _, _) = read_save(opts.name, crypto)
-	else:
-		url = opts.url
-	directory_path = opts.directory
-	if not(os.path.exists(directory_path) and os.path.isdir(directory_path)):
-		os.mkdir(directory_path)
-	storage = getStorage(url)
-	protocol = Protocol(storage, crypto)
-	print('Appel de SIDRestore sur : ' + directory_path)
-	SIDRestore(protocol, directory_path)
-	if True:
-		print('Sauvegarde : ')
-		if opts.name != None:
-			print('Nom : ' + opts.name)
-			print('Version : ' + str(version))
-		print('URl : ' + url)
-		print('Directory_path : ' + directory_path)
+        password = getPw()
+        crypto = SIDCrypto(password)
+        try:
+            (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
+        except ValueError:
+            print('Wrong password')
+        else:
+            print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s\n Version: %s' % (opts.name,url,directory_path,last_update,version))
+            if opts.name != None:
+                (version, url, _, _) = read_save(opts.name, crypto)
+            else:
+                url = opts.url
+            directory_path = opts.directory
+            if not(os.path.exists(directory_path) and os.path.isdir(directory_path)):
+                os.mkdir(directory_path)
+            storage = getStorage(url)
+            protocol = Protocol(storage, crypto)
+            print('Appel de SIDRestore sur : ' + directory_path)
+            SIDRestore(protocol, directory_path)
+            if True:
+                print('Sauvegarde : ')
+                if opts.name != None:
+                        print('Nom : ' + opts.name)
+                        print('Version : ' + str(version))
+                print('URl : ' + url)
+                print('Directory_path : ' + directory_path)

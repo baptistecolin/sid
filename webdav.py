@@ -17,10 +17,7 @@ class Webdav(server_connection):
 
 	def __contains__(self,key):
 		response,content=self.server.request(self.create(self.dest,key),'HEAD')
-		if response.status==200:
-			return True
-		else:
-			return False
+		return response.status==200
 
 	def get(self,k):
 		response,content=self.server.request(self.create(self.dest,k),'GET')

@@ -1,7 +1,7 @@
 from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from Crypto import Random
-import SIDStructure
+from SIDStructure import *
 
 class Null:
     def new(key, mode, iv):
@@ -34,7 +34,8 @@ class SIDCrypto:
         self.password = password
         self.algo_hash = algos[algo_hash]
         self.saltlen = saltlen
-        
+        self.globalkeylen = globalkeylen
+
         self.algo_cipher = algos[algo_cipher]
 
         if self.algo_cipher == DES: #DES implementation is different...
@@ -43,39 +44,43 @@ class SIDCrypto:
             self.keylen, self.ivlen = self.algo_cipher.key_size[-1], self.algo_cipher.block_size
 
         self.rand = Random.new()
-        #self.globalKey = SIDStructure.getKey(password)    quand la fonction getkey sera codée
-
+        self.globalKey = None
 
     def globalKeyGenerator():
         return self.rand(self.globalkeylen)
-        
 
-    def key_iv_salt_generator(self,password):
+
+    def key_iv_salt_generator(self,globalKey):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
         salt = (self.rand).read(self.saltlen) #random generation of the salt
-        password_bytes = password.encode('utf-8')
+        
+        assert self.globalKey != None #error thrown if globalKey has not been defined
 
-        key = self.hash(password_bytes+salt , converting_bytes = True) #the key is the hash of the password+the salt
+        key = self.hash(globalKey + salt , converting_bytes = True) #the key is the hash of the global key +the salt
         key = key[:self.keylen]
         
         return (key,iv,salt)        
 
 
 ###ENCRYPTION FUNCTION
-    def encrypt(self, path):
+    def encrypt(self, path, usePassword = False):
         #the path is the one of the file that will be ciphered
 
         o = open(path, 'rb')
         clear = o.read() #message contained in the file
         o.close()
 
-        m = self.encryptBytes(clear)
+        m = self.encryptBytes(clear, usePassword)
         
         return m
 
-    def encryptBytes(self, clear):
-        (key,iv,salt) = self.key_iv_salt_generator(self.password)
-
+    def encryptBytes(self, clear, usePassword = False):
+        if not usePassword :
+            (key,iv,salt) = self.key_iv_salt_generator(self.globalKey)
+        else:
+            password_bytes = self.password.encode('utf-8')
+            (key,iv,salt) = self.key_iv_salt_generator(password_bytes)
+    
         #generating a cipher
         if self.algo_cipher == ARC2:
             cipher = ARC2.new(key)
@@ -101,25 +106,30 @@ class SIDCrypto:
 
 
 ###DECRYPTION FUNCTION
-    def decrypt(self,path):
+    def decrypt(self,path, usePassword = False):
         
         o = open(path, 'rb')
         c = o.read()
 
-        m = self.decryptBytes(c)
+        m = self.decryptBytes(c, usePassword)
 
         return m #the output is a byte array containing the message.
 
-    def decryptBytes(self,s):
+    def decryptBytes(self,s, usePassword = False):
         #the string is splitted into the actual ciphered message, the hash, the iv, and the salt
         c = s[:len(s)-(self.saltlen + self.ivlen)]
         iv = s[len(s)-(self.ivlen+self.saltlen):len(s)-self.saltlen]
         salt = s[len(s)-self.saltlen:]
 
-        password_bytes = self.password.encode('utf-8')
+        assert self.globalKey != None #an error is thrown if globalKey has not been defined
 
         #the key is the hash of the password+the salt
-        key = self.hash(password_bytes+salt , converting_bytes = True)
+        if not usePassword :
+            key = self.hash(self.globalKey + salt , converting_bytes = True)
+        else :
+            password_bytes = self.password.encode('utf-8')
+            key = self.hash(password_bytes + salt , converting_bytes = True)
+
 
         if self.algo_cipher == ARC2:
             cipher = ARC2.new(key)
@@ -164,6 +174,7 @@ if __name__ == "__main__":
     password = getpass.getpass('password: ')
     algo = input("algorithme a utiliser : ")
     sid = SIDCrypto(password, algo_cipher=algo)
+    sid.globalKey = sid.rand.read(sid.globalkeylen)
                 
     message_clair = input("message a chiffrer : ").encode('utf-8')
     clear = open("clear.txt", 'bw')
