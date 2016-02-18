@@ -128,7 +128,7 @@ class SIDCrypto:
 
         #the key is the hash of the password+the salt
         if self.globalKey is None or usePassword:
-            key = self.hash(password_bytes + salt , converting_bytes = True)[:self.keylen]
+            key = self.hash(password + salt , converting_bytes = True)[:self.keylen]
         else:
             key = self.hash(self.globalKey + salt , converting_bytes = True)[:self.keylen]
 

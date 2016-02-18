@@ -21,7 +21,7 @@ class File(server_connection):
 		try:
 			return open(os.path.join(self.savePath,k),'rb').read()
 		except FileNotFoundError:
-			return 'No such files'
+			print('No such files in', self.savePath)
 
 	def delete(self,k):
 		for root, dirs, files in os.walk(self.savePath):
