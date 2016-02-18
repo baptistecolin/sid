@@ -12,6 +12,8 @@ sid status name
 #give the status of a save (last online version, url)
 sid restore [version] [newname] [name]/[url] destination 
 #download the save "name" in "version" (last version by default)
+sid changepassword name
+#change password to crypt/decrypt save
 sid help
 #get some help
 sid about
