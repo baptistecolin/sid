@@ -10,38 +10,29 @@ import getpass
 class Imaps(server_connection):
 	
 	def __init__(self, login, password, server='imap.gmail.com',
-				 name='?', box='OTHERS', flag='\Flagged'):
+				 name=b'?', box='OTHERS', flag='\Flagged'):
 		self.name = name
 		self.box = box
 		self.flag = flag
 		self.mail = imaplib.IMAP4_SSL(server)
 		self.mail.login(login, password) #('myusername@gmail.com', 'mypassword')
-<<<<<<< HEAD
 		self.mail.create(box)
 		
-=======
-		self.mail.create('OTHERS')
->>>>>>> 3228b1882ddecb1cd96606d206c239bd2e026a4e
 	def affichage(self):
 		for list in (self.mail.list()[1]):
 			print(bytes.decode(list))
 	
-<<<<<<< HEAD
 	def create_box(self, box = 'OTHERS'):
 		self.mail.create(box)
 	
-=======
-	# k : string
-	# keyId : bytes
->>>>>>> 3228b1882ddecb1cd96606d206c239bd2e026a4e
 	def keyId(self, k):
-		return b'sid-' + bytes(self.name, 'utf-8') + b'-' + bytes(k, 'utf-8')
+		return b'sid-' + self.name + b'-' + k
 					
 	# k est le hash du nom et v est le content qui a été encodé 
 	def put(self, k, v):
 		# MessageId: k k est bytes
 		# ...
-		message = b'Message-Id: ' + bytes(k, 'utf-8') + b'\n'
+		message = b'Message-Id: ' + k + b'\n'
 		message += b'Subject: ' + self.keyId(k) + b'\n'
 		message += b'From: x\n'
 		message += b'To: y\n'
@@ -158,19 +149,18 @@ class Imaps(server_connection):
 
 if __name__ == '__main__':
 	password = getpass.getpass('password: ')
-#	IM = Imaps('xiangnan.chat@gmail.com', password, name=b'test')
-	IM = Imaps('ribs.sid@gmail.com', password, name='test')
+	IM = Imaps('xiangnan.chat@gmail.com', password, name=b'test')
 	IM.affichage()
 	#for i in range(5):
-	IM.put('toto', b'blablablablablabla')
-	print("get: ", IM.get('toto'))
+	IM.put(b'toto', b'blablablablablabla')
+	print("get: ", IM.get(b'toto'))
 	#IM.get(b'hello2')
 	
 	#IM.__contains__(b'toto'):
-	print('toto' in IM)
+	print(b'toto' in IM)
 	
 	#IM.delete(b'toto')
-	del IM['toto'] 
+	del IM[b'toto'] 
 	
 	#MP = Imaps('xiangnan.yue@mines-paristech.fr','','imapel.ensmp.fr')
 	#MP.affichage()
