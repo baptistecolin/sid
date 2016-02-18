@@ -5,9 +5,8 @@
 if [ $# -eq 1 ] ; then
   dst=$1
   shift 1
-else
-#  dst=file://$PWD/save.dir
-  dst=ssh://14alarro@ccdl70:Documents/MSI/Projet/backup
+ielse
+  dst=file://$PWD/save.dir
 fi
 
 nom=test
@@ -26,6 +25,7 @@ echo "fichier initial titi" >> $src/titi
 echo "fichier initial toto" >> $src/toto
 
 # création de la sauvegarde
+rm $HOME/.sid/$nom
 sid create --pass foo -n $nom -d $src -u $dst "$@"
 sid list
 sid ls -n $nom
