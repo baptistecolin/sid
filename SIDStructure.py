@@ -332,7 +332,7 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 #SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
 #print(SIDStatus(protocol_test))
-print(SIDList(protocol_test, True))
+#print(SIDList(protocol_test, True))
 
 
 # fichiers temporaires
