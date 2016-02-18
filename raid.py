@@ -52,6 +52,12 @@ class Raid():
 			disk2.put(self.getKey(k, 2), parts[1])
 			disk3.put(self.getKey(k, 3), parts[2])
 
+	def get(self, k, v):
+		if self.version==10:
+
+		elif self.version==5:
+
+
 def main():
 	raid=Raid()
 	raid.put('helloworld',b'blablablabalbalbalbalbalablabalbalbalabalbalbalabalbalablabalbalbalbalablabalbalbalbalbalablabalbalbalbalablabalbalbalbalbalablablablablabalbalblabalbalbalablab')
