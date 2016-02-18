@@ -280,11 +280,11 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 ## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1. ### CHANGE
 # @protocol : sid.Protocol
 def SIDStatus(protocol): ### CHANGE un peu tout
-	try:
-		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
-	except AssertionError:
-		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
-		return None
+#	try:
+	lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
+#	except AssertionError:
+#		print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.")
+#		return None
 	return str(lastSID["version"]), lastSID["lastUpdate"]
 
 ## List files in backend
@@ -331,7 +331,8 @@ def SIDList(protocol, detailed=False): ### CHANGE un peu tout
 #SIDCreate(protocol_test, "test_dir1/")
 #SIDSave(protocol_test, "test_dir1/")
 #SIDRestore(protocol_test, "dir3/")
-SIDStatus(protocol)
+#print(SIDStatus(protocol_test))
+print(SIDList(protocol_test, True))
 
 
 # fichiers temporaires
