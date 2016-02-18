@@ -41,8 +41,11 @@ class SIDCrypto:
         self.rand = Random.new()
         self.globalKey = globalkey
 
-    def generateGlobalKey(self):
-        self.globalKey = self.rand.read(self.algo_cipher.key_size[0])
+    def generateGlobalKey(self): #returns a new global key. Should be useful for version-dependant encryption
+        return self.rand.read(self.algo_cipher.key_size[0])
+
+    def setGlobalKey(self, key): #usual setter
+        self.globalKey = key
 
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
