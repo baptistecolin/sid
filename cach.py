@@ -64,7 +64,7 @@ def read_save(name,crypto):
             return (j_dic['version'],j_dic['url'],j_dic['directory_path'],j_dic['last_update'])
 
 #delete cached save
-def delete_save(name,crypto): #test first if good password
+def cach_delete(name,crypto): #test first if good password
     if os.path.exists(os.path.join(cach_dir,name)):
         os.remove(os.path.join(cach_dir,name))
 
