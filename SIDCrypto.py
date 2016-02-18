@@ -47,6 +47,9 @@ class SIDCrypto:
     def setGlobalKey(self, key): #usual setter
         self.globalKey = key
 
+    def setPassword(self, newpassword): #usual setter
+        self.password = newpassword
+
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
         salt = (self.rand).read(self.saltlen) #random generation of the salt
