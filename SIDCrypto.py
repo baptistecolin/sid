@@ -1,7 +1,6 @@
-from Crypto.Cipher import AES,ARC4,ARC2,Blowfish,CAST,DES,DES3
+from Crypto.Cipher import AES,Blowfish,CAST,DES3
 from Crypto.Hash import MD5,SHA256,SHA512
 from Crypto import Random
-#from SIDStructure import *
 
 class Null:
     def new(key, mode, iv):
@@ -26,7 +25,7 @@ class NullCipher:
     def decrypt(self, s):
         return s
 
-algos = {"AES":AES, "ARC4":ARC4, "Blowfish":Blowfish, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
+algos = {"AES":AES, "Blowfish":Blowfish, "CAST":CAST, "DES3":DES3, "SHA256":SHA256, "SHA512":SHA512, \
          "MD5":MD5, "None":Null}
 
 class SIDCrypto:
@@ -42,8 +41,11 @@ class SIDCrypto:
         self.rand = Random.new()
         self.globalKey = globalkey
 
-    def generateGlobalKey(self):
-        self.globalKey = self.rand.read(self.algo_cipher.key_size[0])
+    def generateGlobalKey(self): #returns a new global key. Should be useful for version-dependant encryption
+        return self.rand.read(self.algo_cipher.key_size[0])
+
+    def setGlobalKey(self, key): #usual setter
+        self.globalKey = key
 
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
@@ -116,9 +118,9 @@ class SIDCrypto:
         #the key is the hash of the password+the salt
         if self.globalKey is None or usePassword:
             password_bytes = self.password.encode('utf-8')
-            key = self.hash(password_bytes + salt , converting_bytes = True)
+            key = self.hash(password_bytes + salt , converting_bytes = True)[:self.keylen]
         else:
-            key = self.hash(self.globalKey + salt , converting_bytes = True)
+            key = self.hash(self.globalKey + salt , converting_bytes = True)[:self.keylen]
 
         cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
         

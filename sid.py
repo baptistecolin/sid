@@ -11,6 +11,7 @@ import argparse as ap
 import re
 import server_connection
 import getpass
+from urllib.parse import urlparse
 from file import File
 from SIDStructure import SIDCreate, SIDRestore, SIDSave, SIDDelete
 from SIDCrypto import * 
@@ -74,11 +75,12 @@ srestore = subs.add_parser('restore', help='restore a save')
 srestore.set_defaults(op='restore')
 
 srestore.add_argument('-v','--version', type=str, help='specify version')
+srestore.add_argument('identifier', type=str, help='specify save name or url')
 srestore.add_argument('directory', type=str, help='specify directory to restore')
 
-srestore.add_argument('-n','--name', type=str, help='Give a save name')
+#srestore.add_argument('-n','--name', type=str, help='Give a save name')
 srestore.add_argument('-p','--password', type=str, help='Give a password')
-srestore.add_argument('-u','--url', type=str, help='specify target url')
+#srestore.add_argument('-u','--url', type=str, help='specify target url')
 
 # parse sub-command, options and arguments
 opts = parser.parse_args()
@@ -211,11 +213,14 @@ elif opts.op == 'status':
 elif opts.op == 'restore':
         password = getPw()
         crypto = SIDCrypto(password)
+
+        # check if url or name is specified
         try:
-            if opts.name != None:
-                (version, url, _, _) = read_save(opts.name, crypto)
+            parseIdentifier = re.search(r'/', opts.identifier)
+            if parseIdentifier == None:
+                (version, url, _, _) = read_save(opts.identifier, crypto)
             else:
-                url = opts.url
+                url = opts.identifier
         except (ValueError,AssertionError):
             print('Wrong password')
         else:
@@ -228,8 +233,8 @@ elif opts.op == 'restore':
             SIDRestore(protocol, directory_path)
             if True:
                 print('Sauvegarde : ')
-                if opts.name != None:
-                        print('Nom : ' + opts.name)
+                if opts.identifier == None:
+                        print('Nom : ' + opts.identifier)
                         print('Version : ' + str(version))
                 print('URl : ' + url)
                 print('Directory_path : ' + directory_path)
