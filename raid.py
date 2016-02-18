@@ -33,8 +33,11 @@ class Raid():
 					disk4.put(self.getKey(k,i+1), parts[i])
 		elif self.version==5:
 
+			disk1 = self.store("./" + k + '-1')
 			disk2 = self.store("./" + k + '-2')
 			disk3 = self.store("./" + k + '-3')
+
+			n=len(v)
 			parts = []
 			parts.append(v[:n // 2])
 			parts.append(v[n // 2:])
@@ -43,9 +46,11 @@ class Raid():
 				control_sum += v[i] ^ v[n // 2 + i]
 			parts.append(control_sum)
 			if n % 2 != 0: control_sum += v[n]
+
 			disk1.put(self.getKey(k, 1), parts[0])
 			disk2.put(self.getKey(k, 2), parts[1])
-			disk2.put(self.getKey(k, 3), parts[2])
+			disk3.put(self.getKey(k, 3), parts[2])
+
 def main():
 	raid=Raid()
 	raid.put('helloworld',b'blablablabalbalbalbalbalablabalbalbalabalbalbalabalbalablabalbalbalbalablabalbalbalbalbalablabalbalbalbalablabalbalbalbalbalablablablablabalbalblabalbalbalablab')
