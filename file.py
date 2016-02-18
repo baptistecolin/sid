@@ -11,12 +11,12 @@ class File(server_connection):
 		self.savePath=path
 		if not os.path.exists(path):
 			os.makedirs(path)
-
+	
 	def put(self,k,v):
 		fileServer=open(os.path.join(self.savePath,k),'wb')
 		fileServer.write(v)
 		fileServer.close()
-    
+	 
 	def get(self,k):
 		try:
 			return open(os.path.join(self.savePath,k),'rb').read()

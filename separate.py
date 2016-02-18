@@ -38,6 +38,7 @@ class Separate():
 			self.store.put(self.getKey(k,i), v[self.MAX * i : self.MAX*(i + 1)])
 		if n%self.MAX != 0:
 			self.store.put(self.getKey(k,num), v[self.MAX * num: ])
+
 	def delete(self,k):
 		if k in self.store:
 			self.store.delete(k)

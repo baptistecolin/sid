@@ -30,6 +30,7 @@ class Protocol():
 protocol_test = Protocol(File('test_dir2/'), crypto)
 
 
+########  AUXILIARY  ##########################################################
 
 ## Recursively lists all files in directory "path" (with included path)
 # /!\ Tested on Linux systems only
@@ -49,7 +50,31 @@ def listFiles(path, addEntryPath = True, entryPath = ""):
 			files.append(totalPath)
 	return files
 
+def error(msg, errID=-1):
+	errIDString = "" if errID == -1 else " (ID:" + errID + ")"
+	print("[SID-Structure] ERROR%s: %s" % (errIDString, msg))
 
+def DEBUG(msg):
+	print("[SID-Structure] DEBUG: %s" % msg)
+
+
+########  END AUXILIARY  ######################################################
+###############################################################################
+########  SID INTERACT   ######################################################
+
+## Returns global SIDKey from "last.sid" in repository
+# @protocol : sid.Protocol
+def getSIDKey(protocol): ### CHANGE
+	try:
+		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
+	except AssertionError:
+		print("[SID-Structure] ERROR: impossible to get key from last.sid: file is corrupt.")
+	return lastSID["sidKey"]
+
+
+########  END SID INTERACT  ###################################################
+###############################################################################
+########  SID CORE  ###########################################################
 
 ## Generate "last.sid" file from version "ver" in directory "path"
 # @protocol : sid.Protocol
@@ -66,7 +91,7 @@ def buildSID(protocol, path = "", isNew = False):
 		try: ### CHANGE
 			last_info = json.loads(protocol.get("last.sid").decode("UTF-8")) ###
 		except AssertionError: ### CHANGE
-			print("[SID-Structure] ERROR: impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
+			error("Impossible to read downloaded last.sid: data is corrupt.") ### CHANGE
 		ver = last_info["version"] + 1
 		sidKey = last_info["sidKey"] ### CHANGE
 		id_max = last_info["id_max"]
@@ -102,9 +127,10 @@ def buildSID(protocol, path = "", isNew = False):
 #				dic[ftype][f] = directory(f,  fhash)
 		else:
 			try:
+				DEBUG(")
 #				if last_info[ftype][f].getHash() == fhash:
-				if last_info[ftype][f]["hash"] == fhash:
-					dic[ftype][f] = last_info[ftype][f]
+				elif last_info[ftype][f]["hash"] == fhash:
+					dic[ftype][f] = last_info[ftype][f]					
 				else:
 					dic[ftype][f] = {"hash" : fhash,
 							"size" : prop.st_size,
@@ -157,15 +183,6 @@ def buildSID(protocol, path = "", isNew = False):
 		to_upload.append("last.sid")
 	return to_upload, dic["basics"]
 
-## Returns global SIDKey from "last.sid" in repository
-# @protocol : sid.Protocol
-def getSIDKey(protocol): ### CHANGE
-	try:
-		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
-	except AssertionError:
-		print("[SID-Structure] ERROR: impossible to get key from last.sid: file is corrupt.")
-	return lastSID["sidKey"]
-
 
 ## Upload directory "path" to update backup
 # @protocol : sid.Protocol
@@ -211,7 +228,13 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		try: ### CHANGE
 			lastSID = json.loads(protocol.get("v" + str(ver) + ".sid"))
 		except:
-			print("[SID-Structure] ERROR: version %i not found on backend, or is impossible to read (file may be corrupt, retry)." % ver)
+			try: ### CHANGE
+				lastSID = json.loads(protocol.get("last.sid"))
+				if lastSID["version"] != ver:
+					raise Exception("Invalid version error.")
+			except: ### CHANGE
+				error("version %i not found on backend, or is impossible to read (file may be corrupt, retry)." % ver)
+				return None
 
 	for d, v in lastSID["dirs"].items():
 		os.makedirs(os.path.join(path, d), 0o777, True)
@@ -276,7 +299,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 				os.utime(os.path.join(path, l), v["modTime"])
 			except: ""
 
-	return downloaded
+	return downloaded, lastSID["version"] ### CHANGE
 
 
 ## Get latest version number (from backend last.sid). Returns version if data print was successful, else -1. ### CHANGE
@@ -362,26 +385,29 @@ def SIDDelete(protocol): ### CHANGE un peu tout
 	return deleted, errors
 
 
-###########################################
-############### TESTING AREA ##############
+########  END SID CORE  #######################################################
+###############################################################################
+###############################################################################
+###############################################################################
+########  TESTING AREA  #######################################################
 
 if __name__ == '__main__':
 	#SIDCreate(protocol_test, "test_dir1/")
-	#SIDSave(protocol_test, "test_dir1/")
+	SIDSave(protocol_test, "test_dir1/")
 	#SIDRestore(protocol_test, "dir3/")
-	#print(SIDStatus(protocol_test))
-	#print(SIDList(protocol_test, True))
-	print(SIDDelete(protocol_test))
+	print(SIDStatus(protocol_test))
+	print(SIDList(protocol_test, True))
+	#print(SIDDelete(protocol_test))
 	
-	# fichiers temporaires
-	# supprimer repertoire SID
+
+
+# fichiers temporaires
 	
-	# ne pas hasher les petits fichiers
-	# forcer restoration
-	# stockage de cle pour crypto # OK ?
+# ne pas hasher les petits fichiers
+# forcer restoration
 	
-	# gros fichiers ?
-	# grosses arborescences
+# gros fichiers ?
+# grosses arborescences
 
 # rsync : algo qui check si morceaux identiques
 

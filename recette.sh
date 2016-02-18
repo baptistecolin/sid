@@ -55,7 +55,7 @@ echo "fichier initial tata" > $src/tata
 
 sid update --pass foo $nom
 
-sid restore --pass foo -u $dst $tst
+sid restore --pass foo $dst $tst
 echo '# comparaison de la restoration'
 diff -r $src $tst
 
