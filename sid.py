@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# FC: certaines options pas utiles si arguments obligatoires?
-# password caché, sans affichage?
 
 ########################################################### OPTIONS & ARGUMENTS
 
@@ -24,11 +22,10 @@ subs = parser.add_subparsers()
 help = subs.add_parser('help', help='show help')
 help.set_defaults(op='help')
 
-help.add_argument('about', nargs='?', choices=['help','create','list','ls','update','dump','status','restore'],
+help.add_argument('about', nargs='?', choices=['help','create','list','ls','update','status','restore', 'changepassword'],
                                   default='help', help='sub-command name')
 
 # list sub-command
-
 slist = subs.add_parser('list', help='list all the saves known on computer')
 slist.set_defaults(op='list')
 
@@ -36,7 +33,7 @@ slist.set_defaults(op='list')
 snameurl = ap.ArgumentParser(add_help=False)
 
 snameurl.add_argument('name', type=str, help='Give a save name')
-snameurl.add_argument('-p','--password', type=str, help='Give a password')
+nameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
@@ -44,12 +41,6 @@ scr.set_defaults(op='create')
 
 scr.add_argument('directory', type=str, help='specify directory to save')
 scr.add_argument('url', type=str, help='specify target url')
-
-# setName sub-command
-ssn = subs.add_parser('setName', help='set a name to a save at a url', parents=[snameurl])
-ssn.set_defaults(op='setName')
-
-ssn.add_argument('url', type=str, help='specify target url')
 
 # ls sub-command
 sls = subs.add_parser('ls', help='list files in a save', parents=[snameurl])
@@ -77,19 +68,17 @@ srestore.add_argument('-v','--version', type=str, help='specify version')
 srestore.add_argument('identifier', type=str, help='specify save name or url')
 srestore.add_argument('directory', type=str, help='specify directory to restore')
 
-srestore.add_argument('-n','--name', type=str, help='Give a save name')
 srestore.add_argument('-nn','--newname', type=str, help='Give a save name')
 srestore.add_argument('-p','--password', type=str, help='Give a password')
-srestore.add_argument('-u','--url', type=str, help='specify target url')
+
+# changepassword sub-command
+schangepassword = subs.add_parser('changepassword', help='change the backup\'s password', parents=[snameurl])
+schangepassword.set_defaults(op='changepassword')
 
 # parse sub-command, options and arguments
 opts = parser.parse_args()
 
 ########################################################### FUNCTIONS 
-
-def splitUrl(url): 
-        reUrl = re.search(r'^(.*)://(.*)',url) 
-        return reUrl.group(1),reUrl.group(2)
 
 def absPath(path):
         if path[0] == '/':
@@ -102,7 +91,16 @@ def getPw():
         return opts.password
     else: 
         password = getpass.getpass('sid\'s password : ')
+        
         return password
+
+# Prompt for login and password if they are not known
+def getIds(login, password, server):
+	if login == None:
+		login = input('Login : ')
+	if password == None:
+		password = getpass.getpass(login + '@' + server + '\'s password : ')
+	return (login, password)
 
 class Protocol():
         def __init__(self, storage, crypto):
@@ -120,7 +118,6 @@ class Protocol():
                 self.storage.delete(k)
 
 def getStorage(url):
-#	protocolName, address = splitUrl(url)
 	parseUrl = urlparse(url)
 	protocolName = parseUrl.scheme
 	backupPath = parseUrl.path
@@ -132,42 +129,15 @@ def getStorage(url):
 		storage = File(backupPath)
 	elif protocolName == 'ssh':
 		from ssh import Ssh
-		
-		# get login, server, path
-		# parsePath = re.match(r'^(.*)@([^:]*):(.*)$', address)
-		# login = parsePath.group(1)
-		# server = parsePath.group(2)
-		# backupPath = parsePath.group(3)
-		#print(backupPath)
-		if login == None:
-			login = input('Login : ')
-		if password == None:
-			password = getpass.getpass(login+'@'+server+'\'s password : ')
+		(login, password) = getIds(login, password, server)
 		storage = Ssh(backupPath, login, password, server)
 	elif protocolName == 'imap' or protocolName == 'imaps':
 		from imaps import Imaps
-		if login == None:
-			login = input('Login : ')
-		# server = address
-		if password == None:
-			password = getpass.getpass(login+'@'+server+'\'s password : ')
+		(login, password) = getIds(login, password, server)
 		storage = Imaps(login, password)
 	elif protocolName == 'http' or protocolName == 'https':
 		from webdav import Webdav
-		
-		#get login, uri (path = '')
-		# parsePath = re.match(r'^([^@]*)@(.*)$', address)
-		#premier cas : pas de nom d'utilisateur dans l'url envoyée
-		#if parsePath == None:
-		#	login = input('Login : ')
-		#	uri = address
-		#else:
-		#	login = parsePath.group(1)
-		#	uri = parsePath.group(2)
-		if login == None:
-			login = input('Login : ')
-		if password == None:
-			password = getpass.getpass(login+'@'+server+'\'s password : ')
+		(login, password) = getIds(login, password, server)
 		storage = Webdav('', protocolName+'://'+server, login, password)
 	return storage
 
@@ -267,3 +237,6 @@ elif opts.op == 'restore':
                         print('Version : ' + str(version))
                 print('URl : ' + url)
                 print('Directory_path : ' + directory_path)
+elif opts.op == 'changepassword':
+	password = getPw()
+	

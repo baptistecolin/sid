@@ -34,10 +34,10 @@ algos = {"AES":AES, "Blowfish":Blowfish, "CAST":CAST, "DES3":DES3, "SHA256":SHA2
 
 class SIDCrypto:
     def __init__(self, password, algo_cipher="AES", algo_hash = "SHA256", saltlen = 8, globalkey=None):
-        self.password = password
+        
         self.algo_hash = algos[algo_hash]
         self.saltlen = saltlen
-
+        self.password = self.hash(password)
         self.algo_cipher = algos[algo_cipher]
 
         self.keylen, self.ivlen = self.algo_cipher.key_size[-1], self.algo_cipher.block_size
@@ -52,10 +52,10 @@ class SIDCrypto:
         self.globalKey = key
 
     def setPassword(self, newpassword): #usual setter
-        self.password = newpassword
+        self.password = self.hash(newpassword)
 
     def isPassword(self, string):
-        return string == password
+        return hash(string) == self.password
 
     def key_iv_salt_generator(self,seed):
         iv = (self.rand).read(self.ivlen) #random generation of the iv
@@ -83,14 +83,13 @@ class SIDCrypto:
     def encryptBytes(self, clear, usePassword = False):
 
         if self.globalKey is None or usePassword:
-            password_bytes = self.password.encode('utf-8')
             (key,iv,salt) = self.key_iv_salt_generator(password_bytes)
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.globalKey)
     
         cipher = self.algo_cipher.new(key, self.algo_cipher.MODE_CBC, iv)
 
-        clear += self.hash(clear)
+        clear += self.hash(clear, converting_bytes = True)
         
         #begin padding
         padlen = cipher.block_size
@@ -129,8 +128,7 @@ class SIDCrypto:
 
         #the key is the hash of the password+the salt
         if self.globalKey is None or usePassword:
-            password_bytes = self.password.encode('utf-8')
-            key = self.hash(password_bytes + salt , converting_bytes = True)[:self.keylen]
+            key = self.hash(password + salt , converting_bytes = True)[:self.keylen]
         else:
             key = self.hash(self.globalKey + salt , converting_bytes = True)[:self.keylen]
 
@@ -162,11 +160,11 @@ class SIDCrypto:
                     s = name
                 else:
                     s = name + str(version)
-                    s = s.encode("utf-8")
+                s = s.encode("utf-8")
         else:
             s = name
 
-        h = self.algo_hash.new()  
+        h = (self.algo_hash).new()  
         h.update(s)
         return h.digest()
 
