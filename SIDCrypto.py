@@ -83,7 +83,7 @@ class SIDCrypto:
     def encryptBytes(self, clear, usePassword = False):
 
         if self.globalKey is None or usePassword:
-            (key,iv,salt) = self.key_iv_salt_generator(password_bytes)
+            (key,iv,salt) = self.key_iv_salt_generator(self.password)
         else:
             (key,iv,salt) = self.key_iv_salt_generator(self.globalKey)
     
