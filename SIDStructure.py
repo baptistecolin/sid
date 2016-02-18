@@ -175,13 +175,14 @@ def buildSID(protocol, path = "", isNew = False):
 	if to_upload or sldChanged:
 		if not isNew:
 			# rename previous
-			o = open(os.path.join(path, "last.sid"), "rb")
+			#o = open(os.path.join(path, "last.sid"), "rb")
+			o = protocol.get('last.sid')
 			prevSid = "v" + str(last_info["version"]) + ".sid"
 #			prev = open(os.path.join(path, prevSid), "wb") ### CHANGE
 #			prev.write(o.read()) ### CHANGE
 #			prev.close() ### CHANGE
-			sids[prevSid] = o.read() ### CHANGE
-			o.close()
+			sids[prevSid] = o#.read() ### CHANGE
+			#o.close()
 		# create new
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S") ### CHANGE
@@ -202,7 +203,7 @@ def SIDSave(protocol, path = ""): ### CHANGE all
 		o = open(os.path.join(path, f), "rb")
 		protocol.put(dic[f]["serverName"], o.read())
 		o.close()
-	for k, v in sids:
+	for k, v in sids.items():
 		protocol.put(k, v)
 			
 
