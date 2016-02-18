@@ -12,7 +12,7 @@ import re
 import server_connection
 import getpass
 from file import File
-from SIDStructure import SIDCreate, SIDRestore, SIDSave
+from SIDStructure import SIDCreate, SIDRestore, SIDSave, SIDDelete
 from SIDCrypto import * 
 from cach import * 
 
@@ -195,6 +195,9 @@ elif opts.op == 'delete':
     except (ValueError,AssertionError): 
         print('Wrong password')
     else:
+        storage = getStorage(url)
+        protocol = Protocol(storage, crypto)
+        SIDDelete(protocol)
         cach_delete(opts.name,crypto)
 elif opts.op == 'status':
     password = getPw()
