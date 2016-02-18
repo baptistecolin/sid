@@ -16,10 +16,14 @@ class Imaps(server_connection):
 		self.flag = flag
 		self.mail = imaplib.IMAP4_SSL(server)
 		self.mail.login(login, password) #('myusername@gmail.com', 'mypassword')
+		self.mail.create(box)
 		
 	def affichage(self):
 		for list in (self.mail.list()[1]):
 			print(bytes.decode(list))
+	
+	def create_box(self, box = 'OTHERS'):
+		self.mail.create(box)
 	
 	def keyId(self, k):
 		return b'sid-' + self.name + b'-' + k
