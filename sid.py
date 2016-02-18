@@ -35,53 +35,50 @@ slist.set_defaults(op='list')
 # options and arguments common to almost all: name 
 snameurl = ap.ArgumentParser(add_help=False)
 
-snameurl.add_argument('-n','--name', type=str, help='Give a save name')
+snameurl.add_argument('name', type=str, help='Give a save name')
 snameurl.add_argument('-p','--password', type=str, help='Give a password')
 
 # create sub-command
 scr = subs.add_parser('create', help='create a save', parents=[snameurl])
 scr.set_defaults(op='create')
 
-scr.add_argument('files', nargs='*', help='process these files', type=ap.FileType('rb'), default=[sys.stdin.buffer])
-scr.add_argument('-u','--url', type=str, help='specify target url')
-scr.add_argument('-d','--directory', type=str, help='specify directory to save')
+scr.add_argument('directory', type=str, help='specify directory to save')
+scr.add_argument('url', type=str, help='specify target url')
 
 # setName sub-command
 ssn = subs.add_parser('setName', help='set a name to a save at a url', parents=[snameurl])
 ssn.set_defaults(op='setName')
 
-ssn.add_argument('-u','--url', type=str, help='specify target url')
+ssn.add_argument('url', type=str, help='specify target url')
 
 # ls sub-command
 sls = subs.add_parser('ls', help='list files in a save', parents=[snameurl])
 sls.set_defaults(op='ls')
 
-sls.add_argument('-u','--url', type=str, help='specify target url')
 sls.add_argument('-v','--version', type=str, help='specify version')
 
 # delete sub-command
 sdel = subs.add_parser('delete', help='delete a save', parents=[snameurl])
 sdel.set_defaults(op='delete')
 
-sdel.add_argument('-u','--url', type=str, help='specify target url')
-
 # status sub-command
 sstat = subs.add_parser('status', help='print status (last online version) of a save', parents=[snameurl])
 sstat.set_defaults(op='status')
-
-sstat.add_argument('-u','--url', type=str, help='specify target url')
 
 # update sub-command
 supdate = subs.add_parser('update', help='update a save', parents=[snameurl])
 supdate.set_defaults(op='update')
 
 # restore sub-command
-srestore = subs.add_parser('restore', help='restore a save', parents=[snameurl])
+srestore = subs.add_parser('restore', help='restore a save')
 srestore.set_defaults(op='restore')
 
-srestore.add_argument('-u','--url', type=str, help='specify target url')
 srestore.add_argument('-v','--version', type=str, help='specify version')
-srestore.add_argument('-d','--directory', type=str, help='specify directory to restore')
+srestore.add_argument('directory', type=str, help='specify directory to restore')
+
+srestore.add_argument('-n','--name', type=str, help='Give a save name')
+srestore.add_argument('-p','--password', type=str, help='Give a password')
+srestore.add_argument('-u','--url', type=str, help='specify target url')
 
 # parse sub-command, options and arguments
 opts = parser.parse_args()
@@ -177,7 +174,7 @@ elif opts.op == 'delete':
     crypto = SIDCrypto(password)
     try:
         (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
-    except ValueError: 
+    except (ValueError,AssertionError): 
         print('Wrong password')
     else:
         cach_delete(opts.name,crypto)
@@ -194,15 +191,13 @@ elif opts.op == 'restore':
         password = getPw()
         crypto = SIDCrypto(password)
         try:
-            (version,url,directory_path,last_update) = read_save(opts.name,crypto) 
-        except ValueError:
-            print('Wrong password')
-        else:
-            print('Name: %s \nURL: %s \nDirectory: %s\n Last_update: %s\n Version: %s' % (opts.name,url,directory_path,last_update,version))
             if opts.name != None:
                 (version, url, _, _) = read_save(opts.name, crypto)
             else:
                 url = opts.url
+        except (ValueError,AssertionError):
+            print('Wrong password')
+        else:
             directory_path = opts.directory
             if not(os.path.exists(directory_path) and os.path.isdir(directory_path)):
                 os.mkdir(directory_path)
