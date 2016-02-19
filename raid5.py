@@ -6,8 +6,8 @@ import file, ssh, imaps, webdav
 class Raid5():
     def __init__(self, stores):
         self.size=len(stores)
-		# 2 stores ok, more or less raid1?
-		assert self.size >= 2, "at least to disks for RAID5"
+        # 2 stores ok, more or less raid1?
+        assert self.size >= 2, "at least two disks for RAID5"
         self.store = stores
 
     def put(self, k, v):
