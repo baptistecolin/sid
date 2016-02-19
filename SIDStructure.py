@@ -68,17 +68,19 @@ def DEBUG(msg):
 
 ## Returns global SIDKey from "last.sid" in repository
 # @protocol : sid.Protocol
-def getSIDKey(protocol): ### CHANGE
+'''def getSIDKey(protocol): ### CHANGE
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"))
 	except AssertionError:
 		ERROR("Impossible to get key from last.sid: file is corrupt.")
-	return lastSID["sidKey"]
+	return lastSID["sidKey"]''' ## TODO ? (one key per BigFile)
 
 
 ########  END SID INTERACT  ###################################################
 ###############################################################################
 ########  SID CORE  ###########################################################
+
+hashLength = 256 # length for default hash algo SHA256
 
 ## Generate "last.sid" file in directory "path". 
 # isNew is True when the repository is created.
@@ -93,7 +95,7 @@ def buildSID(protocol, path = "", isNew = False):
 	if isNew:
 		ver = 0
 		id_max = 0
-		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8") ## TODO ?
+		#sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8") ## TODO ?
 		sidHoles = []
 	else:
 		try:
@@ -102,10 +104,10 @@ def buildSID(protocol, path = "", isNew = False):
 		except AssertionError:
 			ERROR("Impossible to read downloaded last.sid: data is corrupt.")
 		ver = last_info["version"] + 1
-		sidKey = last_info["sidKey"]
+		#sidKey = last_info["sidKey"]
 		id_max = last_info["id_max"]
 		sidHoles = last_info["sidHoles"]
-	dic["sidKey"] = sidKey
+	#dic["sidKey"] = sidKey
 	dic["version"] = ver
 	dic["sidHoles"] = sidHoles
 	for f in listFiles(path, False):
@@ -135,24 +137,54 @@ def buildSID(protocol, path = "", isNew = False):
 				sldChanged = True
 		else: #ftype = "basics"
 			ftype = "basics"
-			fhash = base64.b64encode(protocol.crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8")
-			if isNew:
-				dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash)
-				id_max += 1
-				to_upload.append(f)
-			else:
-				try:
-					if last_info[ftype][f].getHash() == fhash:
-						dic[ftype][f] = last_info[ftype][f]
-					else:
-						dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash)
-						id_max += 1
-						to_upload.append(f)
-				except KeyError:
-					dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash)
+			ob = open(os.path.join(path,f),'rb')
+			flength = len(ob.read())
+			ob.close()
+			if flength > hashlength:
+				#BigFile
+				fhash = base64.b64encode(protocol.crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8")
+				if isNew:
+					dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
 					id_max += 1
 					to_upload.append(f)
-
+				else:
+					try:
+						if type(last_info[ftype][f]) = BigFile:
+						#BigFile from BigFile
+							if last_info[ftype][f].compareHash(fhash):
+								dic[ftype][f] = last_info[ftype][f]
+							else:
+								dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
+								id_max += 1
+								to_upload.append(f)
+						else:
+						#BigFile from SmallFile
+							dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
+							id_max += 1
+							to_upload.append(f)
+					except KeyError:
+						dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
+						id_max += 1
+						to_upload.append(f)
+			else:
+				#SmallFile
+				o = open(os.path.join(path,f),'rb')
+				fcontent = o.read()
+				if isNew:
+					dic[ftype][f] = SmallFile(f, currPath=path, content=fcontent)
+				else:
+					try:
+						if type(last_info[ftype][f]) = SmallFile:
+							#SmallFile from SmallFile
+							if last_info[ftype][f].compareContent(fcontent):
+								dic[ftype][f] = last_info[ftype][f]
+							else:
+								dic[ftype][f] = SmallFile(f, currPath=path, content=fcontent)
+						else:
+							#SmallFile from BigFile
+							dic[ftype][f] = SmallFile(f, currPath=path, content=fcontent)
+					except KeyError:
+						dic[ftype][f] = SmallFile(f, currPath=path, content=fcontent)
 	if to_upload or sldChanged:
 		if not isNew:
 			# rename previous
@@ -226,7 +258,8 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 	for f, v in lastSID["basics"].items():
 		if os.path.exists(os.path.join(path, f)):
 			fstat = os.lstat(f)
-			fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
+			if f['type'] == 'BigFile'
+				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
 			if force: # ATTENTION TODO
 				if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):
 					try:

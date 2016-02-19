@@ -122,17 +122,17 @@ class BasicFile(AbstractFile):
 		return dic
 
 class BigFile(BasicFile):
-	def __init__(self,filePath,serverName,hash=None,currPath='.',size=-1,modTime=-1,mode=None,key=None):
+	def __init__(self,filePath,serverName,hash=None,currPath='.',size=-1,modTime=-1,mode=None,sidKey=None):
 		BasicFile.__init__(self,filePath,currPath='.',size=-1,modTime=-1,mode=None)
 		self.serverName = severName
 		if hash == None:
 			self.hash = crypto.hash(os.path.join(currPath,filePath), hash_file = True)
 		else: 
 			self.hash = hash
-		if key == None:
+		if sidKey == None:
 			## TODO
 		else:
-			self.key = key
+			self.sidKey = sidKey
 
 	# before encoding in json
 	def encode(self):
@@ -141,7 +141,7 @@ class BigFile(BasicFile):
 			dic['type'] = 'BigFile'
 			dic['hash'] = self.hash
 			dic['serverName'] = self.serverName
-			dic['key'] = self.key
+			dic['sidKey'] = self.sidKey
 			return dic
 		raise TypeError(repr(o)+" is not JSON serializable")
 
@@ -156,7 +156,7 @@ class BigFile(BasicFile):
 						   size=dic['size'], 
 						   modTime=dic['modTime'], 
 						   mode=dic['mode'],
-						   key=dic['key'])
+						   sidKey=dic['sidKey'])
 			return bf
 		return dic
 
@@ -166,10 +166,10 @@ class BigFile(BasicFile):
 	def getServerName(self):
 		return self.serverName
 
-	def getKey(self):
-		return self.key
+	def getSidKey(self):
+		return self.sidKey
 
-	def compareToLocal(self, localHash):
+	def compareHash(self, localHash):
 		return self.hash == localHash
 
 class SmallFile(BasicFile):
@@ -206,7 +206,7 @@ class SmallFile(BasicFile):
 			return sf
 		return dic
 
-	def compareToLocal(self, localContent):
+	def compareContent(self, localContent):
 		return self.content == localContent
 
 # Pour le stockage d'infos sur les liens symboliques
