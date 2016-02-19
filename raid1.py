@@ -16,7 +16,7 @@ class Raid1():
 		for s in self.stores:
 			if s.get(k) != None:
 				return s.get(k)
-		raise FileNotFoundError('File not found') 
+		raise FileNotFoundError() 
 
 	def delete(self, k):
 		for s in self.stores:
