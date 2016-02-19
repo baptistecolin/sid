@@ -375,6 +375,8 @@ def SIDRemove(protocol, ver=-1):
 				prevSID = json.loads(protocol.get("v" + str(i) + ".sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 				for f, v in prevSID["basics"].items():
 					toRemove[int(v.getServerName())] = False
+				if ver == lastSID["version"] and i = ver - 1:
+					sidSave = prevSID
 		if ver != lastSID["version"]:
 			for f, v in lastSID["basics"].items():
 				toRemove[int(v.getServerName())] = False
@@ -388,14 +390,16 @@ def SIDRemove(protocol, ver=-1):
 					deleted += 1
 				except:
 					errors += 1
-		## TODO : upload new last.sid if just deleted
 		try:
 			protocol.delete("last.sid" if ver == lastSID["version"] else "v" + str(ver) + ".sid")
 		except:
 			ERROR("Could not delete corresponding .sid distant file.")
-		lastSID["sidHoles"] = holeList
-		protocol.put("last.sid", json.dumps(lastSID, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8"))
-		## END TODO
+		if ver == lastSID["version"]:
+			sidSave["sidHoles"] = holeList
+			protocol.put("last.sid", json.dumps(sidSave, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8"))
+			try:
+				protocol.delete("v" + str(ver-1) + ".sid")
+			except: "" # do nothing
 	except AssertionError:
 		ERROR("Impossible to read data from .sid files on backend: data is corrupt.")
 		return None
@@ -409,20 +413,15 @@ def SIDRemove(protocol, ver=-1):
 ########  TESTING AREA  #######################################################
 
 if __name__ == '__main__':
-	#SIDCreate(protocol_test, "test_dir1/")
-	SIDSave(protocol_test, "test_dir1/")
-	print(SIDStatus(protocol_test))
-	print("LIST :",SIDList(protocol_test, True))
-	SIDRestore(protocol_test, "dir3/")
+	SIDCreate(protocol_test, "test_dir1/")
+	#SIDSave(protocol_test, "test_dir1/")
+	#print(SIDStatus(protocol_test))
+	#print("LIST :",SIDList(protocol_test, True))
+	#SIDRestore(protocol_test, "dir3/")
 	#print(SIDDelete(protocol_test))
 	#print(SIDRemove(protocol_test, 0))
 	
-# implementer crypto
-# ne pas hasher les petits fichiers
-# forcer restoration
 
 # grosses arborescences
-
-### NOT TODO
 # rsync : algo qui check si morceaux identiques
 
