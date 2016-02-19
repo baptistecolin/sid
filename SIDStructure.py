@@ -45,11 +45,15 @@ def listFiles(path, addEntryPath = True, entryPath = ""):
 	for i in l:
 		totalPath = os.path.join(path, i) if addEntryPath else i
 		if os.path.isdir(os.path.join(entryPath, i)):
-			files.append(totalPath)
 			files.extend(listFiles(totalPath, True, entryPath))
-		if not i.endswith(".sid"): # REMOVE IN LATER VERSIONS (TODO)
-			files.append(totalPath)
+		files.append(totalPath)
 	return files
+
+def mtimeToTuple(modTime):
+	modTime = str(modTime)
+	part1, part2 = modTime.split(".")
+	return (int(part1), int(part2))
+
 
 def ERROR(msg, errID=-1):
 	errIDString = "" if errID == -1 else " (ID:" + errID + ")"
@@ -162,7 +166,7 @@ def buildSID(protocol, path = "", isNew = False):
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S")
 		js = json.dumps(dic, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8")
-		sids["last.sid"] = js ### CHANGE
+		sids["last.sid"] = js
 	return to_upload, dic["basics"], sids
 
 
@@ -225,9 +229,9 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 
 	for f, v in lastSID["basics"].items():
 		if os.path.exists(os.path.join(path, f)):
-			fstat = os.lstat(f)
+			fstat = os.lstat(os.path.join(path, f))
 			fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
-			if force: # ATTENTION TODO
+			if force:
 				if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):
 					try:
 						fcontent = protocol.get(v.getServerName()).decode("UTF-8")
@@ -236,7 +240,7 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 						o.close()
 						downloaded.append(f)
 						os.chmod(os.path.join(path, f), v.getMode())
-						os.utime(os.path.join(path, f), v.getModTime())
+						os.utime(os.path.join(path, f), mtimeToTuple(v.getModTime()))
 					except AssertionError:
 						ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
 		else:
@@ -247,7 +251,8 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 				o.close()
 				downloaded.append(f)
 				os.chmod(os.path.join(path, f), v.getMode())
-				os.utime(os.path.join(path, f), v.getModTime())
+				print(v.getModTime(), mtimeToTuple(v.getModTime()))
+				os.utime(os.path.join(path, f), mtimeToTuple(v.getModTime()))
 			except AssertionError:
 				ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
 
@@ -296,7 +301,7 @@ def SIDList(protocol, detailed=False):
 					"file" : f,
 					"size" : v.getSize(),
 					"perms" : v.getMode(),
-					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime()))[:-7]
+					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime())).split(".")[0]
 					}
 		else:
 			details = {"type" : "FILE",
@@ -310,7 +315,7 @@ def SIDList(protocol, detailed=False):
 					"file" : l,
 					"size" : v.getSize(),
 					"perms" : v.getMode(),
-					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime()))[:-7]
+					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime())).split(".")[0]
 					}
 		else:
 			details = {"type" : "FILE",
@@ -408,7 +413,7 @@ if __name__ == '__main__':
 	SIDSave(protocol_test, "test_dir1/")
 	print(SIDStatus(protocol_test))
 	print("LIST :",SIDList(protocol_test, True))
-	#SIDRestore(protocol_test, "dir3/")
+	SIDRestore(protocol_test, "dir3/")
 	#print(SIDDelete(protocol_test))
 	#print(SIDRemove(protocol_test, 0))
 	
