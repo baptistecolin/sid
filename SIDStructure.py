@@ -157,7 +157,7 @@ def buildSID(protocol, path = "", isNew = False):
 		if not isNew:
 			# rename previous
 			prevSid = "v" + str(last_info["version"]) + ".sid"
-			sids[prevSid] = data.encode("UTF-8")
+			sids[prevSid] = data.encode('UTF-8')
 		# create new
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S")

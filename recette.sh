@@ -42,7 +42,7 @@ echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
 
-sid restore --pass foo $dst $tst
+sid restore --pass foo --newname $nom'2' $dst $tst
 echo '# comparaison de la restoration'
 diff -r $src $tst
 rm -rf $tst
@@ -55,7 +55,7 @@ echo "fichier initial tata" > $src/tata
 
 sid update --pass foo $nom
 
-sid restore --pass foo $dst $tst
+sid restore --pass foo --newname $nom'3' $dst $tst
 echo '# comparaison de la restoration'
 diff -r $src $tst
 

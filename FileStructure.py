@@ -51,7 +51,7 @@ class AbstractFile:
 		return None
 	
 	# before encoding in json (any type)
-	# usage: json.dumps(obj, default=FileStructure.universalEncode, sort_keys=True, indent=2)
+	# usage: json.dumps(obj, default=AbstractFile.universalEncode, sort_keys=True, indent=2)
 	@staticmethod
 	def universalEncode(obj):
 		if isinstance(obj, AbstractFile):
@@ -139,7 +139,7 @@ class SymbolicLink(AbstractFile):
 	def __init__(self,filePath,currPath='.',size=-1,modTime=-1,linkURL=None):
 		AbstractFile.__init__(self,filePath,currPath,size,modTime)
 		if linkURL == None: 
-			self.linkURL = os.readlin(os.path.join(currPath,filePath))
+			self.linkURL = os.readlink(os.path.join(currPath,filePath))
 		else: 
 			self.linkURL = linkURL
 
