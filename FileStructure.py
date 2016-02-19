@@ -100,9 +100,6 @@ class BasicFile(AbstractFile):
 	def getMode(self):
 		return self.mode
 
-	def compare(self): ## TODO ??
-		return True
-
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, BasicFile):
