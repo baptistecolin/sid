@@ -112,30 +112,35 @@ def buildSID(protocol, path = "", isNew = False):
 		prop = os.lstat(os.path.join(path, f))
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
+			try:
+				if isNew or os.readlin(os.path.join(path, f)) != last_info[ftype][f].getLinkURL() or os.lstat(os.path.join(path, f)).st_mtime != last_info[ftype][f].getModTime():
+					dic[ftype][f] = SymbolicLink(f, currPath=path)
+					sldChanged = True
+				else:
+					dic[ftype][f] = last_info[ftype][f]
+			except KeyError:
+				dic[ftype][f] = SymbolicLink(f, currPath=path)
+				sldChanged = True
 		elif os.path.isdir(os.path.join(path, f)):
 			ftype = "dirs"
-		else:
+			dic[ftype][f] = Directory(f, currPath=path)
+			try:
+				if isNew or os.lstat(os.path.join(path, f)).st_mtime != last_info[ftype][f].getModTime():
+					dic[ftype][f] = Directory(f, currPath=path)
+					sldChanged = True
+				else:
+					dic[ftype][f] = last_info[ftype][f]
+			except KeyError:
+				dic[ftype][f] = Directory(f, currPath=path)
+				sldChanged = True
+		else: #ftype = "basics"
 			ftype = "basics"
 			fhash = base64.b64encode(protocol.crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8")
-		if isNew:
-			if ftype == "symlinks":
-				dic[ftype][f] = SymbolicLink(f, currPath=path)
-			elif ftype == "dirs":
-				dic[ftype][f] = Directory(f, currPath=path)
-			else: #ftype = "basics"
+			if isNew:
 				dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash)
 				id_max += 1
 				to_upload.append(f)
-			sldChanged = True
-		else:
-			if ftype == "symlinks":
-
-				dic[ftype][f] = SymbolicLink(f, currPath=path)
-				sldChanged = True ### TODO
-			elif ftype == "dirs":
-				dic[ftype][f] = Directory(f, currPath=path)
-				sldChanged = True ### TODO
-			else: #ftype = "basics"
+			else:
 				try:
 					if last_info[ftype][f].getHash() == fhash:
 						dic[ftype][f] = last_info[ftype][f]
@@ -144,14 +149,15 @@ def buildSID(protocol, path = "", isNew = False):
 						id_max += 1
 						to_upload.append(f)
 				except KeyError:
-					dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash) ###
+					dic[ftype][f] = BasicFile(f, str(id_max), currPath=path, hash=fhash)
 					id_max += 1
 					to_upload.append(f)
+
 	if to_upload or sldChanged:
 		if not isNew:
 			# rename previous
 			prevSid = "v" + str(last_info["version"]) + ".sid"
-			sids[prevSid] = data
+			sids[prevSid] = data.encode('UTF-8')
 		# create new
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S")
@@ -219,40 +225,31 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 
 	for f, v in lastSID["basics"].items():
 		if os.path.exists(os.path.join(path, f)):
+			fstat = os.lstat(f)
+			fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
 			if force: # ATTENTION TODO
-				fstat = os.lstat(f)
-				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
 				if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):
 					try:
 						fcontent = protocol.get(v.getServerName()).decode("UTF-8")
 						o = open(os.path.join(path, f), "w")
 						o.write(fcontent)
 						o.close()
+						downloaded.append(f)
+						os.chmod(os.path.join(path, f), v.getMode())
+						os.utime(os.path.join(path, f), v.getModTime())
 					except AssertionError:
 						ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
-					try:
-						os.chmod(os.path.join(path, f), v.getMode())
-					except: ""
-					try:
-						os.utime(os.path.join(path, f), v.getModTime())
-					except: ""
-					downloaded.append(f)
-		else: # ATTENTION TODO
-			fhash = None
+		else:
 			try:
 				fcontent = protocol.get(v.getServerName()).decode("UTF-8")
 				o = open(os.path.join(path, f), "w")
 				o.write(fcontent)
 				o.close()
+				downloaded.append(f)
+				os.chmod(os.path.join(path, f), v.getMode())
+				os.utime(os.path.join(path, f), v.getModTime())
 			except AssertionError:
 				ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
-			try:
-				os.chmod(os.path.join(path, f), v.getMode())
-			except: ""
-			try:
-				os.utime(os.path.join(path, f), v.getModTime())
-			except: ""
-			downloaded.append(f)
 
 	for l, v in lastSID["symlinks"].items():
 		if os.path.exists(os.path.join(path, l)):
@@ -331,7 +328,7 @@ def SIDDelete(protocol):
 	try:
 		lastSID = json.loads(protocol.get("last.sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 	except AssertionError:
-		# TODO : blind removal ?
+		ERROR("Impossible to read data from last.sid: data is corrupt.")
 		return None
 	for f, v in lastSID["basics"].items():
 		try:
@@ -407,19 +404,18 @@ def SIDRemove(protocol, ver=-1):
 ########  TESTING AREA  #######################################################
 
 if __name__ == '__main__':
-	SIDCreate(protocol_test, "test_dir1/")
-	#SIDSave(protocol_test, "test_dir1/")
-	#print(SIDStatus(protocol_test))
+	#SIDCreate(protocol_test, "test_dir1/")
+	SIDSave(protocol_test, "test_dir1/")
+	print(SIDStatus(protocol_test))
 	print("LIST :",SIDList(protocol_test, True))
 	#SIDRestore(protocol_test, "dir3/")
 	#print(SIDDelete(protocol_test))
-	print(SIDRemove(protocol_test, 0))
+	#print(SIDRemove(protocol_test, 0))
 	
-
+# implementer crypto
 # ne pas hasher les petits fichiers
 # forcer restoration
 
-# gros fichiers ?
 # grosses arborescences
 
 ### NOT TODO

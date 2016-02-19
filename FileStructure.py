@@ -8,7 +8,7 @@ import os
 # recherche de la valeur
 class AbstractFile:
 	def __init__(self,filePath,currPath='.',size=-1,modTime=-1):
-		self.path = filePath
+		self.path = filePath		
 		if size < 0 or modTime < 0:
 			prop = os.lstat(os.path.join(currPath,filePath))
 		if size < 0: 
@@ -27,7 +27,7 @@ class AbstractFile:
 		return self.size
 
 	def getModTime(self):
-		return self.modTime
+		return self.modTime	
 
 	# before encoding in json
 	def encode(self):
@@ -64,7 +64,7 @@ class AbstractFile:
 	# usage: json.loads(data, object_hook = AbstractFile.UniversalDecode)	
 	@staticmethod
 	def universalDecode(data, rep_path='.'):
-		TYPES = {'AbstractFile' : AbstractFile, 'BasicFile' : BasicFile, 'SymbolicLink': SymbolicLink, 'Directory' : Directory}
+		TYPES = {'AbstractFile' : AbstractFile, 'BasicFile' : BasicFile, 'BigFile' : BigFile, 'SmallFile' : SmallFile, 'SymbolicLink': SymbolicLink, 'Directory' : Directory}
 		if type(data) == dict:
 			try:
 				obj = TYPES[data['type']].decode(data)
@@ -75,35 +75,30 @@ class AbstractFile:
 				for k in data:
 					obj_dic[k] = AbstractFile.universalDecode(data[k])
 				return data
+		elif type(data) == list:
+			l = []
+			for e in data:
+				l.append(AbstractFile.universalDecode(e))
+			return l
 		else:
 			return data
 
-# Pour le stockage d'infos sur les fichiers
+# Pour le stockage d'infos sur les fichiers (grands ou petits)
+# SHOULD NOT BE INSTANCIATED (see BigFile and SmallFile)
 # si hash, size, modTime ou mode non donnés au constructeur,
 # recherche ou calcul de la valeur
 class BasicFile(AbstractFile):
-	def __init__(self,filePath,serverName,currPath='.',hash=None,size=-1,modTime=-1,mode=None):
+	def __init__(self,filePath,currPath='.',size=-1,modTime=-1,mode=None):
 		AbstractFile.__init__(self,filePath,currPath,size,modTime)
-		if hash == None:
-			self.hash = crypto.hash(path, hash_file = True)
-		else: 
-			self.hash = hash
 		if size < 0 or modTime < 0 or mode < 0:
 			prop = os.lstat(os.path.join(currPath,filePath))
 		if mode == None: 
 			self.mode = prop.st_mode
 		else: 
 			self.mode = mode
-		self.serverName = serverName
 	
 	def getMode(self):
 		return self.mode
-
-	def getServerName(self):
-		return self.serverName
-
-	def getHash(self):
-		return self.hash
 
 	# before encoding in json
 	def encode(self):
@@ -111,8 +106,6 @@ class BasicFile(AbstractFile):
 			dic = AbstractFile.encode(self)  ### ?
 			dic['type'] = 'BasicFile'
 			dic['mode'] = self.mode
-			dic['serverName'] = self.serverName
-			dic['hash'] = self.hash
 			return dic
 		raise TypeError(repr(o)+" is not JSON serializable")
 
@@ -121,16 +114,100 @@ class BasicFile(AbstractFile):
 	def decode(dic):
 		if dic['type'] == 'BasicFile':
 			bf = BasicFile(dic['path'], 
-						   dic['serverName'],
 						   currPath=None, 
-						   hash=dic['hash'], 
 						   size=dic['size'], 
 						   modTime=dic['modTime'], 
-						   mode=dic['mode'])
+						   mode=dic['mode'],)
 			return bf
 		return dic
 
-## TODO : SmallFile ??
+class BigFile(BasicFile):
+	def __init__(self,filePath,serverName,hash=None,currPath='.',size=-1,modTime=-1,mode=None,key=None):
+		BasicFile.__init__(self,filePath,currPath='.',size=-1,modTime=-1,mode=None)
+		self.serverName = severName
+		if hash == None:
+			self.hash = crypto.hash(os.path.join(currPath,filePath), hash_file = True)
+		else: 
+			self.hash = hash
+		if key == None:
+			## TODO
+		else:
+			self.key = key
+
+	# before encoding in json
+	def encode(self):
+		if isinstance(self, BigFile):
+			dic = BasicFile.encode(self)  ### ?
+			dic['type'] = 'BigFile'
+			dic['hash'] = self.hash
+			dic['serverName'] = self.serverName
+			dic['key'] = self.key
+			return dic
+		raise TypeError(repr(o)+" is not JSON serializable")
+
+	# to decode from json
+	@staticmethod
+	def decode(dic):
+		if dic['type'] == 'BigFile':
+			bf = BigFile(dic['path'], 
+						   dic['serverName'],
+						   hash=dic['hash'],
+						   currPath=None, 
+						   size=dic['size'], 
+						   modTime=dic['modTime'], 
+						   mode=dic['mode'],
+						   key=dic['key'])
+			return bf
+		return dic
+
+	def getHash(self):
+		return self.hash
+
+	def getServerName(self):
+		return self.serverName
+
+	def getKey(self):
+		return self.key
+
+	def compareToLocal(self, localHash):
+		return self.hash == localHash
+
+class SmallFile(BasicFile):
+	def __init__(self,filePath,content=None,currPath='.',size=-1,modTime=-1,mode=None):
+		BasicFile.__init__(self,filePath,currPath='.',size=-1,modTime=-1,mode=None)
+		if content==None:
+			o = open(os.path.join(currPath,filePath),'rb')
+			self.content = o.read()
+		else:
+			self.content = content
+
+	def getContent(self):
+		return self.content
+
+	# before encoding in json
+	def encode(self):
+		if isinstance(self, SmallFile):
+			dic = BasicFile.encode(self)  ### ?
+			dic['type'] = 'SmallFile'
+			dic['content'] = self.content
+			return dic
+		raise TypeError(repr(o)+" is not JSON serializable")
+
+	# to decode from json
+	@staticmethod
+	def decode(dic):
+		if dic['type'] == 'SmallFile':
+			sf = SmallFile(dic['path'], 
+						   content=dic['content'],
+						   currPath=None, 
+						   size=dic['size'], 
+						   modTime=dic['modTime'], 
+						   mode=dic['mode'])
+			return sf
+		return dic
+
+	def compareToLocal(self, localContent):
+		return self.content == localContent
 
 # Pour le stockage d'infos sur les liens symboliques
 # si size, modTime ou adresse de la cible non donnés au constructeur,
@@ -139,7 +216,7 @@ class SymbolicLink(AbstractFile):
 	def __init__(self,filePath,currPath='.',size=-1,modTime=-1,linkURL=None):
 		AbstractFile.__init__(self,filePath,currPath,size,modTime)
 		if linkURL == None: 
-			self.linkURL = os.readlin(os.path.join(currPath,filePath))
+			self.linkURL = os.readlink(os.path.join(currPath,filePath))
 		else: 
 			self.linkURL = linkURL
 
