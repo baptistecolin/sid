@@ -270,9 +270,13 @@ elif opts.op == 'chpass':
                 #crypto = SIDCrypto(password)
                 (_, url, directory_path, _) = read_save(opts.name, crypto)
                 storage = getStorage(url)
+                crypto.setGlobalKey(None)
                 protocol = Protocol(storage, crypto)
                 h = protocol.get('password_hash.crypt')
                 print('oui bravo')
+                last = protocol.get('last.sid')
+                protocol.crypto = SIDCrypto(getpass.getpass('new password : '))
+                protocol.put('last.sid', last)
 
 ###### ici : mettre en place le chiffrement / dechiffrement de last.sid
 
