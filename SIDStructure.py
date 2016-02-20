@@ -92,6 +92,7 @@ hashLength = 256 # length for default hash algo SHA256
 # @path : str (chemin relatif)
 # @isNew : boolean
 def buildSID(protocol, path = "", isNew = False):
+	print("DEBUG : sidKey for this upload :", protocol.crypto.globalKey)
 	to_upload = []
 	sids = {}
 	sldChanged = False
@@ -115,11 +116,12 @@ def buildSID(protocol, path = "", isNew = False):
 	dic["version"] = ver
 	dic["sidHoles"] = sidHoles
 	for f in listFiles(path, False):
-		prop = os.lstat(os.path.join(path, f))
+		localPath = os.path.join(path, f)
+		prop = os.lstat(localPath)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
 			try:
-				if isNew or os.readlin(os.path.join(path, f)) != last_info[ftype][f].getLinkURL() or os.lstat(os.path.join(path, f)).st_mtime != last_info[ftype][f].getModTime():
+				if isNew or os.readlin(localPath) != last_info[ftype][f].getLinkURL() or os.lstat(localPath).st_mtime != last_info[ftype][f].getModTime():
 					dic[ftype][f] = SymbolicLink(f, currPath=path)
 					sldChanged = True
 				else:
@@ -127,11 +129,11 @@ def buildSID(protocol, path = "", isNew = False):
 			except KeyError:
 				dic[ftype][f] = SymbolicLink(f, currPath=path)
 				sldChanged = True
-		elif os.path.isdir(os.path.join(path, f)):
+		elif os.path.isdir(localPath):
 			ftype = "dirs"
 			dic[ftype][f] = Directory(f, currPath=path)
 			try:
-				if isNew or os.lstat(os.path.join(path, f)).st_mtime != last_info[ftype][f].getModTime():
+				if isNew or os.lstat(localPath).st_mtime != last_info[ftype][f].getModTime():
 					dic[ftype][f] = Directory(f, currPath=path)
 					sldChanged = True
 				else:
@@ -141,19 +143,20 @@ def buildSID(protocol, path = "", isNew = False):
 				sldChanged = True
 		else: #ftype = "basics"
 			ftype = "basics"
-			ob = open(os.path.join(path,f),'rb')
+			ob = open(localPath,'rb')
 			flength = len(ob.read())
 			ob.close()
-			if flength > hashlength:
+			if flength > hashLength:
 				#BigFile
-				fhash = base64.b64encode(protocol.crypto.hash(os.path.join(path, f), hash_file=True)).decode("UTF-8")
+				fhash = base64.b64encode(protocol.crypto.hash(localPath, hash_file=True)).decode("UTF-8")
 				if isNew:
+					#print("DEBUG : sidKey for file {0} : ".format(f), protocol.crypto.globalKey)
 					dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
 					id_max += 1
 					to_upload.append(f)
 				else:
 					try:
-						if type(last_info[ftype][f]) = BigFile:
+						if type(last_info[ftype][f]) == BigFile:
 						#BigFile from BigFile
 							if last_info[ftype][f].compareHash(fhash):
 								dic[ftype][f] = last_info[ftype][f]
@@ -172,13 +175,14 @@ def buildSID(protocol, path = "", isNew = False):
 						to_upload.append(f)
 			else:
 				#SmallFile
-				o = open(os.path.join(path,f),'rb')
+				o = open(localPath,'rb')
 				fcontent = o.read()
+				o.close()
 				if isNew:
 					dic[ftype][f] = SmallFile(f, currPath=path, content=fcontent)
 				else:
 					try:
-						if type(last_info[ftype][f]) = SmallFile:
+						if type(last_info[ftype][f]) == SmallFile:
 							#SmallFile from SmallFile
 							if last_info[ftype][f].compareContent(fcontent):
 								dic[ftype][f] = last_info[ftype][f]
@@ -260,41 +264,41 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 		except: ""
 
 	for f, v in lastSID["basics"].items():
-		if os.path.exists(os.path.join(path, f)):
-			fstat = os.lstat(os.path.join(path, f))
-			if v['type'] == 'BigFile'
-				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
-				if force:
-					if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):
-						try:
-							fcontent = protocol.get(v.getServerName()).decode("UTF-8")
-							o = open(os.path.join(path, f), "w")
-							o.write(fcontent)
-							o.close()
-							downloaded.append(f)
-							os.chmod(os.path.join(path, f), v.getMode())
-							os.utime(os.path.join(path, f), mtimeToTuple(v.getModTime()))
-						except AssertionError:
-							ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
-				else:
-					try:
-						fcontent = protocol.get(v.getServerName()).decode("UTF-8")
-						o = open(os.path.join(path, f), "w")
-						o.write(fcontent)
-						o.close()
-						downloaded.append(f)
-						os.chmod(os.path.join(path, f), v.getMode())
-						print(v.getModTime(), mtimeToTuple(v.getModTime()))
-						os.utime(os.path.join(path, f), mtimeToTuple(v.getModTime()))
-					except AssertionError:
-						ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
-			else: ## TODO
-				ERROR('TODO : SmallFile')
+		toDownload = False
+		localPath = os.path.join(path, f)
+		if os.path.exists(localPath):
+#			fstat = os.lstat(localPath)
+#				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
+			if force:
+				#if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):	
+				if not v.compareToLocal(currPath=path, crypto=protocol.crypto): # compare automatiquement hash ou contenu selon taille
+					toDownload = True
+		else:
+			toDownload = True
+		if toDownload:
+			if type(v) == BigFile:
+				try:
+					fcontent = protocol.get(v.getServerName()).decode("UTF-8") ### TODO open with right key
+					o = open(localPath, "w")
+					o.write(fcontent)
+					o.close()
+					downloaded.append(f)
+				except AssertionError:
+					ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
+			elif type(v) == SmallFile:
+				fcontent = v.getContent()	
+				o = open(localPath, "w")
+				o.write(fcontent)
+				o.close()
+			os.chmod(localPath, v.getMode())
+			#print(v.getModTime(), mtimeToTuple(v.getModTime()))
+			os.utime(localPath, mtimeToTuple(v.getModTime()))
 
 	for l, v in lastSID["symlinks"].items():
 		if os.path.exists(os.path.join(path, l)):
-			lstat = os.lstat(l)
-			if lstat.st_mtime != v.getModTime() or os.readlin(os.path.join(path, l)) != v.getLinkURL():
+			#lstat = os.lstat(l)
+			if v.compareToLocal(currPath=path):
+			#if lstat.st_mtime != v.getModTime() or os.readlin(os.path.join(path, l)) != v.getLinkURL():
 				os.unlink(os.path.join(path, l))
 				os.symlink(v.getLinkURL(), os.path.join(path, l))
 				try:
@@ -348,6 +352,7 @@ def SIDList(protocol, detailed=False):
 			flist.append(l)
 			details = {"type" : "LINK",
 					"file" : l,
+#					"link URL" : v.getLinkURL(),  ### TODO
 					"size" : v.getSize(),
 					"perms" : v.getMode(),
 					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime())).split(".")[0]
@@ -410,7 +415,7 @@ def SIDRemove(protocol, ver=-1):
 				prevSID = json.loads(protocol.get("v" + str(i) + ".sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 				for f, v in prevSID["basics"].items():
 					toRemove[int(v.getServerName())] = False
-				if ver == lastSID["version"] and i = ver - 1:
+				if ver == lastSID["version"] and i == ver - 1:
 					sidSave = prevSID
 		if ver != lastSID["version"]:
 			for f, v in lastSID["basics"].items():

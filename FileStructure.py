@@ -29,6 +29,14 @@ class AbstractFile:
 	def getModTime(self):
 		return self.modTime	
 
+	def compareToLocal(self, currPath=None, filePath=None): 
+		''' arguments indispensables : self ; 
+		si pas d'infos sur fichier local, donner currPath''' 
+		if filePath == None:
+			filePath = self.filePath
+		fstat = os.lstat(os.path.join(path, f))
+		return self.modTime == fstat.st_mtime and self.size == fstat.st_size
+
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, AbstractFile):
@@ -100,6 +108,34 @@ class BasicFile(AbstractFile):
 	def getMode(self):
 		return self.mode
 
+	def compareToLocal(self, currPath=None, filePath=None, localHash=None, crypto=None, localContent=None, compareMode=True): 
+		''' compare automatiquement hash ou contenu en fonction de la taille, plus autres attributs.
+		compare les droits (Mode) seulement si compareMode=True
+		arguments indispensables : self ; 
+		si pas d'infos (hash ou contenu) sur fichier local, donner currPath ;
+		si BigFile et pas de hash, donner crypto''' 
+		if AbstractFile.compareToLocal(self, currPath=currPath, filePath=filePath):
+			if filePath == None:
+				filePath = self.filePath
+			fstat = os.lstat(os.path.join(path, f))
+			if (self.mode != fstat.st_mode and compareMode):
+				return False
+			elif type(self) == BigFile:
+				if localHash == None:
+					if crypto == None:
+						raise ValueError("ERROR : missing crypto. Can't hash")
+					else:
+						localHash = crypto.hash(os.path.join(currPath,filePath), hash_file=True)
+				return self.compareHash(localHash)
+			elif type(self) == SmallFile:	
+				if localContent == None:
+					o = open(os.path.join(currPath,filePath), 'rb')	
+					localContent = o.read()
+					o.close()
+				return self.compareContent(localContent)	
+		else:
+			return False
+
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, BasicFile):
@@ -122,17 +158,17 @@ class BasicFile(AbstractFile):
 		return dic
 
 class BigFile(BasicFile):
-	def __init__(self,filePath,serverName,hash=None,currPath='.',size=-1,modTime=-1,mode=None,sidKey=None):
+	def __init__(self,filePath,serverName,sidKey,hash=None,crypto=None,currPath='.',size=-1,modTime=-1,mode=None):
 		BasicFile.__init__(self,filePath,currPath='.',size=-1,modTime=-1,mode=None)
-		self.serverName = severName
+		self.serverName = serverName
 		if hash == None:
-			self.hash = crypto.hash(os.path.join(currPath,filePath), hash_file = True)
+			if crypto == None:
+				raise ValueError("ERROR : missing crypto. Can't hash")
+			else:
+				self.hash = crypto.hash(os.path.join(currPath,filePath), hash_file = True)
 		else: 
 			self.hash = hash
-		if sidKey == None:
-			## TODO
-		else:
-			self.sidKey = sidKey
+		self.sidKey = sidKey
 
 	# before encoding in json
 	def encode(self):
@@ -170,7 +206,7 @@ class BigFile(BasicFile):
 		return self.sidKey
 
 	def compareHash(self, localHash):
-		return self.hash == localHash
+		return localHash == base64.b64decode(self.hash.encode("UTF-8")) ### import ? encodage...
 
 class SmallFile(BasicFile):
 	def __init__(self,filePath,content=None,currPath='.',size=-1,modTime=-1,mode=None):
@@ -178,6 +214,7 @@ class SmallFile(BasicFile):
 		if content==None:
 			o = open(os.path.join(currPath,filePath),'rb')
 			self.content = o.read()
+			o.close()
 		else:
 			self.content = content
 
@@ -223,6 +260,18 @@ class SymbolicLink(AbstractFile):
 	def getLinkURL(self):
 		return self.linkURL
 
+	def compareToLocal(self, currPath=None, filePath=None, localLinkURL=None): 
+		''' arguments indispensables : self ; 
+		si pas d'infos sur fichier local, donner currPath''' 
+		if AbstractFile.compareToLocal(self, currPath=currPath, filePath=filePath):
+			if filePath == None:
+				filePath = self.filePath
+			if localLinkURL == None:
+				localLinkURL = os.readlink(os.path.join(currPath,filePath))
+			return localLinkURL == self.linkURL
+		else:
+			return False
+
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, SymbolicLink):
@@ -257,6 +306,18 @@ class Directory(AbstractFile):
 
 	def getMode(self):
 		return self.mode
+
+	def compareToLocal(self, currPath=None, filePath=None, compareMode=True): 
+		''' arguments indispensables : self ; 
+		si pas d'infos sur fichier local, donner currPath
+		compare les droits (Mode) seulement si compareMode=True''' 
+		if AbstractFile.compareToLocal(self, currPath=currPath, filePath=filePath):
+			if filePath == None:
+				filePath = self.filePath
+			prop = os.lstat(os.path.join(currPath, filePath))
+			return self.mode == prop.st_mode
+		else:
+			return False
 	
 	# before encoding in json
 	def encode(self):
