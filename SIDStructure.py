@@ -45,11 +45,15 @@ def listFiles(path, addEntryPath = True, entryPath = ""):
 	for i in l:
 		totalPath = os.path.join(path, i) if addEntryPath else i
 		if os.path.isdir(os.path.join(entryPath, i)):
-			files.append(totalPath)
 			files.extend(listFiles(totalPath, True, entryPath))
-		if not i.endswith(".sid"): # REMOVE IN LATER VERSIONS (TODO)
-			files.append(totalPath)
+		files.append(totalPath)
 	return files
+
+def mtimeToTuple(modTime):
+	modTime = str(modTime)
+	part1, part2 = modTime.split(".")
+	return (int(part1), int(part2))
+
 
 def ERROR(msg, errID=-1):
 	errIDString = "" if errID == -1 else " (ID:" + errID + ")"
@@ -194,7 +198,7 @@ def buildSID(protocol, path = "", isNew = False):
 		dic["id_max"] = id_max
 		dic["lastUpdate"] = time.strftime("%d/%m/%Y - %H:%M:%S")
 		js = json.dumps(dic, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8")
-		sids["last.sid"] = js ### CHANGE
+		sids["last.sid"] = js
 	return to_upload, dic["basics"], sids
 
 
@@ -257,11 +261,22 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 
 	for f, v in lastSID["basics"].items():
 		if os.path.exists(os.path.join(path, f)):
-			fstat = os.lstat(f)
-			if f['type'] == 'BigFile'
+			fstat = os.lstat(os.path.join(path, f))
+			if v['type'] == 'BigFile'
 				fhash = protocol.crypto.hash(os.path.join(path, f), hash_file=True)
-			if force: # ATTENTION TODO
-				if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):
+				if force:
+					if fstat.st_size != v.getSize() or fstat.st_mtime != v.getModTime or fhash != base64.b64decode(v.getHash().encode("UTF-8")):
+						try:
+							fcontent = protocol.get(v.getServerName()).decode("UTF-8")
+							o = open(os.path.join(path, f), "w")
+							o.write(fcontent)
+							o.close()
+							downloaded.append(f)
+							os.chmod(os.path.join(path, f), v.getMode())
+							os.utime(os.path.join(path, f), mtimeToTuple(v.getModTime()))
+						except AssertionError:
+							ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
+				else:
 					try:
 						fcontent = protocol.get(v.getServerName()).decode("UTF-8")
 						o = open(os.path.join(path, f), "w")
@@ -269,20 +284,12 @@ def SIDRestore(protocol, path = "", ver = -1, force = False):
 						o.close()
 						downloaded.append(f)
 						os.chmod(os.path.join(path, f), v.getMode())
-						os.utime(os.path.join(path, f), v.getModTime())
+						print(v.getModTime(), mtimeToTuple(v.getModTime()))
+						os.utime(os.path.join(path, f), mtimeToTuple(v.getModTime()))
 					except AssertionError:
 						ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
-		else:
-			try:
-				fcontent = protocol.get(v.getServerName()).decode("UTF-8")
-				o = open(os.path.join(path, f), "w")
-				o.write(fcontent)
-				o.close()
-				downloaded.append(f)
-				os.chmod(os.path.join(path, f), v.getMode())
-				os.utime(os.path.join(path, f), v.getModTime())
-			except AssertionError:
-				ATTENTION("Impossible to read downloaded file %s: file is corrupt." % f)
+			else: ## TODO
+				ERROR('TODO : SmallFile')
 
 	for l, v in lastSID["symlinks"].items():
 		if os.path.exists(os.path.join(path, l)):
@@ -329,7 +336,7 @@ def SIDList(protocol, detailed=False):
 					"file" : f,
 					"size" : v.getSize(),
 					"perms" : v.getMode(),
-					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime()))[:-7]
+					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime())).split(".")[0]
 					}
 		else:
 			details = {"type" : "FILE",
@@ -343,7 +350,7 @@ def SIDList(protocol, detailed=False):
 					"file" : l,
 					"size" : v.getSize(),
 					"perms" : v.getMode(),
-					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime()))[:-7]
+					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime())).split(".")[0]
 					}
 		else:
 			details = {"type" : "FILE",
@@ -403,6 +410,8 @@ def SIDRemove(protocol, ver=-1):
 				prevSID = json.loads(protocol.get("v" + str(i) + ".sid").decode("UTF-8"), object_hook = AbstractFile.universalDecode)
 				for f, v in prevSID["basics"].items():
 					toRemove[int(v.getServerName())] = False
+				if ver == lastSID["version"] and i = ver - 1:
+					sidSave = prevSID
 		if ver != lastSID["version"]:
 			for f, v in lastSID["basics"].items():
 				toRemove[int(v.getServerName())] = False
@@ -416,14 +425,16 @@ def SIDRemove(protocol, ver=-1):
 					deleted += 1
 				except:
 					errors += 1
-		## TODO : upload new last.sid if just deleted
 		try:
 			protocol.delete("last.sid" if ver == lastSID["version"] else "v" + str(ver) + ".sid")
 		except:
 			ERROR("Could not delete corresponding .sid distant file.")
-		lastSID["sidHoles"] = holeList
-		protocol.put("last.sid", json.dumps(lastSID, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8"))
-		## END TODO
+		if ver == lastSID["version"]:
+			sidSave["sidHoles"] = holeList
+			protocol.put("last.sid", json.dumps(sidSave, sort_keys=True, indent=2, default=AbstractFile.universalEncode).encode("UTF-8"))
+			try:
+				protocol.delete("v" + str(ver-1) + ".sid")
+			except: "" # do nothing
 	except AssertionError:
 		ERROR("Impossible to read data from .sid files on backend: data is corrupt.")
 		return None
@@ -437,20 +448,15 @@ def SIDRemove(protocol, ver=-1):
 ########  TESTING AREA  #######################################################
 
 if __name__ == '__main__':
-	#SIDCreate(protocol_test, "test_dir1/")
-	SIDSave(protocol_test, "test_dir1/")
-	print(SIDStatus(protocol_test))
-	print("LIST :",SIDList(protocol_test, True))
+	SIDCreate(protocol_test, "test_dir1/")
+	#SIDSave(protocol_test, "test_dir1/")
+	#print(SIDStatus(protocol_test))
+	#print("LIST :",SIDList(protocol_test, True))
 	#SIDRestore(protocol_test, "dir3/")
 	#print(SIDDelete(protocol_test))
 	#print(SIDRemove(protocol_test, 0))
 	
-# implementer crypto
-# ne pas hasher les petits fichiers
-# forcer restoration
 
 # grosses arborescences
-
-### NOT TODO
 # rsync : algo qui check si morceaux identiques
 
