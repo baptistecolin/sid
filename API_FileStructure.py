@@ -10,6 +10,7 @@ class AbstractFile:
 			int modTime
 	attributes (non optional):
 		str path
+		str currPath
 		int size
 		int modTime
 	attributes (optional):
@@ -45,6 +46,7 @@ class BasicFile(AbstractFile):
 			int mode
 	attributes (non optional):
 		str path
+		str currPath
 		int size
 		int modTime
 		int mode
@@ -76,7 +78,7 @@ class BigFile(BasicFile(AbstractFile)):
 			@serverName : str
 			@sidKey : ? ### TODO
 		optional arguments:
-			@hash : ? ### TODO
+			@hash : str
 			@crypto : SIDCrypto
 			@currPath : str
 			@size : int
@@ -85,12 +87,13 @@ class BigFile(BasicFile(AbstractFile)):
 			
 		attributes (non optional):
 			str path
+			str currPath
 			int size
 			int modTime
 			int mode
 			str serverName
-			? hash ### TODO
-			? sidKey ### TODO
+			str hash 
+			str sidKey ### ?
 		attributes (optional):
 			-
 		methods:
@@ -118,6 +121,7 @@ class SmallFile(BasicFile(AbstractFile)):
 			@mode : int
 	attributes (non-optional):
 		str path
+		str currPath
 		int size
 		int modTime
 		int mode
@@ -144,6 +148,7 @@ class SymbolicLink(AbstractFile):
 			@modTime : int
 	attributes (non-optional):
 		str path
+		str currPath
 		int size
 		int modTime
 		str linkURL
@@ -171,6 +176,7 @@ class Directory(AbstractFile):
 			@mode : int
 	attributes (non-optional):
 		str path
+		str currPath
 		int size
 		int modTime
 		int mode

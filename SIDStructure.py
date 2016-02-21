@@ -91,7 +91,7 @@ hashLength = 256 # length for default hash algo SHA256
 # @protocol : sid.Protocol
 # @path : str (chemin relatif)
 # @isNew : boolean
-def buildSID(protocol, path = "", isNew = False):
+def buildSID(protocol, path = "./", isNew = False):
 	#print("DEBUG : sidKey for this upload :", protocol.crypto.globalKey)
 	to_upload = []
 	sids = {}
@@ -100,7 +100,7 @@ def buildSID(protocol, path = "", isNew = False):
 	if isNew:
 		ver = 0
 		id_max = 0
-		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8") ## TODO ?
+		sidKey = base64.b64encode(protocol.crypto.generateGlobalKey()).decode("UTF-8") ## TODO ?"AZERTY" #
 		sidHoles = []
 	else:
 		try:
@@ -153,7 +153,7 @@ def buildSID(protocol, path = "", isNew = False):
 				fhash = base64.b64encode(protocol.crypto.hash(localPath, hash_file=True)).decode("UTF-8")
 				if isNew:
 					#print("DEBUG : sidKey for file {0} : ".format(f), protocol.crypto.globalKey)
-					dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
+					dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=sidKey)
 					id_max += 1
 					to_upload.append(f)
 				else:
@@ -163,16 +163,16 @@ def buildSID(protocol, path = "", isNew = False):
 							if last_info[ftype][f].compareHash(fhash):
 								dic[ftype][f] = last_info[ftype][f]
 							else:
-								dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
+								dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=sidKey)
 								id_max += 1
 								to_upload.append(f)
 						else:
 						#BigFile from SmallFile
-							dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
+							dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=sidKey)
 							id_max += 1
 							to_upload.append(f)
 					except KeyError:
-						dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
+						dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=sidKey)
 						id_max += 1
 						to_upload.append(f)
 			else:
@@ -238,7 +238,7 @@ def SIDCreate(protocol, path = ""):
 # @protocol : sid.Protocol
 # @ver : int
 # @path : str (chemin relatif)
-def SIDRestore(protocol, path = "", ver = -1, force = False):
+def SIDRestore(protocol, path = "./", ver = -1, force = False):
 	downloaded = []
 	if ver < 0:
 		try:

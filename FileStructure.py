@@ -10,7 +10,10 @@ import json ### TODO Remove after tests
 class AbstractFile:
 	def __init__(self,filePath,currPath='.',size=-1,modTime=-1):
 		self.path = filePath		
+		self.currPath = currPath
 		if size < 0 or modTime < 0:
+			print("DEBUG : filePath :",filePath)
+			print("DEBUG : currPath :",currPath)
 			prop = os.lstat(os.path.join(currPath,filePath))
 		if size < 0: 
 			self.size = prop.st_size
@@ -41,7 +44,6 @@ class AbstractFile:
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, AbstractFile):
-			print("DEBUG : calling AbstractFile.encode on", self.getPath())
 			return {'type' : 'AbstractFile',
 				'path' : self.path,
 				'size' : self.size,
@@ -53,7 +55,6 @@ class AbstractFile:
 	@staticmethod
 	def decode(dic):
 		if dic['type'] == 'AbstractFile':
-			print("DEBUG : appel de AbstractFile.decode() sur {0}".format(dic))
 			return AbstractFile(dic['path'],
 					 currPath=None,
 					 size=dic['size'],
@@ -65,7 +66,6 @@ class AbstractFile:
 	@staticmethod
 	def universalEncode(obj):
 		if isinstance(obj, AbstractFile):
-			print("DEBUG : calling AbstractFile.universalEncode on",obj.getPath())
 			return obj.encode()
 		else:
 			#print("DEBUG : unknown type in universalEncode. Handled as basic type")
@@ -142,7 +142,6 @@ class BasicFile(AbstractFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, BasicFile):
-			print("DEBUG : calling BasicFile.encode on", self.getPath())
 			dic = AbstractFile.encode(self)  ### ?
 			dic['type'] = 'BasicFile'
 			dic['mode'] = self.mode
@@ -232,7 +231,6 @@ class SmallFile(BasicFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, SmallFile):
-			print("DEBUG : calling SmallFile.encode on",self.getPath())
 			dic = BasicFile.encode(self)  ### ?
 			dic['type'] = 'SmallFile'
 			dic['content'] = self.content
@@ -245,7 +243,7 @@ class SmallFile(BasicFile):
 		if dic['type'] == 'SmallFile':
 			sf = SmallFile(dic['path'], 
 						   content=dic['content'],
-						   currPath=None, 
+						   currPath=dic['currPath'], 
 						   size=dic['size'], 
 						   modTime=dic['modTime'], 
 						   mode=dic['mode'])
