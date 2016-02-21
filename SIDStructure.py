@@ -92,7 +92,7 @@ hashLength = 256 # length for default hash algo SHA256
 # @path : str (chemin relatif)
 # @isNew : boolean
 def buildSID(protocol, path = "", isNew = False):
-	print("DEBUG : sidKey for this upload :", protocol.crypto.globalKey)
+	#print("DEBUG : sidKey for this upload :", protocol.crypto.globalKey)
 	to_upload = []
 	sids = {}
 	sldChanged = False
@@ -100,7 +100,7 @@ def buildSID(protocol, path = "", isNew = False):
 	if isNew:
 		ver = 0
 		id_max = 0
-		#sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8") ## TODO ?
+		sidKey = "AZERTY" #base64.b64encode(protocol.crypto.globalKeyGenerator()).decode("UTF-8") ## TODO ?
 		sidHoles = []
 	else:
 		try:
@@ -115,8 +115,10 @@ def buildSID(protocol, path = "", isNew = False):
 	#dic["sidKey"] = sidKey
 	dic["version"] = ver
 	dic["sidHoles"] = sidHoles
-	for f in listFiles(path, False):
+	for f in listFiles(path, addEntryPath=False):  ### ?
+		#DEBUG("f :"+f)
 		localPath = os.path.join(path, f)
+		#DEBUG("localPath :"+localPath)
 		prop = os.lstat(localPath)
 		if stat.S_ISLNK(prop.st_mode) != 0:
 			ftype = "symlinks"
@@ -151,7 +153,7 @@ def buildSID(protocol, path = "", isNew = False):
 				fhash = base64.b64encode(protocol.crypto.hash(localPath, hash_file=True)).decode("UTF-8")
 				if isNew:
 					#print("DEBUG : sidKey for file {0} : ".format(f), protocol.crypto.globalKey)
-					dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
+					dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
 					id_max += 1
 					to_upload.append(f)
 				else:
@@ -161,16 +163,16 @@ def buildSID(protocol, path = "", isNew = False):
 							if last_info[ftype][f].compareHash(fhash):
 								dic[ftype][f] = last_info[ftype][f]
 							else:
-								dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
+								dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
 								id_max += 1
 								to_upload.append(f)
 						else:
 						#BigFile from SmallFile
-							dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
+							dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
 							id_max += 1
 							to_upload.append(f)
 					except KeyError:
-						dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey=protocol.crypto.globalKey)
+						dic[ftype][f] = BigFile(f, str(id_max), currPath=path, hash=fhash, sidKey="AZERTY")
 						id_max += 1
 						to_upload.append(f)
 			else:
@@ -179,6 +181,7 @@ def buildSID(protocol, path = "", isNew = False):
 				fcontent = o.read()
 				o.close()
 				if isNew:
+					#DEBUG("currPath :"+path)
 					dic[ftype][f] = SmallFile(f, currPath=path, content=fcontent)
 				else:
 					try:
@@ -352,7 +355,7 @@ def SIDList(protocol, detailed=False):
 			flist.append(l)
 			details = {"type" : "LINK",
 					"file" : l,
-#					"link URL" : v.getLinkURL(),  ### TODO
+					"link URL" : v.getLinkURL(),
 					"size" : v.getSize(),
 					"perms" : v.getMode(),
 					"lastMod" : str(datetime.datetime.fromtimestamp(v.getModTime())).split(".")[0]
@@ -453,7 +456,12 @@ def SIDRemove(protocol, ver=-1):
 ########  TESTING AREA  #######################################################
 
 if __name__ == '__main__':
-	SIDCreate(protocol_test, "test_dir1/")
+	#print("addEntryPath=False")
+	#print(listFiles("./dir_test",addEntryPath=False))
+	#print("addEntryPath=True")
+	#print(listFiles("./dir_test",addEntryPath=True))
+	print(buildSID(protocol_test,"./dir_test",True))
+	#SIDCreate(protocol_test, "test_dir1/")
 	#SIDSave(protocol_test, "test_dir1/")
 	#print(SIDStatus(protocol_test))
 	#print("LIST :",SIDList(protocol_test, True))

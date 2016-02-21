@@ -1,5 +1,6 @@
 import SIDCrypto
 import os
+import json ### TODO Remove after tests
 
 ## Classe mère ("abstraite") pour le stockage d'infos sur les fichiers, répertoires ou liens
 # n'est pas censée être instanciée
@@ -40,6 +41,7 @@ class AbstractFile:
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, AbstractFile):
+			print("DEBUG : calling AbstractFile.encode on", self.getPath())
 			return {'type' : 'AbstractFile',
 				'path' : self.path,
 				'size' : self.size,
@@ -63,6 +65,7 @@ class AbstractFile:
 	@staticmethod
 	def universalEncode(obj):
 		if isinstance(obj, AbstractFile):
+			print("DEBUG : calling AbstractFile.universalEncode on",obj.getPath())
 			return obj.encode()
 		else:
 			#print("DEBUG : unknown type in universalEncode. Handled as basic type")
@@ -139,6 +142,7 @@ class BasicFile(AbstractFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, BasicFile):
+			print("DEBUG : calling BasicFile.encode on", self.getPath())
 			dic = AbstractFile.encode(self)  ### ?
 			dic['type'] = 'BasicFile'
 			dic['mode'] = self.mode
@@ -159,7 +163,7 @@ class BasicFile(AbstractFile):
 
 class BigFile(BasicFile):
 	def __init__(self,filePath,serverName,sidKey,hash=None,crypto=None,currPath='.',size=-1,modTime=-1,mode=None):
-		BasicFile.__init__(self,filePath,currPath='.',size=-1,modTime=-1,mode=None)
+		BasicFile.__init__(self,filePath,currPath,size=-1,modTime=-1,mode=None)
 		self.serverName = serverName
 		if hash == None:
 			if crypto == None:
@@ -173,10 +177,12 @@ class BigFile(BasicFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, BigFile):
+			print("DEBUG : calling BigFile.encode on",self.getPath())
 			dic = BasicFile.encode(self)  ### ?
 			dic['type'] = 'BigFile'
 			dic['hash'] = self.hash
 			dic['serverName'] = self.serverName
+			print("sidKey for {0}:".format(self.path),self.sidKey)
 			dic['sidKey'] = self.sidKey
 			return dic
 		raise TypeError(repr(o)+" is not JSON serializable")
@@ -210,9 +216,9 @@ class BigFile(BasicFile):
 
 class SmallFile(BasicFile):
 	def __init__(self,filePath,content=None,currPath='.',size=-1,modTime=-1,mode=None):
-		BasicFile.__init__(self,filePath,currPath='.',size=-1,modTime=-1,mode=None)
+		BasicFile.__init__(self,filePath,currPath,size=-1,modTime=-1,mode=None)
 		if content==None:
-			o = open(os.path.join(currPath,filePath),'rb')
+			o = open(os.path.join(currPath,filePath),'r')
 			self.content = o.read()
 			o.close()
 		else:
@@ -224,6 +230,7 @@ class SmallFile(BasicFile):
 	# before encoding in json
 	def encode(self):
 		if isinstance(self, SmallFile):
+			print("DEBUG : calling SmallFile.encode on",self.getPath())
 			dic = BasicFile.encode(self)  ### ?
 			dic['type'] = 'SmallFile'
 			dic['content'] = self.content
@@ -339,3 +346,26 @@ class Directory(AbstractFile):
 						   mode=dic['mode'])
 			return di
 		return dic
+
+###################################TESTS#################################
+
+if __name__ == '__main__':
+	dic = {"abstract" : {}, "basics" : {}, "symlinks" : {}, "dirs" : {}}
+	#f1 = AbstractFile("save/0", currPath="dir_test")
+	#bafile = BasicFile("save/1", currPath="dir_test")
+	small_file1 = SmallFile("short", currPath="dir_test")
+	dic_small_file1=AbstractFile.universalEncode(small_file1)
+	print(dic_small_file1)
+	#big_file = BigFile("save/last.sid", 15, "QWERTY", currPath="dir_test", hash="123456789")
+	#dic['abstract'][f1.getPath()]=f1
+	#dic['basics'][bafile.getPath()]=bafile
+	dic['basics'][small_file1.getPath()]=small_file1
+	#dic['basics'][big_file.getPath()]=big_file
+	s1 = json.dumps(dic_small_file1)
+	print(s1)
+	s = json.dumps(dic, default=AbstractFile.universalEncode)
+	print(s)
+
+
+
+

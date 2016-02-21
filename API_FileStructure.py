@@ -121,7 +121,7 @@ class SmallFile(BasicFile(AbstractFile)):
 		int size
 		int modTime
 		int mode
-		? content ### TODO
+		? content ### TODO str ? sinon pb dans json.dumps
 	attributes (optional):
 		-
 	methods:
