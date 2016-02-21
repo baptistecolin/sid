@@ -112,7 +112,7 @@ class SmallFile(BasicFile(AbstractFile)):
 			@filePath : str
 		optional arguments:
 			@currPath : str
-			@content : ? ### TODO
+			@content : str ## impératif pour encoder en json
 			@size : int
 			@modTime : int
 			@mode : int
@@ -121,7 +121,7 @@ class SmallFile(BasicFile(AbstractFile)):
 		int size
 		int modTime
 		int mode
-		? content ### TODO str ? sinon pb dans json.dumps
+		str content 
 	attributes (optional):
 		-
 	methods:
@@ -130,7 +130,7 @@ class SmallFile(BasicFile(AbstractFile)):
 		@override encode
 		@override @staticmethod decode
 		compareContent(self, localContent)
-			@localContent : ? ### TODO
+			@localContent : str
 			returns bool
 
 class SymbolicLink(AbstractFile):

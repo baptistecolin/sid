@@ -178,7 +178,7 @@ def buildSID(protocol, path = "", isNew = False):
 			else:
 				#SmallFile
 				o = open(localPath,'rb')
-				fcontent = o.read()
+				fcontent = base64.b64encode(o.read()).decode("UTF-8") ##
 				o.close()
 				if isNew:
 					#DEBUG("currPath :"+path)
@@ -460,8 +460,8 @@ if __name__ == '__main__':
 	#print(listFiles("./dir_test",addEntryPath=False))
 	#print("addEntryPath=True")
 	#print(listFiles("./dir_test",addEntryPath=True))
-	print(buildSID(protocol_test,"./dir_test",True))
-	#SIDCreate(protocol_test, "test_dir1/")
+	#print(buildSID(protocol_test,"./dir_test",True))
+	SIDCreate(protocol_test, "dir_test")
 	#SIDSave(protocol_test, "test_dir1/")
 	#print(SIDStatus(protocol_test))
 	#print("LIST :",SIDList(protocol_test, True))

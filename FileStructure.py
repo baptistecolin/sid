@@ -218,11 +218,13 @@ class SmallFile(BasicFile):
 	def __init__(self,filePath,content=None,currPath='.',size=-1,modTime=-1,mode=None):
 		BasicFile.__init__(self,filePath,currPath,size=-1,modTime=-1,mode=None)
 		if content==None:
-			o = open(os.path.join(currPath,filePath),'r')
-			self.content = o.read()
+			o = open(os.path.join(currPath,filePath),'rb')
+			self.content = o.read().encode("UTF-8") ##
 			o.close()
-		else:
+		elif type(content) == str:
 			self.content = content
+		else:
+			raise ValueError("content must be a string or None")
 
 	def getContent(self):
 		return self.content
